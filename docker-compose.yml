@@ -1,0 +1,18 @@
+services:
+  nuxt:
+    container_name: nuxt_toollab
+    build:
+      context: ./docker
+      target: dev
+    ports:
+      - "3000:3000"
+    networks:
+      - web
+    volumes:
+      - .:/app
+    environment:
+      - NODE_ENV=development
+
+networks:
+  web:
+    driver: bridge

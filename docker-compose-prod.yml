@@ -1,0 +1,18 @@
+services:
+  nuxt:
+    build:
+      context: .
+      target: prod
+    ports: []
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.front_toollab.rule=Host(`front.toollab.fr`)"
+      - "traefik.http.routers.front_toollab.entrypoints=web,websecure"
+      - "traefik.http.routers.front_toollab.tls=true"
+      - "traefik.http.routers.front_toollab.tls.certresolver=myresolver"
+    environment:
+      - NODE_ENV=production
+
+networks:
+  web:
+    external: true
