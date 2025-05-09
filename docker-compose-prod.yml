@@ -4,6 +4,7 @@ services:
       context: .
       target: prod
     ports: []
+    volumes: []
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.front_toollab.rule=Host(`front.toollab.fr`)"
