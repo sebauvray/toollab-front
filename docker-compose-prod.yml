@@ -8,7 +8,7 @@ services:
     volumes: !reset []
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.front_toollab.rule=Host(`front.toollab.fr`)"
+      - "traefik.http.routers.front_toollab.rule=Host(`toollab.fr`)"
       - "traefik.http.routers.front_toollab.entrypoints=web,websecure"
       - "traefik.http.routers.front_toollab.tls=true"
       - "traefik.http.routers.front_toollab.tls.certresolver=myresolver"
