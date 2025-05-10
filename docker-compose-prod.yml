@@ -1,7 +1,7 @@
 services:
   nuxt:
     build:
-      context: .
+      context: ./Docker
       target: prod
     ports: []
     volumes: []
