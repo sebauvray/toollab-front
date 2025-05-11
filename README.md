@@ -9,3 +9,7 @@ docker compose up -d
 Command to be made in the project folder.
 
 And that's it.
+
+Project run at http://localhost:3000/
+
+Note: First start is long
