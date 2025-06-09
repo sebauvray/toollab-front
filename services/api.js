@@ -2,9 +2,7 @@ import * as axiosModule from 'axios'
 const axios = axiosModule.default || axiosModule
 
 const apiClient = axios.create({
-    baseURL: process.env.NODE_ENV === 'production'
-        ? process.env.NUXT_PUBLIC_API_URL
-        : 'http://localhost',
+    baseURL:  'http://localhost:8000',
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
