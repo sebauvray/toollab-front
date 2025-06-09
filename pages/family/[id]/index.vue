@@ -282,7 +282,6 @@ definePageMeta({
         <div class="flex flex-col justify-center gap-y-0.5">
           <div class="font-bold text-base mb-1">Adresse</div>
 
-          <!-- Affichage de l'adresse quand on n'est pas en mode édition -->
           <template v-if="!isEditing">
             <div class="inline-flex items-center gap-x-2 font-montserrat text-xs text-default font-medium">
               <HomeTLB/>
@@ -293,7 +292,6 @@ definePageMeta({
             </div>
           </template>
 
-          <!-- Formulaire d'édition pour l'adresse -->
           <template v-else>
             <div class="inline-flex items-center gap-x-2 font-montserrat text-xs text-default font-medium mb-2">
               <HomeTLB/>

@@ -1,7 +1,7 @@
 import apiClient from './api'
 
 export default {
-    async getClassrooms(params = {}) {
+    async getClasses(params = {}) {
         try {
             const response = await apiClient.get('/api/classrooms', { params })
             return response.data
@@ -11,7 +11,7 @@ export default {
         }
     },
 
-    async getClassroom(id) {
+    async getClassById(id) {
         try {
             const response = await apiClient.get(`/api/classrooms/${id}`)
             return response.data
@@ -21,19 +21,36 @@ export default {
         }
     },
 
-    async createClassroom(classroomData) {
+    async createClass(classData) {
         try {
-            const response = await apiClient.post('/api/classrooms', classroomData)
+            const schoolId = localStorage.getItem('current_school_id') || 1
+
+            const payload = {
+                name: classData.name,
+                cursus_id: classData.cursus_id,
+                level_id: classData.level_id || classData.levelId,
+                gender: classData.gender,
+                size: parseInt(classData.size),
+                school_id: classData.school_id || schoolId,
+                years: new Date().getFullYear(),
+                type: classData.type || 'Standard'
+            }
+
+
+            const response = await apiClient.post('/api/classrooms', payload)
             return response.data
         } catch (error) {
             console.error('Erreur lors de la création de la classe:', error)
+            if (error.response && error.response.data) {
+                console.error('Détails de l\'erreur:', error.response.data);
+            }
             throw error
         }
     },
 
-    async updateClassroom(id, classroomData) {
+    async updateClass(id, classData) {
         try {
-            const response = await apiClient.put(`/api/classrooms/${id}`, classroomData)
+            const response = await apiClient.put(`/api/classrooms/${id}`, classData)
             return response.data
         } catch (error) {
             console.error(`Erreur lors de la mise à jour de la classe ${id}:`, error)
@@ -41,22 +58,12 @@ export default {
         }
     },
 
-    async deleteClassroom(id) {
+    async deleteClass(id) {
         try {
             const response = await apiClient.delete(`/api/classrooms/${id}`)
             return response.data
         } catch (error) {
             console.error(`Erreur lors de la suppression de la classe ${id}:`, error)
-            throw error
-        }
-    },
-
-    async getClassroomUsers(classroomId) {
-        try {
-            const response = await apiClient.get(`/api/users/classroom/${classroomId}`)
-            return response.data
-        } catch (error) {
-            console.error(`Erreur lors de la récupération des utilisateurs de la classe ${classroomId}:`, error)
             throw error
         }
     }

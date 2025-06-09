@@ -5,6 +5,8 @@ import PlusLight from "~/components/Icons/PlusLight.vue";
 import DataTable from "~/components/table/DataTable.vue";
 import AddClassModal from "~/components/modals/AddClassModal.vue";
 import PageContainer from "~/components/layout/PageContainer.vue";
+import cursusService from "~/services/cursus";
+import classeService from "~/services/classe";
 import { useRoute } from '#imports';
 
 const route = useRoute();
@@ -13,58 +15,13 @@ const error = ref(null);
 const showAddClassModal = ref(false);
 
 const cursus = ref({
-  id: 1,
-  name: route.params.slug ? route.params.slug.charAt(0).toUpperCase() + route.params.slug.slice(1) : '',
-  levels: [
-    { id: 1, name: '1ère année' },
-    { id: 2, name: '2ème année' },
-    { id: 3, name: '3ème année' }
-  ],
+  id: parseInt(route.params.id),
+  name: '',
+  levels: [],
   progression: 'levels'
 });
 
-const allClasses = ref([
-  {
-    id: 1,
-    name: '1A',
-    levelId: 1,
-    level: '1ère année',
-    gender: 'Hommes',
-    color: '#93C5FD',
-    size: 30,
-    studentCount: 25
-  },
-  {
-    id: 2,
-    name: '1B',
-    levelId: 1,
-    level: '1ère année',
-    gender: 'Femmes',
-    color: '#FDA4AF',
-    size: 25,
-    studentCount: 18
-  },
-  {
-    id: 3,
-    name: '2A',
-    levelId: 2,
-    level: '2ème année',
-    gender: 'Enfants',
-    color: '#FCD34D',
-    size: 20,
-    studentCount: 15
-  },
-  {
-    id: 4,
-    name: '3A',
-    levelId: 3,
-    level: '3ème année',
-    gender: 'Hommes',
-    color: '#93C5FD',
-    size: 22,
-    studentCount: 20
-  }
-]);
+const classes = ref([]);
 
 const genderColors = {
   'Hommes': '#93C5FD',
@@ -88,42 +45,114 @@ const columns = [
   { key: 'studentCount', label: 'Élèves inscrits', width: '2' },
 ];
 
-const handlePageChange = (page) => {
-  pagination.value.currentPage = page;
+const fetchCursus = async () => {
+  try {
+    isLoading.value = true;
+    error.value = null;
+
+    const response = await cursusService.getCursusById(route.params.id);
+
+    if (response.status === 'success') {
+      const cursusData = response.data.cursus;
+      cursus.value = {
+        id: cursusData.id,
+        name: cursusData.name,
+        levels: cursusData.levels || [],
+        progression: cursusData.progression
+      };
+
+
+      await fetchClasses();
+    } else {
+      error.value = 'Erreur lors de la récupération du cursus';
+    }
+  } catch (err) {
+    console.error('Erreur lors de la récupération du cursus:', err);
+    error.value = 'Une erreur est survenue lors du chargement des données';
+  } finally {
+    isLoading.value = false;
+  }
 };
 
-const handleAddClass = (newClass) => {
-  const selectedLevel = cursus.value.levels.find(l => l.id === newClass.levelId);
+const fetchClasses = async (page = pagination.value.currentPage) => {
+  try {
+    const response = await classeService.getClasses({
+      cursus_id: route.params.id,
+      page: page,
+      per_page: pagination.value.perPage
+    });
 
-  const newClassObj = {
-    id: Math.max(...allClasses.value.map(c => c.id)) + 1,
-    name: newClass.name,
-    levelId: newClass.levelId,
-    level: selectedLevel ? selectedLevel.name : '',
-    gender: newClass.gender.charAt(0).toUpperCase() + newClass.gender.slice(1),
-    color: genderColors[newClass.gender.charAt(0).toUpperCase() + newClass.gender.slice(1)] || '#86EFAC',
-    size: newClass.size,
-    studentCount: 0
-  };
+    if (response.status === 'success') {
+      classes.value = response.data.items.map(classroom => {
+        const levelName = classroom.level?.name || 'Sans niveau';
 
-  allClasses.value.push(newClassObj);
-  pagination.value.total = allClasses.value.length;
+        return {
+          id: classroom.id,
+          name: classroom.name,
+          levelId: classroom.level_id,
+          level: levelName,
+          gender: classroom.gender,
+          color: genderColors[classroom.gender] || '#86EFAC',
+          size: classroom.size,
+          studentCount: classroom.student_count || 0
+        };
+      });
 
-  // Notification de succès
-  const { setFlashMessage } = useFlashMessage();
-  setFlashMessage({
-    type: 'success',
-    message: `La classe ${newClass.name} a été ajoutée avec succès`
-  });
+      pagination.value = {
+        currentPage: response.data.pagination.current_page,
+        totalPages: response.data.pagination.total_pages,
+        perPage: response.data.pagination.per_page,
+        total: response.data.pagination.total
+      };
+    } else {
+      console.error('Erreur lors de la récupération des classes:', response);
+    }
+  } catch (err) {
+    console.error('Erreur lors de la récupération des classes:', err);
+  }
+};
+
+const handlePageChange = (page) => {
+  fetchClasses(page);
+};
+
+const handleAddClass = async (newClass) => {
+  try {
+    const classData = {
+      name: newClass.name,
+      cursus_id: cursus.value.id,
+      level_id: newClass.levelId,
+      gender: newClass.gender,
+      size: parseInt(newClass.size),
+      type: cursus.value.name,
+      school_id: localStorage.getItem('current_school_id') || 1
+    };
+
+
+    const response = await classeService.createClass(classData);
+
+    if (response.status === 'success') {
+      const { setFlashMessage } = useFlashMessage();
+      setFlashMessage({
+        type: 'success',
+        message: response.message || `La classe ${newClass.name} a été ajoutée avec succès`
+      });
+
+      await fetchClasses();
+    } else {
+      error.value = response.message || 'Une erreur est survenue lors de la création de la classe';
+    }
+  } catch (err) {
+    console.error('Erreur lors de la création de la classe:', err);
+    if (err.response) {
+      console.error('Détails de la réponse:', err.response.data);
+    }
+    error.value = 'Une erreur est survenue lors de la création de la classe';
+  }
 };
 
 onMounted(() => {
-  isLoading.value = true;
-
-  setTimeout(() => {
-    pagination.value.total = allClasses.value.length;
-    isLoading.value = false;
-  }, 500);
+  fetchCursus();
 });
 
 definePageMeta({
@@ -164,7 +193,7 @@ definePageMeta({
     <div v-else>
       <DataTable
           :columns="columns"
-          :items="allClasses"
+          :items="classes"
           :pagination="pagination"
           :loading="isLoading"
           @page-change="handlePageChange"
