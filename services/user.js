@@ -79,5 +79,17 @@ export default {
             console.error('Erreur lors du changement de mot de passe:', error)
             throw error
         }
+    },
+
+    async searchStudents(query) {
+        try {
+            const response = await apiClient.get('/api/users/search', {
+                params: { query }
+            })
+            return response.data
+        } catch (error) {
+            console.error('Erreur lors de la recherche d\'étudiants:', error)
+            throw error
+        }
     }
 }
