@@ -2,9 +2,25 @@
 import { computed } from 'vue'
 import { useRoute }  from '#imports'
 
+const props = defineProps({
+  customItems: {
+    type: Array,
+    default: null
+  }
+})
+
 const route = useRoute()
 
 const breadcrumbs = computed(() => {
+  // Si des éléments personnalisés sont fournis, les utiliser
+  if (props.customItems && props.customItems.length > 0) {
+    return props.customItems.map(item => ({
+      name: item.name,
+      path: item.path
+    }))
+  }
+
+  // Sinon, utiliser le comportement automatique existant
   const pathArray = route.path.split('/')
   const breadcrumbs = []
   let path = ''

@@ -6,7 +6,7 @@ import AddCursusModal from "~/components/modals/AddCursusModal.vue"
 import PageContainer from "~/components/layout/PageContainer.vue"
 import cursusService from '~/services/cursus'
 import Trash from "~/components/Icons/Trash.vue"
-import ConfirmationModal from "~/components/modals/ConfirmationModal.vue"
+import ConfirmationModal from "~/components/modals/ConfirmationModal.vue";
 
 definePageMeta({
   layout: 'auth',
@@ -142,6 +142,10 @@ const handleDeleteCursus = async () => {
   }
 }
 
+const handleRowClick = (cursus) => {
+  navigateTo(`/cursus/${cursus.id}`)
+}
+
 onMounted(() => {
   fetchCursus()
 })
@@ -184,13 +188,14 @@ onMounted(() => {
     >
       <template #default="{ item, isLastRow }">
         <div
+            @click="handleRowClick(item)"
             class="grid py-1.5 px-4 hover:bg-gray-50 transition-colors cursor-pointer"
             :class="{ 'border-b border-[#E6EFF5]': !isLastRow }"
             :style="`grid-template-columns: repeat(12, minmax(0, 1fr))`"
         >
-          <NuxtLink :to="`/cursus/${item.id}`" class="col-span-5 inline-flex items-center justify-start gap-x-4 pl-1">
+          <div class="col-span-5 inline-flex items-center justify-start gap-x-4 pl-1">
             <span>{{ item.name }}</span>
-          </NuxtLink>
+          </div>
           <div class="col-span-2 inline-flex items-center justify-start">
             {{ item.classCount }}
           </div>
@@ -205,7 +210,7 @@ onMounted(() => {
           </div>
           <div class="col-span-1 inline-flex items-center justify-center">
             <button
-                @click.prevent.stop="openDeleteModal(item)"
+                @click.stop="openDeleteModal(item)"
                 class="text-gray-500 hover:text-red-600 transition-colors"
                 title="Supprimer ce cursus"
             >

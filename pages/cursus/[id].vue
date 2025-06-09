@@ -1,3 +1,4 @@
+<!-- [id].vue - Page détail du cursus -->
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
@@ -45,6 +46,12 @@ const columns = [
   { key: 'studentCount', label: 'Élèves inscrits', width: '2' },
 ];
 
+// Computed pour le breadcrumb
+const breadcrumbItems = computed(() => [
+  { name: 'Cursus', path: '/cursus' },
+  { name: cursus.value.name || 'Chargement...', path: null }
+]);
+
 const fetchCursus = async () => {
   try {
     isLoading.value = true;
@@ -60,7 +67,6 @@ const fetchCursus = async () => {
         levels: cursusData.levels || [],
         progression: cursusData.progression
       };
-
 
       await fetchClasses();
     } else {
@@ -128,7 +134,6 @@ const handleAddClass = async (newClass) => {
       school_id: localStorage.getItem('current_school_id') || 1
     };
 
-
     const response = await classeService.createClass(classData);
 
     if (response.status === 'success') {
@@ -165,7 +170,7 @@ definePageMeta({
 
 <template>
   <PageContainer>
-    <BreadCrumb/>
+    <BreadCrumb :custom-items="breadcrumbItems" />
 
     <button
         @click="showAddClassModal = true"
