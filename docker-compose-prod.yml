@@ -8,12 +8,27 @@ services:
     volumes: !reset []
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.front_toollab.rule=Host(`toollab.fr`, `www.toollab.fr`)"
+
+      # ROUTER PRINCIPAL (toollab.fr)
+      - "traefik.http.routers.front_toollab.rule=Host(`toollab.fr`)"
       - "traefik.http.routers.front_toollab.entrypoints=web,websecure"
       - "traefik.http.routers.front_toollab.tls=true"
       - "traefik.http.routers.front_toollab.tls.certresolver=myresolver"
-    environment:
-      - NODE_ENV=production
+
+      # MIDDLEWARE DE REDIRECTION www => apex
+      - "traefik.http.middlewares.redirect-www.redirectregex.regex=^https?://www\\.toollab\\.fr/(.*)"
+      - "traefik.http.middlewares.redirect-www.redirectregex.replacement=https://toollab.fr/$$1"
+      - "traefik.http.middlewares.redirect-www.redirectregex.permanent=true"
+
+      # ROUTER pour www.toollab.fr qui applique la redirection
+      - "traefik.http.routers.redirect_www.rule=Host(`www.toollab.fr`)"
+      - "traefik.http.routers.redirect_www.entrypoints=web,websecure"
+      - "traefik.http.routers.redirect_www.middlewares=redirect-www"
+      - "traefik.http.routers.redirect_www.tls=true"
+      - "traefik.http.routers.redirect_www.tls.certresolver=myresolver"
+
+    networks:
+      - web
 
 networks:
   web:
