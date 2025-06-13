@@ -366,7 +366,8 @@ definePageMeta({
             <div class="col-span-7 inline-flex items-center justify-start gap-x-2 pl-1">
               <div class="inline-flex items-center gap-x-3">
                 <ResponsableTLB v-if="student.is_responsible" />
-                <component :is="student.gender === 'F' ? UserFemaleTLB : UserMaleTLB" />
+                <UserFemaleTLB v-if="student.gender === 'F'" />
+                <UserMaleTLB v-else />
               </div>
               <span>{{ student.first_name }} {{ student.last_name }} </span>
             </div>
