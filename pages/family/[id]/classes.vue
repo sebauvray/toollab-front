@@ -35,8 +35,8 @@ const fetchFamilyData = async () => {
     const response = await familyService.getFamily(route.params.id);
 
     if (response.status === 'success') {
-      family.value = response.data;
-      students.value = response.data.students || [];
+      family.value = response.data.family;
+      students.value = response.data.family.students || [];
 
       if (students.value.length > 0 && !selectedStudent.value) {
         selectedStudent.value = students.value[0];
