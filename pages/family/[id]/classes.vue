@@ -18,6 +18,7 @@ const selectedClasses = ref(new Set());
 const isLoading = ref(true);
 const error = ref(null);
 const isSaving = ref(false);
+const loadingClassIndex = ref(null); // Nouvelle variable pour gérer l'animation de chargement
 
 const family = ref(null);
 const students = ref([]);
@@ -28,6 +29,13 @@ const studentEnrollments = ref({});
 const currentSchoolId = computed(() => {
   return localStorage.getItem('current_school_id') || 1;
 });
+
+// Nouvelle fonction pour déterminer la couleur du texte des places disponibles
+const getAvailableSpotsColor = (spots) => {
+  if (spots >= 11) return 'text-green-500';
+  if (spots >= 6 && spots <= 10) return 'text-orange-500';
+  return 'text-red-500';
+};
 
 const fetchFamilyData = async () => {
   try {
@@ -128,6 +136,7 @@ const toggleClass = async (index) => {
   if (!isClassSelectable(index)) return;
 
   isSaving.value = true;
+  loadingClassIndex.value = index; // Définir quelle classe est en cours de chargement
 
   try {
     if (currentStudentClasses.has(index)) {
@@ -160,6 +169,7 @@ const toggleClass = async (index) => {
     });
   } finally {
     isSaving.value = false;
+    loadingClassIndex.value = null; // Réinitialiser l'index de chargement
   }
 };
 
@@ -241,8 +251,9 @@ definePageMeta({
                  'opacity-75': isSaving
                }
              ]">
-          <div v-if="isSaving && studentClasses[selectedStudent?.id]?.has(index)"
-               class="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center rounded-xl">
+          <!-- Animation de chargement pour la classe spécifique -->
+          <div v-if="loadingClassIndex === index"
+               class="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center rounded-xl z-10">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
           </div>
 
@@ -268,7 +279,8 @@ definePageMeta({
             <div>{{ classe.schedule.teacher.name }}</div>
           </div>
 
-          <div class="text-red-500 font-black inline-flex items-center justify-center my-3">
+          <div class="font-black inline-flex items-center justify-center my-3"
+               :class="getAvailableSpotsColor(classe.available_spots)">
             {{ classe.available_spots }} places dispos
           </div>
         </div>
