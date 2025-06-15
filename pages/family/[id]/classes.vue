@@ -18,7 +18,7 @@ const selectedClasses = ref(new Set());
 const isLoading = ref(true);
 const error = ref(null);
 const isSaving = ref(false);
-const loadingClassIndex = ref(null); // Nouvelle variable pour gérer l'animation de chargement
+const loadingClassIndex = ref(null);
 
 const family = ref(null);
 const students = ref([]);
@@ -30,7 +30,6 @@ const currentSchoolId = computed(() => {
   return localStorage.getItem('current_school_id') || 1;
 });
 
-// Nouvelle fonction pour déterminer la couleur du texte des places disponibles
 const getAvailableSpotsColor = (spots) => {
   if (spots >= 11) return 'text-green-500';
   if (spots >= 6 && spots <= 10) return 'text-orange-500';
@@ -136,7 +135,7 @@ const toggleClass = async (index) => {
   if (!isClassSelectable(index)) return;
 
   isSaving.value = true;
-  loadingClassIndex.value = index; // Définir quelle classe est en cours de chargement
+  loadingClassIndex.value = index;
 
   try {
     if (currentStudentClasses.has(index)) {
@@ -160,6 +159,9 @@ const toggleClass = async (index) => {
     }
 
     studentClasses.value = {...studentClasses.value};
+
+    await fetchClasses();
+
   } catch (err) {
     console.error('Erreur lors de la modification de l\'inscription:', err);
     const { setFlashMessage } = useFlashMessage();
@@ -169,7 +171,7 @@ const toggleClass = async (index) => {
     });
   } finally {
     isSaving.value = false;
-    loadingClassIndex.value = null; // Réinitialiser l'index de chargement
+    loadingClassIndex.value = null;
   }
 };
 
@@ -251,7 +253,6 @@ definePageMeta({
                  'opacity-75': isSaving
                }
              ]">
-          <!-- Animation de chargement pour la classe spécifique -->
           <div v-if="loadingClassIndex === index"
                class="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center rounded-xl z-10">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
@@ -296,43 +297,19 @@ definePageMeta({
               :key="student.id"
               @click="selectStudent(student)"
               class="p-2 border rounded-lg inline-flex items-center justify-between cursor-pointer hover:bg-gray-50"
-              :class="selectedStudent?.id === student.id ? 'border-black' : 'border-transparent'"
-          >
-            <span>{{ student.first_name }} {{ student.last_name }}</span>
-            <div class="size-7 flex items-center justify-center">
-              <Valid v-if="hasSelectedClasses(student.id)" class="text-green-600"/>
-            </div>
+              :class="selectedStudent?.id === student.id ? 'bg-green-50 border-green-500' : ''">
+            <span class="font-medium">{{ student.first_name }} {{ student.last_name }}</span>
+            <Valid v-if="hasSelectedClasses(student.id)" class="text-green-500 size-5"/>
           </div>
         </div>
       </div>
 
-      <div class="bg-white rounded-lg w-full border p-4 font-nunito h-full flex flex-col justify-between min-h-80">
-        <div>
-          <h2 class="font-bold text-2xl mb-6 font-montserrat">Récapitulatif</h2>
-          <div class="flex flex-col gap-2">
-            <template v-for="student in students" :key="student.id">
-              <div
-                  v-for="classIndex in Array.from(studentClasses[student.id] || [])"
-                  :key="`${student.id}-${classIndex}`"
-                  class="pb-1.5 border-b border-gray-300 flex justify-between items-center"
-              >
-                <div>{{ student.first_name }} {{ student.last_name }}</div>
-                <div class="text-sm">{{ classes[classIndex]?.type }} - {{ classes[classIndex]?.level?.name || classes[classIndex]?.name }}</div>
-              </div>
-            </template>
-          </div>
-        </div>
-
-        <div class="w-full inline-flex items-center justify-center">
-          <button
-              @click="handlePaymentNavigation"
-              class="bg-yellow-tlb text-default py-3 w-full text-center rounded-lg hover:opacity-90 mx-auto font-bold text-lg mt-6"
-              :disabled="isSaving"
-          >
-            Paiement
-          </button>
-        </div>
-      </div>
+      <NuxtLink
+          @click="handlePaymentNavigation"
+          class="text-white inline-flex items-center justify-center gap-x-2 h-12 w-full bg-default rounded-full my-auto"
+      >
+        <span>Choix du paiement</span>
+      </NuxtLink>
     </section>
 
     <ConfirmationClasseModal
