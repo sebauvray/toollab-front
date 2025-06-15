@@ -78,26 +78,20 @@ const handleAddCursus = async (newCursus) => {
   try {
     isLoading.value = true
 
-    // Transform levels to the format expected by the API
-    const formattedLevels = newCursus.levels.filter(level => level.trim() !== '').map(level => ({
-      name: level
-    }))
-
     const response = await cursusService.createCursus({
       name: newCursus.name,
       progression: newCursus.progression,
-      levels: formattedLevels
+      levels_count: newCursus.levels_count,
+      school_id: localStorage.getItem('current_school_id') || 1
     })
 
     if (response.status === 'success') {
-      // Success notification
       const { setFlashMessage } = useFlashMessage()
       setFlashMessage({
         type: 'success',
         message: response.message || 'Cursus créé avec succès'
       })
 
-      // Refresh cursus list
       await fetchCursus(pagination.value.currentPage)
     } else {
       error.value = response.message || 'Une erreur est survenue lors de la création du cursus'
