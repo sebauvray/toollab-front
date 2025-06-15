@@ -32,7 +32,7 @@ const currentSchoolId = computed(() => {
 const fetchFamilyData = async () => {
   try {
     isLoading.value = true;
-    const response = await familyService.getFamilyById(route.params.id);
+    const response = await familyService.getFamily(route.params.id);
 
     if (response.status === 'success') {
       family.value = response.data;
