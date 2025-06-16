@@ -22,8 +22,6 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
             schoolRole.role === 'Directeur'
         )
 
-        console.log(isDirector);
-
         if (!isDirector) {
             return navigateTo('/')
         }
