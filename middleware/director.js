@@ -16,12 +16,13 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         const response = await userService.getUserRoles(user.value.id)
         const userRoles = response.roles
 
-        console.log(userRoles);
 
         const isDirector = userRoles.schools?.some(schoolRole =>
             schoolRole.context.id === parseInt(schoolId) &&
-            schoolRole.role.toLowerCase() === 'director'
+            schoolRole.role === 'Directeur'
         )
+
+        console.log(isDirector);
 
         if (!isDirector) {
             return navigateTo('/')
