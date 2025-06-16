@@ -62,7 +62,21 @@ const loadUserSchools = async () => {
         schools.value = await Promise.all(schoolPromises);
 
         if (schools.value.length > 0) {
-          selectedSchool.value = schools.value[0];
+          const savedSchoolId = localStorage.getItem('current_school_id');
+
+          if (savedSchoolId) {
+            const savedSchool = schools.value.find(s => s.id === parseInt(savedSchoolId));
+            if (savedSchool) {
+              selectedSchool.value = savedSchool;
+            } else {
+              selectedSchool.value = schools.value[0];
+              localStorage.setItem('current_school_id', schools.value[0].id);
+            }
+          } else {
+            selectedSchool.value = schools.value[0];
+            localStorage.setItem('current_school_id', schools.value[0].id);
+          }
+
           checkIfDirector();
         }
       }
