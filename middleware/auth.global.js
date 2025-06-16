@@ -15,9 +15,4 @@ export default defineNuxtRouteMiddleware((to) => {
             return navigateTo('/');
         }
     }
-
-    if (process.server) {
-        if (requiresAuth) {
-        }
-    }
 });

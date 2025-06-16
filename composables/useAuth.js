@@ -24,6 +24,10 @@ async function initAuth() {
     }
 }
 
+if (process.client) {
+    initAuth()
+}
+
 export function useAuth() {
     return {
         user: readonly(user),
@@ -77,6 +81,10 @@ export function useAuth() {
             } finally {
                 isLoading.value = false
             }
+        },
+
+        refreshUser: () => {
+            syncFromStorage()
         }
     }
 }
