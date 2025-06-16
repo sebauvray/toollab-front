@@ -264,8 +264,8 @@ definePageMeta({
             </div>
 
             <div class="flex flex-col">
-              <div class="font-black uppercase text-black text-lg">{{ classe.level?.name || classe.name }}</div>
-              <div class="text-gray-tlb text-base">{{ classe.type }} - Niveau {{ classe.level?.order || 1 }}</div>
+              <div class="font-black uppercase text-black text-lg">{{ classe.name }}</div>
+              <div class="text-gray-tlb text-base">{{ classe.cursus }} - {{ classe.level?.name || 'Sans niveau' }}</div>
             </div>
           </div>
 
@@ -318,7 +318,7 @@ definePageMeta({
                   class="pb-1.5 border-b border-gray-300 flex justify-between items-center"
               >
                 <div>{{ student.first_name }} {{ student.last_name }}</div>
-                <div class="text-sm">{{ classes[classIndex]?.type }} - {{ classes[classIndex]?.level?.name || classes[classIndex]?.name }}</div>
+                <div class="text-sm">{{ classes[classIndex]?.name }} - {{ classes[classIndex].cursus }}</div>
               </div>
             </template>
           </div>
