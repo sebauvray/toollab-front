@@ -66,6 +66,29 @@ const availableCursusesForMultiCursus = computed(() => {
   )
 })
 
+const calculatedTarifApresReduction = computed(() => {
+  if (!selectedCursus.value?.tarif?.prix || !familialeForm.value.pourcentage_reduction) {
+    return 0
+  }
+
+  const tarifBase = parseFloat(selectedCursus.value.tarif.prix)
+  const pourcentage = parseFloat(familialeForm.value.pourcentage_reduction)
+
+  if (familialeForm.value.mode === 'montant' && familialeForm.value.montant_cible) {
+    return parseFloat(familialeForm.value.montant_cible)
+  }
+
+  const result = tarifBase * (1 - pourcentage / 100)
+  return Math.round(result * 100) / 100
+})
+
+const calculateTarifWithReduction = (tarifBase, pourcentageReduction) => {
+  const base = parseFloat(tarifBase)
+  const pourcentage = parseFloat(pourcentageReduction)
+  const result = base * (1 - pourcentage / 100)
+  return Math.round(result * 100) / 100
+}
+
 const calculerPourcentageReduction = () => {
   if (!selectedCursus.value?.tarif?.prix || !familialeForm.value.montant_cible) return
 
@@ -78,7 +101,7 @@ const calculerPourcentageReduction = () => {
   }
 
   const reduction = ((tarifBase - montantCible) / tarifBase) * 100
-  familialeForm.value.pourcentage_reduction = reduction.toFixed(2)
+  familialeForm.value.pourcentage_reduction = Math.round(reduction * 100) / 100
 }
 
 const calculerMontantCible = () => {
@@ -87,8 +110,7 @@ const calculerMontantCible = () => {
   const tarifBase = parseFloat(selectedCursus.value.tarif.prix)
   const pourcentage = parseFloat(familialeForm.value.pourcentage_reduction)
 
-  const montantCible = tarifBase * (1 - pourcentage / 100)
-  familialeForm.value.montant_cible = montantCible.toFixed(2)
+  familialeForm.value.montant_cible = calculateTarifWithReduction(tarifBase, pourcentage)
 }
 
 const getTarifPrecedent = (nombreEleves) => {
@@ -102,16 +124,13 @@ const getTarifPrecedent = (nombreEleves) => {
     return tarifBase
   }
 
-  const reductionsApplicables = selectedCursus.value.reductions_familiales
-      .filter(r => r.nombre_eleves_min < nombreEleves)
-      .sort((a, b) => b.nombre_eleves_min - a.nombre_eleves_min)
+  const reduction = selectedCursus.value.reductions_familiales.find(r => r.nombre_eleves_min === nombreEleves)
 
-  if (reductionsApplicables.length === 0) {
+  if (!reduction) {
     return tarifBase
   }
 
-  const pourcentageReduction = parseFloat(reductionsApplicables[0].pourcentage_reduction)
-  return tarifBase * (1 - pourcentageReduction / 100)
+  return calculateTarifWithReduction(tarifBase, reduction.pourcentage_reduction)
 }
 
 const fetchCursuses = async () => {
@@ -202,18 +221,24 @@ const addReductionFamiliale = async () => {
         }
     )
 
-    if (response.status === 'success') {
+    if (response.status === 'success' && response.data.reduction) {
       if (!selectedCursus.value.reductions_familiales) {
         selectedCursus.value.reductions_familiales = []
       }
+
       selectedCursus.value.reductions_familiales.push(response.data.reduction)
+      selectedCursus.value.reductions_familiales.sort((a, b) => a.nombre_eleves_min - b.nombre_eleves_min)
 
       const index = cursuses.value.findIndex(c => c.id === selectedCursus.value.id)
       if (index !== -1) {
+        if (!cursuses.value[index].reductions_familiales) {
+          cursuses.value[index].reductions_familiales = []
+        }
         cursuses.value[index].reductions_familiales = [...selectedCursus.value.reductions_familiales]
       }
 
       showAddFamiliale.value = false
+      editingFamiliale.value = null
       resetFamilialeForm()
 
       setFlashMessage({
@@ -229,6 +254,7 @@ const addReductionFamiliale = async () => {
     })
   } finally {
     isSaving.value = false
+    showAddFamiliale.value = false
   }
 }
 
@@ -256,6 +282,7 @@ const updateReductionFamiliale = async () => {
         cursuses.value[cursusIndex].reductions_familiales = [...selectedCursus.value.reductions_familiales]
       }
 
+      showAddFamiliale.value = false
       editingFamiliale.value = null
       resetFamilialeForm()
 
@@ -272,6 +299,7 @@ const updateReductionFamiliale = async () => {
     })
   } finally {
     isSaving.value = false
+    showAddFamiliale.value = false
   }
 }
 
@@ -322,8 +350,7 @@ const editReductionFamiliale = (reduction) => {
   familialeForm.value.mode = 'pourcentage'
 
   const tarifBase = parseFloat(selectedCursus.value.tarif.prix)
-  const pourcentage = parseFloat(reduction.pourcentage_reduction)
-  familialeForm.value.montant_cible = (tarifBase * (1 - pourcentage / 100)).toFixed(2)
+  familialeForm.value.montant_cible = calculateTarifWithReduction(tarifBase, reduction.pourcentage_reduction)
 
   showAddFamiliale.value = true
 }
@@ -406,6 +433,7 @@ const updateReductionMultiCursus = async () => {
         cursuses.value[cursusIndex].reductions_multi_cursus = [...selectedCursus.value.reductions_multi_cursus]
       }
 
+      showAddMultiCursus.value = false
       editingMultiCursus.value = null
       resetMultiCursusForm()
 
@@ -554,8 +582,8 @@ onMounted(() => {
 
               <div v-if="selectedCursus.reductions_familiales?.length > 0" class="space-y-3">
                 <div
-                    v-for="reduction in selectedCursus.reductions_familiales"
-                    :key="reduction.id"
+                    v-for="(reduction, index) in selectedCursus.reductions_familiales"
+                    :key="reduction.id || `temp-${index}`"
                     class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                 >
                   <div>
@@ -601,8 +629,8 @@ onMounted(() => {
 
               <div v-if="selectedCursus.reductions_multi_cursus?.length > 0" class="space-y-3">
                 <div
-                    v-for="reduction in selectedCursus.reductions_multi_cursus"
-                    :key="reduction.id"
+                    v-for="(reduction, index) in selectedCursus.reductions_multi_cursus"
+                    :key="reduction.id || `temp-multi-${index}`"
                     class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                 >
                   <div>
@@ -704,7 +732,7 @@ onMounted(() => {
               Réduction : {{ familialeForm.pourcentage_reduction }}%
             </p>
             <p class="text-sm text-gray-600">
-              Tarif après réduction : {{ formatPrice(selectedCursus.tarif.prix * (1 - familialeForm.pourcentage_reduction / 100)) }}
+              Tarif après réduction : {{ formatPrice(calculatedTarifApresReduction) }}
             </p>
           </div>
         </div>
