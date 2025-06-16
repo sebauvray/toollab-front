@@ -6,6 +6,7 @@ import Cursus from "~/components/Icons/Cursus.vue";
 import NavLink from "~/components/navigation/NavLink.vue";
 import FamilyTLB from "~/components/Icons/Family-TLB.vue";
 import UserDropdown from "~/components/UserDropdown.vue";
+import CurrencyEuro from "~/components/Icons/CurrencyEuro.vue";
 import {ref, computed, onMounted} from 'vue';
 import userService from '~/services/user';
 import schoolService from '~/services/school';
@@ -14,6 +15,7 @@ const user = ref(null);
 const schools = ref([]);
 const selectedSchool = ref(null);
 const showSchoolDropdown = ref(false);
+const isDirector = ref(false);
 
 const initials = computed(() => {
   if (!user.value) return 'NA';
@@ -33,6 +35,13 @@ const currentSchoolName = computed(() => {
   if (!selectedSchool.value) return 'Nom de l\'Institut';
   return selectedSchool.value.name;
 });
+
+const checkIfDirector = () => {
+  if (selectedSchool.value && schools.value.length > 0) {
+    const currentSchoolRole = schools.value.find(s => s.id === selectedSchool.value.id);
+    isDirector.value = currentSchoolRole?.role === 'director';
+  }
+};
 
 const loadUserSchools = async () => {
   try {
@@ -54,6 +63,7 @@ const loadUserSchools = async () => {
 
         if (schools.value.length > 0) {
           selectedSchool.value = schools.value[0];
+          checkIfDirector();
         }
       }
     }
@@ -65,6 +75,8 @@ const loadUserSchools = async () => {
 const selectSchool = (school) => {
   selectedSchool.value = school;
   showSchoolDropdown.value = false;
+  localStorage.setItem('current_school_id', school.id);
+  checkIfDirector();
 };
 
 onMounted(async () => {
@@ -92,6 +104,7 @@ onMounted(async () => {
         <NavLink to="/" :icon="Home" text="Accueil"/>
         <NavLink to="/cursus" :icon="Cursus" text="Cursus"/>
         <NavLink to="/family" :icon="FamilyTLB" text="Familles"/>
+        <NavLink v-if="isDirector" to="/tarification" :icon="CurrencyEuro" text="Tarification"/>
       </nav>
 
       <div class="mt-auto mb-6 px-6">
@@ -105,7 +118,7 @@ onMounted(async () => {
         <div v-else class="relative">
           <button
               @click="showSchoolDropdown = !showSchoolDropdown"
-              class="w-full flex items-center gap-x-3 py-3 hover:bg-gray-50 rounded-lg transition-colors"
+              class="w-full flex items-center gap-x-3 py-3 px-3 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <div class="w-8 h-8 flex items-center justify-center rounded-full bg-primary">
               <span class="text-white text-sm font-semibold">{{ currentSchoolInitial }}</span>
@@ -124,15 +137,15 @@ onMounted(async () => {
 
           <div
               v-if="showSchoolDropdown"
-              class="absolute bottom-full left-0 right-0 mb-2 bg-white border rounded-lg shadow-lg overflow-hidden"
+              class="absolute bottom-full left-0 right-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden"
           >
             <div class="max-h-64 overflow-y-auto">
               <button
                   v-for="school in schools"
                   :key="school.id"
                   @click="selectSchool(school)"
-                  class="w-full flex items-center gap-x-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
-                  :class="{ 'bg-gray-100': selectedSchool?.id === school.id }"
+                  class="w-full flex items-center gap-x-3 px-4 py-3 hover:bg-gray-100 transition-colors"
+                  :class="{ 'bg-gray-50': selectedSchool?.id === school.id }"
               >
                 <div class="w-8 h-8 flex items-center justify-center rounded-full bg-primary">
                   <span class="text-white text-sm font-semibold">{{ school.name.charAt(0).toUpperCase() }}</span>
