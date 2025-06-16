@@ -130,7 +130,8 @@ const handleCommentSubmit = async () => {
   if (newComment.value.trim()) {
     try {
       const response = await familyService.addComment(route.params.id, newComment.value.trim());
-      comments.value.unshift(response.data.comment);
+      comments.value.push(response.comment);
+       // console.log(response.data);
       newComment.value = '';
       scrollToBottom();
 
