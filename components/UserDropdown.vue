@@ -58,6 +58,9 @@ onBeforeUnmount(() => {
         style="margin-top: 0.5rem;"
     >
       <div class="py-1">
+          <NuxtLink to="/settings" class="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 transition-colors" @click="isOpen = !isOpen">
+              Paramètre
+          </NuxtLink>
         <button
             @click="handleLogout"
             class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 transition-colors"
