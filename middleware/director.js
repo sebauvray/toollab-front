@@ -1,11 +1,19 @@
 import userService from '~/services/user'
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
-    const { user } = useAuth()
+    if (process.server) return
 
-    if (!user.value) {
+    const token = localStorage.getItem('auth.token')
+    if (!token) {
         return navigateTo('/login')
     }
+
+    const userJson = localStorage.getItem('auth.user')
+    if (!userJson) {
+        return navigateTo('/login')
+    }
+
+    const user = JSON.parse(userJson)
 
     try {
         const schoolId = localStorage.getItem('current_school_id')
@@ -13,9 +21,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
             return navigateTo('/')
         }
 
-        const response = await userService.getUserRoles(user.value.id)
+        const response = await userService.getUserRoles(user.id)
         const userRoles = response.roles
-
 
         const isDirector = userRoles.schools?.some(schoolRole =>
             schoolRole.context.id === parseInt(schoolId) &&
