@@ -79,14 +79,14 @@ const calculatedTarifApresReduction = computed(() => {
   }
 
   const result = tarifBase * (1 - pourcentage / 100)
-  return Math.round(result * 100) / 100
+  return parseFloat(result.toFixed(2))
 })
 
 const calculateTarifWithReduction = (tarifBase, pourcentageReduction) => {
   const base = parseFloat(tarifBase)
   const pourcentage = parseFloat(pourcentageReduction)
   const result = base * (1 - pourcentage / 100)
-  return Math.round(result * 100) / 100
+  return parseFloat(result.toFixed(2))
 }
 
 const calculerPourcentageReduction = () => {
@@ -101,7 +101,7 @@ const calculerPourcentageReduction = () => {
   }
 
   const reduction = ((tarifBase - montantCible) / tarifBase) * 100
-  familialeForm.value.pourcentage_reduction = Math.round(reduction * 100) / 100
+  familialeForm.value.pourcentage_reduction = parseFloat(reduction.toFixed(2))
 }
 
 const calculerMontantCible = () => {
@@ -226,7 +226,13 @@ const addReductionFamiliale = async () => {
         selectedCursus.value.reductions_familiales = []
       }
 
-      selectedCursus.value.reductions_familiales.push(response.data.reduction)
+      const newReduction = {
+        ...response.data.reduction,
+        nombre_eleves_min: parseInt(response.data.reduction.nombre_eleves_min),
+        pourcentage_reduction: parseFloat(response.data.reduction.pourcentage_reduction)
+      }
+
+      selectedCursus.value.reductions_familiales.push(newReduction)
       selectedCursus.value.reductions_familiales.sort((a, b) => a.nombre_eleves_min - b.nombre_eleves_min)
 
       const index = cursuses.value.findIndex(c => c.id === selectedCursus.value.id)
@@ -274,7 +280,11 @@ const updateReductionFamiliale = async () => {
     if (response.status === 'success') {
       const index = selectedCursus.value.reductions_familiales.findIndex(r => r.id === editingFamiliale.value.id)
       if (index !== -1) {
-        selectedCursus.value.reductions_familiales[index] = response.data.reduction
+        selectedCursus.value.reductions_familiales[index] = {
+          ...response.data.reduction,
+          nombre_eleves_min: parseInt(response.data.reduction.nombre_eleves_min),
+          pourcentage_reduction: parseFloat(response.data.reduction.pourcentage_reduction)
+        }
       }
 
       const cursusIndex = cursuses.value.findIndex(c => c.id === selectedCursus.value.id)
@@ -350,7 +360,7 @@ const editReductionFamiliale = (reduction) => {
   familialeForm.value.mode = 'pourcentage'
 
   const tarifBase = parseFloat(selectedCursus.value.tarif.prix)
-  familialeForm.value.montant_cible = calculateTarifWithReduction(tarifBase, reduction.pourcentage_reduction)
+  familialeForm.value.montant_cible = calculateTarifWithReduction(tarifBase, reduction.pourcentage_reduction).toString()
 
   showAddFamiliale.value = true
 }
@@ -383,7 +393,14 @@ const addReductionMultiCursus = async () => {
       if (!selectedCursus.value.reductions_multi_cursus) {
         selectedCursus.value.reductions_multi_cursus = []
       }
-      selectedCursus.value.reductions_multi_cursus.push(response.data.reduction)
+
+      const newReduction = {
+        ...response.data.reduction,
+        cursus_requis_id: parseInt(response.data.reduction.cursus_requis_id),
+        pourcentage_reduction: parseFloat(response.data.reduction.pourcentage_reduction)
+      }
+
+      selectedCursus.value.reductions_multi_cursus.push(newReduction)
 
       const index = cursuses.value.findIndex(c => c.id === selectedCursus.value.id)
       if (index !== -1) {
@@ -425,7 +442,11 @@ const updateReductionMultiCursus = async () => {
     if (response.status === 'success') {
       const index = selectedCursus.value.reductions_multi_cursus.findIndex(r => r.id === editingMultiCursus.value.id)
       if (index !== -1) {
-        selectedCursus.value.reductions_multi_cursus[index] = response.data.reduction
+        selectedCursus.value.reductions_multi_cursus[index] = {
+          ...response.data.reduction,
+          cursus_requis_id: parseInt(response.data.reduction.cursus_requis_id),
+          pourcentage_reduction: parseFloat(response.data.reduction.pourcentage_reduction)
+        }
       }
 
       const cursusIndex = cursuses.value.findIndex(c => c.id === selectedCursus.value.id)
@@ -506,7 +527,9 @@ const getCursusRequiredName = (cursusRequiredId) => {
 const formatPrice = (price) => {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
-    currency: 'EUR'
+    currency: 'EUR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   }).format(price)
 }
 
