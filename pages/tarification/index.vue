@@ -36,6 +36,8 @@ const tarifForm = ref({
 
 const familialeForm = ref({
   nombre_eleves_min: '',
+  mode: 'montant',
+  montant_cible: '',
   pourcentage_reduction: ''
 })
 
@@ -59,6 +61,54 @@ const availableCursusesForMultiCursus = computed(() => {
       !cursusesThatRequireThis.includes(c.id)
   )
 })
+
+const calculerPourcentageReduction = () => {
+  if (!selectedCursus.value?.tarif?.prix || !familialeForm.value.montant_cible) return
+
+  const tarifBase = parseFloat(selectedCursus.value.tarif.prix)
+  const montantCible = parseFloat(familialeForm.value.montant_cible)
+
+  if (montantCible >= tarifBase) {
+    familialeForm.value.pourcentage_reduction = ''
+    return
+  }
+
+  const reduction = ((tarifBase - montantCible) / tarifBase) * 100
+  familialeForm.value.pourcentage_reduction = reduction.toFixed(2)
+}
+
+const calculerMontantCible = () => {
+  if (!selectedCursus.value?.tarif?.prix || !familialeForm.value.pourcentage_reduction) return
+
+  const tarifBase = parseFloat(selectedCursus.value.tarif.prix)
+  const pourcentage = parseFloat(familialeForm.value.pourcentage_reduction)
+
+  const montantCible = tarifBase * (1 - pourcentage / 100)
+  familialeForm.value.montant_cible = montantCible.toFixed(2)
+}
+
+const getTarifPrecedent = (nombreEleves) => {
+  if (!selectedCursus.value?.tarif?.prix) {
+    return 0
+  }
+
+  const tarifBase = parseFloat(selectedCursus.value.tarif.prix)
+
+  if (!selectedCursus.value?.reductions_familiales || selectedCursus.value.reductions_familiales.length === 0) {
+    return tarifBase
+  }
+
+  const reductionsApplicables = selectedCursus.value.reductions_familiales
+      .filter(r => r.nombre_eleves_min < nombreEleves)
+      .sort((a, b) => b.nombre_eleves_min - a.nombre_eleves_min)
+
+  if (reductionsApplicables.length === 0) {
+    return tarifBase
+  }
+
+  const pourcentageReduction = parseFloat(reductionsApplicables[0].pourcentage_reduction)
+  return tarifBase * (1 - pourcentageReduction / 100)
+}
 
 const fetchCursuses = async () => {
   try {
@@ -95,6 +145,8 @@ const resetForms = () => {
   editingMultiCursus.value = null
   familialeForm.value = {
     nombre_eleves_min: '',
+    mode: 'montant',
+    montant_cible: '',
     pourcentage_reduction: ''
   }
   multiCursusForm.value = {
@@ -127,10 +179,15 @@ const submitReductionFamiliale = async () => {
   try {
     isSaving.value = true
 
+    const dataToSend = {
+      nombre_eleves_min: familialeForm.value.nombre_eleves_min,
+      pourcentage_reduction: familialeForm.value.pourcentage_reduction
+    }
+
     if (editingFamiliale.value) {
       await tarificationService.updateReductionFamiliale(
           editingFamiliale.value.id,
-          familialeForm.value
+          dataToSend
       )
       setFlashMessage({
         type: 'success',
@@ -139,7 +196,7 @@ const submitReductionFamiliale = async () => {
     } else {
       await tarificationService.addReductionFamiliale(
           selectedCursus.value.id,
-          familialeForm.value
+          dataToSend
       )
       setFlashMessage({
         type: 'success',
@@ -244,8 +301,13 @@ const deleteReductionMultiCursus = async (reductionId) => {
 
 const editReductionFamiliale = (reduction) => {
   editingFamiliale.value = reduction
+  const tarifPrecedent = getTarifPrecedent(reduction.nombre_eleves_min)
+  const montantCible = tarifPrecedent * (1 - reduction.pourcentage_reduction / 100)
+
   familialeForm.value = {
     nombre_eleves_min: reduction.nombre_eleves_min,
+    mode: 'montant',
+    montant_cible: montantCible.toFixed(2),
     pourcentage_reduction: reduction.pourcentage_reduction
   }
   showAddFamiliale.value = true
@@ -266,223 +328,308 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="p-8">
-    <div v-if="isLoading" class="flex justify-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-    </div>
-
-    <div v-else class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <!-- Liste des cursus -->
-      <div class="lg:col-span-1 bg-white rounded-lg shadow p-6">
-        <h3 class="text-lg font-semibold mb-4">Cursus disponibles</h3>
-        <div class="space-y-2">
-          <button
-              v-for="cursus in cursuses"
-              :key="cursus.id"
-              @click="selectCursus(cursus)"
-              :class="[
-              'w-full text-left px-4 py-3 rounded-lg border transition-all',
-              selectedCursus?.id === cursus.id
-                ? 'border-primary bg-primary bg-opacity-10'
-                : 'border-gray-200 hover:border-gray-300'
-            ]"
-          >
-            <div class="font-medium">{{ cursus.name }}</div>
-            <div v-if="cursus.tarif" class="text-sm text-gray-600 mt-1">
-              Tarif: {{ cursus.tarif.prix }}€
-            </div>
-          </button>
+  <div class="p-6">
+    <div class="flex gap-6">
+      <div class="w-64 bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-4 border-b">
+          <h3 class="font-semibold text-gray-900">Cursus</h3>
+        </div>
+        <div class="p-4">
+          <div v-if="isLoading" class="space-y-2">
+            <div class="h-10 bg-gray-100 animate-pulse rounded"></div>
+            <div class="h-10 bg-gray-100 animate-pulse rounded"></div>
+          </div>
+          <div v-else class="space-y-2">
+            <button
+                v-for="cursus in cursuses"
+                :key="cursus.id"
+                @click="selectCursus(cursus)"
+                :class="[
+                  'w-full text-left px-4 py-2 rounded-lg transition-colors',
+                  selectedCursus?.id === cursus.id
+                    ? 'bg-primary text-white'
+                    : 'hover:bg-gray-100'
+                ]"
+            >
+              {{ cursus.name }}
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- Détails du cursus sélectionné -->
-      <div class="lg:col-span-3">
+      <div class="flex-1">
         <div v-if="selectedCursus" class="space-y-6">
-          <!-- Tarif de base -->
-          <div class="bg-white rounded-lg shadow p-6">
-            <h4 class="font-semibold text-lg mb-4">Tarif de base</h4>
-            <form @submit.prevent="submitTarif" class="flex gap-3">
-              <input
-                  type="number"
-                  step="0.01"
-                  v-model="tarifForm.prix"
-                  class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Prix en euros"
-                  required
-              />
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold mb-4">Tarif de base</h3>
+            <form @submit.prevent="submitTarif" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  Prix (€)
+                </label>
+                <input
+                    type="number"
+                    v-model="tarifForm.prix"
+                    step="0.01"
+                    min="0"
+                    required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary"
+                />
+              </div>
               <button
                   type="submit"
                   :disabled="isSaving"
-                  class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50"
+                  class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 disabled:opacity-50"
               >
-                Enregistrer
+                {{ isSaving ? 'Enregistrement...' : 'Enregistrer' }}
               </button>
             </form>
           </div>
 
-          <!-- Réductions familiales -->
-          <div class="bg-white rounded-lg shadow p-6">
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div class="flex justify-between items-center mb-4">
-              <h4 class="font-semibold text-lg">Réductions familiales</h4>
+              <h3 class="text-lg font-semibold">Réductions familiales</h3>
               <button
                   v-if="!showAddFamiliale"
                   @click="showAddFamiliale = true"
-                  class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark text-sm"
+                  class="inline-flex items-center gap-2 px-4 py-2 text-primary border border-primary rounded-lg hover:bg-primary hover:text-white transition-colors"
               >
-                <Plus class="w-4 h-4" />
+                <Plus class="size-4" />
                 Ajouter
               </button>
             </div>
 
-            <div v-if="selectedCursus.reductions_familiales?.length > 0" class="space-y-2 mb-4">
+            <div v-if="selectedCursus.reductions_familiales?.length > 0" class="space-y-3 mb-4">
               <div
                   v-for="reduction in selectedCursus.reductions_familiales"
                   :key="reduction.id"
-                  class="flex justify-between items-center bg-gray-50 p-3 rounded-lg"
+                  class="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
               >
-                <span>
-                  À partir de {{ reduction.nombre_eleves_min }} élèves:
-                  <span class="font-semibold">-{{ reduction.pourcentage_reduction }}%</span>
-                </span>
+                <div>
+                  <span class="font-medium">À partir de {{ reduction.nombre_eleves_min }} élèves</span>
+                  <div class="text-sm text-gray-600 mt-1">
+                    <span v-if="selectedCursus.tarif?.prix">
+                      {{ parseFloat(getTarifPrecedent(reduction.nombre_eleves_min)).toFixed(2) }} € →
+                      {{ (getTarifPrecedent(reduction.nombre_eleves_min) * (1 - reduction.pourcentage_reduction / 100)).toFixed(2) }} €
+                    </span>
+                    <span class="text-green-600 ml-2">(-{{ reduction.pourcentage_reduction }}%)</span>
+                  </div>
+                </div>
                 <div class="flex gap-2">
                   <button
                       @click="editReductionFamiliale(reduction)"
-                      class="p-1 text-primary hover:text-primary-dark"
+                      class="p-2 text-gray-600 hover:text-primary transition-colors"
                   >
-                    <EditIcon class="w-4 h-4" />
+                    <EditIcon class="size-5" />
                   </button>
                   <button
                       @click="deleteReductionFamiliale(reduction.id)"
-                      class="p-1 text-red-500 hover:text-red-700"
+                      class="p-2 text-gray-600 hover:text-red-600 transition-colors"
                   >
-                    <Trash class="w-4 h-4" />
+                    <Trash class="size-5" />
                   </button>
                 </div>
               </div>
             </div>
 
-            <form v-if="showAddFamiliale" @submit.prevent="submitReductionFamiliale" class="space-y-3">
-              <input
-                  type="number"
-                  min="2"
-                  v-model="familialeForm.nombre_eleves_min"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Nombre d'élèves minimum"
-                  required
-              />
-              <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  v-model="familialeForm.pourcentage_reduction"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Pourcentage de réduction"
-                  required
-              />
-              <div class="flex gap-3">
-                <button
-                    type="submit"
-                    :disabled="isSaving"
-                    class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50"
-                >
-                  {{ editingFamiliale ? 'Modifier' : 'Ajouter' }}
-                </button>
-                <button
-                    type="button"
-                    @click="resetForms"
-                    class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
-                >
-                  Annuler
-                </button>
-              </div>
-            </form>
+            <div v-if="showAddFamiliale" class="mt-4 p-4 bg-gray-50 rounded-lg">
+              <form @submit.prevent="submitReductionFamiliale" class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Nombre d'élèves minimum
+                  </label>
+                  <input
+                      type="number"
+                      v-model="familialeForm.nombre_eleves_min"
+                      min="2"
+                      required
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Type de réduction
+                  </label>
+                  <div class="flex gap-4">
+                    <label class="flex items-center">
+                      <input
+                          type="radio"
+                          v-model="familialeForm.mode"
+                          value="montant"
+                          class="mr-2"
+                      />
+                      Montant fixe
+                    </label>
+                    <label class="flex items-center">
+                      <input
+                          type="radio"
+                          v-model="familialeForm.mode"
+                          value="pourcentage"
+                          class="mr-2"
+                      />
+                      Pourcentage
+                    </label>
+                  </div>
+                </div>
+
+                <div class="space-y-3">
+                  <div v-if="selectedCursus.tarif?.prix" class="text-sm text-gray-600">
+                    Tarif précédent : {{ parseFloat(getTarifPrecedent(familialeForm.nombre_eleves_min) || 0).toFixed(2) }} €
+                  </div>
+
+                  <div v-if="familialeForm.mode === 'montant'">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                      Nouveau tarif (€)
+                    </label>
+                    <input
+                        type="number"
+                        v-model="familialeForm.montant_cible"
+                        @input="calculerPourcentageReduction"
+                        step="0.01"
+                        min="0"
+                        required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary"
+                    />
+                    <div v-if="familialeForm.pourcentage_reduction" class="mt-2 text-sm text-gray-600">
+                      Réduction calculée : {{ familialeForm.pourcentage_reduction }}%
+                    </div>
+                  </div>
+
+                  <div v-else>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                      Pourcentage de réduction (%)
+                    </label>
+                    <input
+                        type="number"
+                        v-model="familialeForm.pourcentage_reduction"
+                        @input="calculerMontantCible"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary"
+                    />
+                    <div v-if="familialeForm.montant_cible && selectedCursus.tarif?.prix" class="mt-2 text-sm text-gray-600">
+                      Nouveau tarif : {{ familialeForm.montant_cible }} €
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex gap-2">
+                  <button
+                      type="submit"
+                      :disabled="isSaving"
+                      class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 disabled:opacity-50"
+                  >
+                    {{ editingFamiliale ? 'Modifier' : 'Ajouter' }}
+                  </button>
+                  <button
+                      type="button"
+                      @click="resetForms"
+                      class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
 
-          <!-- Réductions multi-cursus -->
-          <div class="bg-white rounded-lg shadow p-6">
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div class="flex justify-between items-center mb-4">
-              <h4 class="font-semibold text-lg">Réductions multi-cursus</h4>
+              <h3 class="text-lg font-semibold">Réductions multi-cursus</h3>
               <button
                   v-if="!showAddMultiCursus && availableCursusesForMultiCursus.length > 0"
                   @click="showAddMultiCursus = true"
-                  class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark text-sm"
+                  class="inline-flex items-center gap-2 px-4 py-2 text-primary border border-primary rounded-lg hover:bg-primary hover:text-white transition-colors"
               >
-                <Plus class="w-4 h-4" />
+                <Plus class="size-4" />
                 Ajouter
               </button>
             </div>
 
-            <div v-if="selectedCursus.reductions_multi_cursus?.length > 0" class="space-y-2 mb-4">
+            <div v-if="selectedCursus.reductions_multi_cursus?.length > 0" class="space-y-3 mb-4">
               <div
                   v-for="reduction in selectedCursus.reductions_multi_cursus"
                   :key="reduction.id"
-                  class="flex justify-between items-center bg-gray-50 p-3 rounded-lg"
+                  class="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
               >
-                <span>
-                  Si inscrit aussi en {{ reduction.cursus_requis_nom }}:
-                  <span class="font-semibold">-{{ reduction.pourcentage_reduction }}%</span>
-                </span>
+                <div>
+                  <span class="font-medium">Si inscrit à : {{ reduction.cursus_requis_name }}</span>
+                  <span class="text-sm text-green-600 ml-2">-{{ reduction.pourcentage_reduction }}%</span>
+                </div>
                 <div class="flex gap-2">
                   <button
                       @click="editReductionMultiCursus(reduction)"
-                      class="p-1 text-primary hover:text-primary-dark"
+                      class="p-2 text-gray-600 hover:text-primary transition-colors"
                   >
-                    <EditIcon class="w-4 h-4" />
+                    <EditIcon class="size-5" />
                   </button>
                   <button
                       @click="deleteReductionMultiCursus(reduction.id)"
-                      class="p-1 text-red-500 hover:text-red-700"
+                      class="p-2 text-gray-600 hover:text-red-600 transition-colors"
                   >
-                    <Trash class="w-4 h-4" />
+                    <Trash class="size-5" />
                   </button>
                 </div>
               </div>
             </div>
 
-            <form v-if="showAddMultiCursus" @submit.prevent="submitReductionMultiCursus" class="space-y-3">
-              <select
-                  v-if="!editingMultiCursus"
-                  v-model="multiCursusForm.cursus_requis_id"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  required
-              >
-                <option value="">Sélectionner un cursus requis</option>
-                <option
-                    v-for="cursus in availableCursusesForMultiCursus"
-                    :key="cursus.id"
-                    :value="cursus.id"
-                >
-                  {{ cursus.name }}
-                </option>
-              </select>
-              <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  v-model="multiCursusForm.pourcentage_reduction"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Pourcentage de réduction"
-                  required
-              />
-              <div class="flex gap-3">
-                <button
-                    type="submit"
-                    :disabled="isSaving"
-                    class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50"
-                >
-                  {{ editingMultiCursus ? 'Modifier' : 'Ajouter' }}
-                </button>
-                <button
-                    type="button"
-                    @click="resetForms"
-                    class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
-                >
-                  Annuler
-                </button>
-              </div>
-            </form>
+            <div v-if="showAddMultiCursus" class="mt-4 p-4 bg-gray-50 rounded-lg">
+              <form @submit.prevent="submitReductionMultiCursus" class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Cursus requis
+                  </label>
+                  <select
+                      v-model="multiCursusForm.cursus_requis_id"
+                      required
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary"
+                  >
+                    <option value="">Sélectionner un cursus</option>
+                    <option
+                        v-for="cursus in availableCursusesForMultiCursus"
+                        :key="cursus.id"
+                        :value="cursus.id"
+                    >
+                      {{ cursus.name }}
+                    </option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Pourcentage de réduction (%)
+                  </label>
+                  <input
+                      type="number"
+                      v-model="multiCursusForm.pourcentage_reduction"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      required
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div class="flex gap-2">
+                  <button
+                      type="submit"
+                      :disabled="isSaving"
+                      class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 disabled:opacity-50"
+                  >
+                    {{ editingMultiCursus ? 'Modifier' : 'Ajouter' }}
+                  </button>
+                  <button
+                      type="button"
+                      @click="resetForms"
+                      class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
 
