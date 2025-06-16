@@ -39,7 +39,7 @@ const currentSchoolName = computed(() => {
 const checkIfDirector = () => {
   if (selectedSchool.value && schools.value.length > 0) {
     const currentSchoolRole = schools.value.find(s => s.id === selectedSchool.value.id);
-    isDirector.value = currentSchoolRole?.role === 'director';
+    isDirector.value = currentSchoolRole?.role === 'Directeur';
   }
 };
 

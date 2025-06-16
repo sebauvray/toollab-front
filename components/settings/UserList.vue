@@ -2,6 +2,7 @@
 import { ref, onMounted, defineProps, defineEmits } from 'vue'
 import staffService from '~/services/staff'
 import Trash from "~/components/Icons/Trash.vue"
+import ConfirmationModal from "~/components/modals/ConfirmationModal.vue";
 
 const props = defineProps({
   schoolId: {
@@ -18,11 +19,10 @@ const message = ref({ type: '', text: '' })
 const showConfirmModal = ref(false)
 const selectedUserForRemoval = ref(null)
 
-// Dictionnaire de traduction
 const roleLabels = {
   'director': 'Directeur',
   'admin': 'Administrateur',
-  'registar': 'Responsable des inscriptions', // Notez la faute dans le slug 'registar'
+  'registar': 'Responsable des inscriptions',
   'teacher': 'Enseignant',
   'student': 'Élève',
   'responsible': 'Responsable'
@@ -33,7 +33,6 @@ const fetchUsers = async () => {
     isLoading.value = true
     const response = await staffService.getSchoolUsers(props.schoolId)
 
-    // Filtrer les rôles concernés avec les slugs
     const filteredData = response.filter(item =>
         ['director', 'admin', 'registar'].includes(item.role)
     )
