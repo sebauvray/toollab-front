@@ -86,7 +86,7 @@ const calculateTarifWithReduction = (tarifBase, pourcentageReduction) => {
   const base = parseFloat(tarifBase)
   const pourcentage = parseFloat(pourcentageReduction)
   const result = base * (1 - pourcentage / 100)
-  return parseFloat(result.toFixed(2))
+  return Math.round(result).toFixed(0)
 }
 
 const calculerPourcentageReduction = () => {
@@ -528,8 +528,8 @@ const formatPrice = (price) => {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
   }).format(price)
 }
 
@@ -577,7 +577,7 @@ onMounted(() => {
                   <input
                       v-model="tarifForm.prix"
                       type="number"
-                      step="0.01"
+                      step="1"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500"
                   />
                 </div>
@@ -732,7 +732,7 @@ onMounted(() => {
                 v-model="familialeForm.montant_cible"
                 @input="calculerPourcentageReduction"
                 type="number"
-                step="0.01"
+                step="1"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500"
             />
           </div>
@@ -743,7 +743,7 @@ onMounted(() => {
                 v-model="familialeForm.pourcentage_reduction"
                 @input="calculerMontantCible"
                 type="number"
-                step="0.01"
+                step="1"
                 min="0"
                 max="100"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500"
@@ -808,7 +808,7 @@ onMounted(() => {
             <input
                 v-model="multiCursusForm.pourcentage_reduction"
                 type="number"
-                step="0.01"
+                step="1"
                 min="0"
                 max="100"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500"
