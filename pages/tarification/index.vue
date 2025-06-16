@@ -12,7 +12,7 @@ definePageMeta({
   layoutData: {
     title: 'Tarification'
   },
-  middleware: 'director-only'
+  middleware: 'director'
 })
 
 usePageTitle('Tarification')
