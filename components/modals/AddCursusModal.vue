@@ -35,6 +35,11 @@ const handleSave = () => {
     return
   }
 
+  if (currentCursus.value.progression === 'levels' && (!currentCursus.value.levels_count || currentCursus.value.levels_count > 20)) {
+        error.value = 'Le cursus ne peut pas avoir plus de 20 niveaux'
+        return
+  }
+
   try {
     isSubmitting.value = true
     error.value = ''
