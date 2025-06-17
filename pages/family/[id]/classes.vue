@@ -284,8 +284,14 @@ definePageMeta({
 
           <div class="flex items-center gap-x-5">
             <div class="bg-[#A2A1A8]/5 p-2 rounded-lg">
-              <NotebookTLB class="text-yellow-500 size-7"/>
-            </div>
+                <NotebookTLB
+                    :class="{
+                  'text-[#93C5FD]': classe.gender === 'Hommes',
+                  'text-[#FDA4AF]': classe.gender === 'Femmes',
+                  'text-[#FCD34D]': classe.gender === 'Enfants'
+                }"
+                    class="size-7"
+                />            </div>
 
             <div class="flex flex-col">
               <div class="font-black uppercase text-black text-lg">{{ classe.name }}</div>
