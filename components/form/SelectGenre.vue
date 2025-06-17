@@ -6,7 +6,6 @@ const options = [
   { name: 'Hommes', color: '#93C5FD' },
   { name: 'Femmes', color: '#FDA4AF' },
   { name: 'Enfants', color: '#FCD34D' },
-  { name: 'Mixte', color: '#86EFAC' },
 ]
 
 const props = defineProps({
