@@ -301,8 +301,8 @@ const resetNewForm = () => {
             </div>
           </div>
 
-          <div v-else class="space-y-4">
-            <div class="flex items-center gap-4">
+          <div v-else class="space-y-3">
+            <div class="flex items-center gap-3">
               <span class="font-medium">{{ typesLabels[ligne.type_paiement] }}</span>
               <input
                   v-model.number="editForm.montant"
@@ -310,39 +310,25 @@ const resetNewForm = () => {
                   step="1"
                   min="0"
                   placeholder="Montant"
-                  class="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                  class="px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-sm"
               />
-              <div class="flex gap-2">
-                <button
-                    @click="cancelEdit"
-                    class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                >
-                  <X class="w-5 h-5" />
-                </button>
-                <button
-                    @click="saveEdit(ligne)"
-                    class="p-2 text-green-600 hover:bg-green-50 rounded-lg"
-                >
-                  <Check class="w-5 h-5" />
-                </button>
-              </div>
             </div>
 
-            <div v-if="ligne.type_paiement === 'cheque'" class="grid grid-cols-3 gap-3">
+            <div v-if="ligne.type_paiement === 'cheque'" class="grid grid-cols-3 gap-2">
               <input
                   v-model="editForm.cheque.banque"
                   placeholder="Banque"
-                  class="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                  class="px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-sm"
               />
               <input
                   v-model="editForm.cheque.numero"
                   placeholder="Numéro"
-                  class="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                  class="px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-sm"
               />
               <input
                   v-model="editForm.cheque.nom_emetteur"
                   placeholder="Nom émetteur"
-                  class="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                  class="px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-sm"
               />
             </div>
 
@@ -351,22 +337,22 @@ const resetNewForm = () => {
                   v-model="editForm.justification"
                   placeholder="Justification"
                   rows="2"
-                  class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                  class="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-sm"
               ></textarea>
             </div>
 
             <div class="flex justify-end gap-2">
               <button
                   @click="cancelEdit"
-                  class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                  class="px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg text-sm"
               >
-                <X class="w-5 h-5" />
+                Annuler
               </button>
               <button
                   @click="saveEdit(ligne)"
-                  class="p-2 text-green-600 hover:bg-green-50 rounded-lg"
+                  class="px-3 py-1 bg-black text-white rounded-lg hover:bg-gray-800 text-sm"
               >
-                <Check class="w-5 h-5" />
+                Valider
               </button>
             </div>
           </div>
@@ -386,7 +372,7 @@ const resetNewForm = () => {
           <div class="space-y-4">
             <select
                 v-model="newForm.type"
-                class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                class="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-sm"
             >
               <option value="">Sélectionner un type</option>
               <option value="espece">Espèces</option>
@@ -398,18 +384,18 @@ const resetNewForm = () => {
             <div v-if="newForm.type === 'cheque'">
               <div class="flex items-center gap-4 mb-4">
                 <label class="text-sm font-medium">Nombre de chèques :</label>
-                <select v-model.number="newForm.nombreCheques" @change="initializeCheques" class="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black">
+                <select v-model.number="newForm.nombreCheques" @change="initializeCheques" class="px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-sm">
                   <option v-for="n in 7" :key="n" :value="n">{{ n }}</option>
                 </select>
               </div>
 
               <div class="space-y-2 mb-4">
                 <label class="flex items-center gap-2">
-                  <input type="checkbox" v-model="newForm.memeNom" class="rounded">
+                  <input type="checkbox" v-model="newForm.memeNom" class="rounded border-black text-black focus:ring-black focus:ring-2">
                   <span class="text-sm">Même nom sur tous les chèques</span>
                 </label>
                 <label class="flex items-center gap-2">
-                  <input type="checkbox" v-model="newForm.memeBanque" class="rounded">
+                  <input type="checkbox" v-model="newForm.memeBanque" class="rounded border-black text-black focus:ring-black focus:ring-2">
                   <span class="text-sm">Même banque pour tous les chèques</span>
                 </label>
               </div>
@@ -419,36 +405,36 @@ const resetNewForm = () => {
                     v-if="newForm.memeBanque"
                     v-model="newForm.banqueCommune"
                     placeholder="Banque"
-                    class="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                    class="px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-sm"
                 />
                 <input
                     v-if="newForm.memeNom"
                     v-model="newForm.nomCommun"
                     placeholder="Nom émetteur"
-                    class="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                    class="px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-sm"
                 />
               </div>
 
-              <div class="space-y-3 max-h-60 overflow-y-auto">
+              <div class="space-y-3">
                 <div v-for="(cheque, index) in newForm.cheques" :key="index" class="border rounded-lg p-3 bg-white">
-                  <h4 class="font-medium mb-2">Chèque {{ index + 1 }}</h4>
-                  <div class="grid grid-cols-3 gap-2">
+                  <h4 class="font-medium mb-2 text-sm">Chèque {{ index + 1 }}</h4>
+                  <div class="grid grid-cols-4 gap-2">
                     <input
                         v-if="!newForm.memeBanque"
                         v-model="cheque.banque"
                         placeholder="Banque"
-                        class="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                        class="px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-sm"
                     />
                     <input
                         v-model="cheque.numero"
                         placeholder="Numéro"
-                        class="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                        class="px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-sm"
                     />
                     <input
                         v-if="!newForm.memeNom"
                         v-model="cheque.nom_emetteur"
                         placeholder="Nom émetteur"
-                        class="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                        class="px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-sm"
                     />
                     <input
                         v-model.number="cheque.montant"
@@ -457,7 +443,7 @@ const resetNewForm = () => {
                         min="0"
                         placeholder="Montant"
                         @input="updateMontantTotal"
-                        class="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                        class="px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-sm"
                     />
                   </div>
                 </div>
@@ -470,8 +456,8 @@ const resetNewForm = () => {
                   type="number"
                   step="1"
                   min="0"
-                  placeholder="200"
-                  class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                  placeholder="Montant"
+                  class="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-sm"
               />
             </div>
 
@@ -481,28 +467,28 @@ const resetNewForm = () => {
                   type="number"
                   step="1"
                   min="0"
-                  placeholder="100"
-                  class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black mb-2"
+                  placeholder="Montant"
+                  class="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-sm mb-2"
               />
               <textarea
                   v-model="newForm.justification"
                   placeholder="Justification"
                   rows="2"
-                  class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                  class="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-sm"
               ></textarea>
             </div>
 
             <div class="flex justify-end gap-2">
               <button
                   @click="resetNewForm"
-                  class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                  class="px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg text-sm"
               >
                 Annuler
               </button>
               <button
                   @click="addNewLigne"
                   :disabled="!isValidNewForm"
-                  class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="px-3 py-1 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
                 Ajouter
               </button>
