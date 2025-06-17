@@ -115,14 +115,7 @@ const hasClassOfType = (studentId, type) => {
 };
 
 const isClassSelectable = (index) => {
-  if (!selectedStudent.value || !classes.value[index]) return false;
-
-  if (studentClasses.value[selectedStudent.value.id].has(index)) {
-    return true;
-  }
-
-  const classType = classes.value[index].type;
-  return !hasClassOfType(selectedStudent.value.id, classType);
+    return !!selectedStudent.value && !!classes.value[index];
 };
 
 const toggleClass = async (index) => {
@@ -148,7 +141,16 @@ const toggleClass = async (index) => {
         message: 'Inscription supprimée'
       });
     } else {
-      await studentClassroomService.enrollStudent(studentId, classroom.id, route.params.id);
+        const newCursus = classroom.cursus;
+        const previousClassIndexes = Array.from(currentStudentClasses);
+        for (const previousIndex of previousClassIndexes) {
+            const previousClassroom = classes.value[previousIndex];
+            if (previousClassroom.cursus === newCursus) {
+                await studentClassroomService.unenrollStudent(studentId, previousClassroom.id);
+                currentStudentClasses.delete(previousIndex);
+            }
+        }
+        await studentClassroomService.enrollStudent(studentId, classroom.id, route.params.id);
       currentStudentClasses.add(index);
 
       const { setFlashMessage } = useFlashMessage();
@@ -241,7 +243,7 @@ definePageMeta({
       <div class="grid grid-cols-3 gap-4 mt-6 font-nunito">
         <div v-for="(classe, index) in classes"
              :key="classe.id"
-             @click="toggleClass(index)"
+             @click="toggleClass(index, classe)"
              class="flex flex-col rounded-xl select-none bg-gray-50 p-4 transition-all duration-200 relative"
              :class="[
                'border-4',
