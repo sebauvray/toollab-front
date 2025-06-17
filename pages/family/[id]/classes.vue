@@ -30,6 +30,28 @@ const currentSchoolId = computed(() => {
   return localStorage.getItem('current_school_id') || 1;
 });
 
+const filteredClasses = computed(() => {
+    if (!selectedStudent.value) return [];
+
+    const studentGender = selectedStudent.value.gender; // 'M' ou 'F'
+
+    return classes.value.filter(classe => {
+        const classGender = classe.gender; // 'Hommes', 'Femmes', 'Enfants'
+
+        if (classGender === 'Enfants') return true;
+
+        if (studentGender === 'M') {
+            return classGender === 'Hommes';
+        }
+
+        if (studentGender === 'F') {
+            return classGender === 'Femmes';
+        }
+
+        return false;
+    });
+});
+
 const getAvailableSpotsColor = (spots) => {
   if (spots >= 11) return 'text-green-500';
   if (spots >= 6 && spots <= 10) return 'text-orange-500';
@@ -241,7 +263,7 @@ definePageMeta({
         <span class="font-semibold text-sm">Classes disponibles ({{ classes.filter(c => c.available_spots > 0).length }})</span>
       </div>
       <div class="grid grid-cols-3 gap-4 mt-6 font-nunito">
-        <div v-for="(classe, index) in classes"
+          <div v-for="(classe, index) in filteredClasses"
              :key="classe.id"
              @click="toggleClass(index, classe)"
              class="flex flex-col rounded-xl select-none bg-gray-50 p-4 transition-all duration-200 relative"
