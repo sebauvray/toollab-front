@@ -141,7 +141,7 @@ const handleCommentSubmit = async () => {
     }
 };
 
-const handleAddStudents = async (newStudents) => {
+const handleAddStudents = async (newStudents, callbacks) => {
     try {
         const response = await familyService.addStudents(route.params.id, newStudents);
         fetchFamilyDetails();
@@ -152,13 +152,16 @@ const handleAddStudents = async (newStudents) => {
             message: 'Élèves ajoutés avec succès'
         });
 
-    } catch (err) {
+    showAddStudentsModal.value = false;
+
+        callbacks?.resolve?.();} catch (err) {
         console.error('Erreur lors de l\'ajout des élèves:', err);
         const {setFlashMessage} = useFlashMessage();
         setFlashMessage({
             type: 'error',
             message: 'Erreur lors de l\'ajout des élèves'
         });
+  callbacks?.reject?.(err);
     }
 };
 

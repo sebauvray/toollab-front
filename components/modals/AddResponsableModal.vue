@@ -42,11 +42,6 @@ const handleSave = async () => {
         isSubmitting.value = true;
         error.value = '';
 
-        if (!formData.value.firstname || !formData.value.lastname || !formData.value.email) {
-            error.value = 'Veuillez remplir tous les champs obligatoires.';
-            return;
-        }
-
         const payload = {
             ...formData.value,
             is_student: isEleve.value
