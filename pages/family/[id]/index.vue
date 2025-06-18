@@ -230,15 +230,15 @@ definePageMeta({
             </div>
             <div class="flex">
                 <button
-                    @click="showAddResponsableModal = true"
+                    @click="showAddStudentsModal = true"
                     class=" mx-2 inline-flex gap-x-2 justify-between items-center px-4 py-2 text-white text-sm rounded-lg bg-default w-fit hover:opacity-90">
                     Ajouter un élève
                 </button>
 
-                <AddResponsableModal
-                    :is-open="showAddResponsableModal"
-                    @close="showAddResponsableModal = false"
-                    @save="handleAddResponsable"
+                <AddElevesModal
+                    :is-open="showAddStudentsModal"
+                    @close="showAddStudentsModal = false"
+                    @save="handleAddStudents"
                 />
             </div>
             <NuxtLink
