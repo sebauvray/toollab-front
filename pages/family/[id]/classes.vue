@@ -30,28 +30,6 @@ const currentSchoolId = computed(() => {
     return localStorage.getItem('current_school_id') || 1;
 });
 
-// const filteredClasses = computed(() => {
-//     if (!selectedStudent.value) return [];
-//
-//     const studentGender = selectedStudent.value.gender; // 'M' ou 'F'
-//
-//     return classes.value.filter(classe => {
-//         const classGender = classe.gender; // 'Hommes', 'Femmes', 'Enfants'
-//
-//         if (classGender === 'Enfants') return true;
-//
-//         if (studentGender === 'M') {
-//             return classGender === 'Hommes';
-//         }
-//
-//         if (studentGender === 'F') {
-//             return classGender === 'Femmes';
-//         }
-//
-//         return false;
-//     });
-// });
-
 const shouldShowClass = (classe) => {
     if (!selectedStudent.value) return false;
 
@@ -301,10 +279,10 @@ definePageMeta({
                         <div class="bg-[#A2A1A8]/5 p-2 rounded-lg">
                             <NotebookTLB
                                 :class="{
-                  'text-[#93C5FD]': classe.gender === 'Hommes',
-                  'text-[#FDA4AF]': classe.gender === 'Femmes',
-                  'text-[#FCD34D]': classe.gender === 'Enfants'
-                }"
+                                  'text-[#93C5FD]': classe.gender === 'Hommes',
+                                  'text-[#FDA4AF]': classe.gender === 'Femmes',
+                                  'text-[#FCD34D]': classe.gender === 'Enfants'
+                                }"
                                 class="size-7"
                             />
                         </div>

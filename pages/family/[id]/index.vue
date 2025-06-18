@@ -14,7 +14,7 @@ import EditElevesModal from "~/components/modals/EditElevesModal.vue"
 import AddResponsableModal from "~/components/modals/AddResponsableModal.vue"
 import familyService from '~/services/family'
 import userService from '~/services/user'
-import { formatDateTimeFr, formatShortDateFr } from '~/utils/dateFormatter'
+import { formatShortDateFr } from '~/utils/dateFormatter'
 import EditIcon from "~/components/Icons/Edit.vue";
 
 
@@ -400,8 +400,10 @@ definePageMeta({
                                 <span>{{ student.first_name }} {{ student.last_name }} </span>
                             </div>
                             <div class="col-span-3 flex">
-                                <div class="inline-flex justify-start items-center mx-1 bg-teal-500 rounded-lg px-2" v-for="classroom in student.classrooms">
+                                <div class="inline-flex justify-start font-bold text-gray-700 items-center rounded-lg"
+                                     v-for="(classroom, index) in student.classrooms">
                                     {{ classroom ? classroom.name : '-' }}
+                                    <span v-if="student.classrooms.length !== index+1" class="mx-1"> - </span>
                                 </div>
                             </div>
                             <div class="inline-flex col-span-3 justify-start items-center">
