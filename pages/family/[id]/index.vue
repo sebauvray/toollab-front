@@ -260,7 +260,7 @@ definePageMeta({
   </div>
 
   <div v-else class="flex flex-col px-8 pt-2 w-full font-montserrat">
-    <div class="flex justify-end">
+    <div class="flex justify-end my-2">
       <div class="flex">
         <button
             @click="showAddResponsableModal = true"
@@ -402,8 +402,8 @@ definePageMeta({
             </SaveButton>
           </div>
         </div>
-        <div class="grid grid-rows-5 w-full py-1.5 px-6 col-span-2 bg-white rounded-xl divide-y border divide-[#E6EFF5] relative">
-          <div class="grid grid-cols-12 py-1.5 font-bold text-sm font-montserrat">
+        <div class="w-full py-1.5 px-6 col-span-2 bg-white rounded-xl border">
+          <div class="grid grid-cols-12 py-1.5 font-bold text-sm font-montserrat border-b border-[#E6EFF5]">
             <div class="inline-flex col-span-5 justify-start items-center pl-6">Élève</div>
             <div class="inline-flex col-span-3 justify-start items-center">Classe</div>
             <div class="inline-flex col-span-3 justify-start items-center">Date de naissance</div>
@@ -411,7 +411,7 @@ definePageMeta({
           </div>
 
           <template v-if="family.students && family.students.length > 0">
-            <div v-for="(student, index) in family.students" :key="student.id" class="grid grid-cols-12 py-1.5 text-sm font-nunito">
+            <div v-for="(student, index) in family.students" :key="student.id" class="grid grid-cols-12 py-1.5 text-sm font-nunito border-b border-[#E6EFF5] last:border-b-0">
               <div class="inline-flex col-span-5 gap-x-1.5 justify-start items-center pl-0.5">
                 <div class="inline-flex gap-x-2 items-center">
                   <ResponsableTLB v-if="student.is_responsible" />
@@ -439,7 +439,7 @@ definePageMeta({
               </div>
             </div>
           </template>
-          <div v-else class="col-span-12 py-8 text-center text-gray-500 text-sm">
+          <div v-else class="py-24 text-center text-gray-500 text-sm">
             Aucun élève enregistré pour cette famille.
           </div>
         </div>
