@@ -272,7 +272,7 @@ definePageMeta({
         <button
             @click="showAddStudentsModal = true"
             class="mx-1 inline-flex gap-x-2 justify-between items-center px-4 py-2 text-white text-sm rounded-lg bg-default w-fit hover:opacity-90">
-          Ajouter un élève
+          Ajouter des élèves
         </button>
       </div>
       <NuxtLink
