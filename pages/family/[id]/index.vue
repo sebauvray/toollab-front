@@ -446,7 +446,6 @@ definePageMeta({
                             >
                                 <div class="flex justify-between items-center text-xs font-montserrat">
                                     <div class="font-bold">{{ comment.author }}</div>
-                                    <div class="font-bold">{{ comment.author }}</div>
                                     <div class="font-light">{{ comment.date }}</div>
                                 </div>
                                 <div class="text-xs font-montserrat">{{ comment.content }}</div>
