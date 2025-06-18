@@ -15,8 +15,13 @@ const props = defineProps({
   }
 })
 
+
 const isActive = computed(() => {
-  return route.path === props.to
+  if (props.to === '/') {
+    return route.path === '/'
+  }
+
+  return route.path.startsWith(props.to)
 })
 </script>
 <template>
