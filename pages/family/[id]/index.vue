@@ -6,15 +6,16 @@ import HomeTLB from "~/components/Icons/Home-TLB.vue"
 import MailTLB from "~/components/Icons/Mail-TLB.vue"
 import PaiementEmpty from "~/components/Icons/Paiement-Empty.vue"
 import PhoneTLB from "~/components/Icons/Phone-TLB.vue"
-import PlusLight from "~/components/Icons/PlusLight.vue"
 import ResponsableTLB from "~/components/Icons/Responsable-TLB.vue"
 import UserFemaleTLB from "~/components/Icons/UserFemale-TLB.vue"
 import UserMaleTLB from "~/components/Icons/UserMale-TLB.vue"
 import AddElevesModal from "~/components/modals/AddElevesModal.vue"
+import EditElevesModal from "~/components/modals/EditElevesModal.vue"
 import AddResponsableModal from "~/components/modals/AddResponsableModal.vue"
 import familyService from '~/services/family'
 import userService from '~/services/user'
-import { formatDateTimeFr } from '~/utils/dateFormatter'
+import { formatDateTimeFr, formatShortDateFr } from '~/utils/dateFormatter'
+import EditIcon from "~/components/Icons/Edit.vue";
 
 
 const route = useRoute();
@@ -24,6 +25,8 @@ const family = ref(null);
 const selectedResponsible = ref(null);
 
 const showAddStudentsModal = ref(false);
+const showEditStudentsModal = ref(false);
+const selectedStudent = ref(null);
 const showAddResponsableModal = ref(false);
 const isEditing = ref(false);
 const contactInfo = ref({
@@ -144,7 +147,7 @@ const handleCommentSubmit = async () => {
 const handleAddStudents = async (newStudents, callbacks) => {
     try {
         const response = await familyService.addStudents(route.params.id, newStudents);
-        fetchFamilyDetails();
+        await fetchFamilyDetails();
 
         const {setFlashMessage} = useFlashMessage();
         setFlashMessage({
@@ -169,7 +172,7 @@ const handleAddResponsable = async (newResponsable) => {
     try {
         if (newResponsable && newResponsable.user) {
             const response = await familyService.addResponsible(route.params.id, newResponsable.user.id);
-            fetchFamilyDetails();
+            await fetchFamilyDetails();
 
             const {setFlashMessage} = useFlashMessage();
             setFlashMessage({
@@ -183,6 +186,25 @@ const handleAddResponsable = async (newResponsable) => {
         setFlashMessage({
             type: 'error',
             message: 'Erreur lors de l\'ajout du responsable'
+        });
+    }
+};
+
+const handleEditStudent = async (updatedStudent) => {
+    try {
+        await familyService.updateStudent(route.params.id, updatedStudent.id, updatedStudent);
+        await fetchFamilyDetails(); // pour mettre à jour l'affichage
+        const {setFlashMessage} = useFlashMessage();
+        setFlashMessage({
+            type: 'success',
+            message: 'Élève mis à jour avec succès'
+        });
+    } catch (err) {
+        console.error("Erreur lors de la mise à jour de l'élève:", err);
+        const {setFlashMessage} = useFlashMessage();
+        setFlashMessage({
+            type: 'error',
+            message: "Erreur lors de la mise à jour de l'élève"
         });
     }
 };
@@ -224,12 +246,6 @@ definePageMeta({
                     class=" mx-2 inline-flex gap-x-2 justify-between items-center px-4 py-2 text-white text-sm rounded-lg bg-default w-fit hover:opacity-90">
                     Ajouter un responsable
                 </button>
-
-                <AddResponsableModal
-                    :is-open="showAddResponsableModal"
-                    @close="showAddResponsableModal = false"
-                    @save="handleAddResponsable"
-                />
             </div>
             <div class="flex">
                 <button
@@ -237,12 +253,6 @@ definePageMeta({
                     class=" mx-2 inline-flex gap-x-2 justify-between items-center px-4 py-2 text-white text-sm rounded-lg bg-default w-fit hover:opacity-90">
                     Ajouter un élève
                 </button>
-
-                <AddElevesModal
-                    :is-open="showAddStudentsModal"
-                    @close="showAddStudentsModal = false"
-                    @save="handleAddStudents"
-                />
             </div>
             <NuxtLink
                 :to="{
@@ -371,23 +381,17 @@ definePageMeta({
                         </SaveButton>
                     </div>
                 </div>
-
-                <AddElevesModal
-                    :is-open="showAddStudentsModal"
-                    @close="showAddStudentsModal = false"
-                    @save="handleAddStudents"
-                />
-
                 <div class="grid grid-rows-5 w-full py-2 px-10 col-span-2 bg-white rounded-2xl divide-y border divide-[#E6EFF5] relative">
                     <div class="grid grid-cols-12 font-bold font-montserrat">
-                        <div class="inline-flex col-span-7 justify-start items-center pl-10">Élève</div>
-                        <div class="inline-flex col-span-2 justify-start items-center">Classe</div>
-                        <div class="inline-flex col-span-3 justify-start items-center">Date d'inscription</div>
+                        <div class="inline-flex col-span-5 justify-start items-center pl-10">Élève</div>
+                        <div class="inline-flex col-span-3 justify-start items-center">Classe</div>
+                        <div class="inline-flex col-span-3 justify-start items-center">Date de naissance</div>
+                        <div class="inline-flex col-span-1 justify-start items-center">-</div>
                     </div>
 
                     <template v-if="family.students && family.students.length > 0">
                         <div v-for="(student, index) in family.students" :key="student.id" class="grid grid-cols-12 py-2 font-nunito">
-                            <div class="inline-flex col-span-7 gap-x-2 justify-start items-center pl-1">
+                            <div class="inline-flex col-span-5 gap-x-2 justify-start items-center pl-1">
                                 <div class="inline-flex gap-x-3 items-center">
                                     <ResponsableTLB v-if="student.is_responsible" />
                                     <UserFemaleTLB v-if="student.gender === 'F'" />
@@ -395,21 +399,28 @@ definePageMeta({
                                 </div>
                                 <span>{{ student.first_name }} {{ student.last_name }} </span>
                             </div>
-                            <div class="inline-flex col-span-2 justify-start items-center">
-                                {{ student.classroom ? student.classroom.name : '-' }}
+                            <div class="col-span-3 flex">
+                                <div class="inline-flex justify-start items-center mx-1 bg-teal-500 rounded-lg px-2" v-for="classroom in student.classrooms">
+                                    {{ classroom ? classroom.name : '-' }}
+                                </div>
                             </div>
                             <div class="inline-flex col-span-3 justify-start items-center">
-                                {{ formatDateTimeFr(student.created_at) }}
+                                {{ formatShortDateFr(student.birthdate) }}
+                            </div>
+                            <div class="col-span-1">
+                                <button
+                                    @click="selectedStudent = student; showEditStudentsModal = true" class="p-1.5 text-gray-600 hover:text-gray-900"
+                                >
+                                    <EditIcon class="w-4 h-4" />
+                                </button>
                             </div>
                         </div>
                     </template>
-
                     <div v-else class="col-span-12 py-10 text-center text-gray-500">
                         Aucun élève enregistré pour cette famille.
                     </div>
                 </div>
             </div>
-
             <div class="grid grid-cols-2 gap-x-12 w-full h-[23rem] mt-2">
                 <div class="flex flex-col col-span-1 gap-y-6 py-4 bg-white rounded-3xl border">
                     <div class="px-10 text-2xl font-bold font-montserrat">Paiements</div>
@@ -432,6 +443,7 @@ definePageMeta({
                                 class="flex flex-col gap-y-2 px-6 py-2 w-full rounded-lg shadow-sm bg-gray-light"
                             >
                                 <div class="flex justify-between items-center text-xs font-montserrat">
+                                    <div class="font-bold">{{ comment.author }}</div>
                                     <div class="font-bold">{{ comment.author }}</div>
                                     <div class="font-light">{{ comment.date }}</div>
                                 </div>
@@ -464,4 +476,20 @@ definePageMeta({
             </div>
         </div>
     </div>
+    <AddResponsableModal
+        :is-open="showAddResponsableModal"
+        @close="showAddResponsableModal = false"
+        @save="handleAddResponsable"
+    />
+    <AddElevesModal
+        :is-open="showAddStudentsModal"
+        @close="showAddStudentsModal = false"
+        @save="handleAddStudents"
+    />
+    <EditElevesModal
+        :is-open="showEditStudentsModal"
+        :student="selectedStudent"
+        @close="showEditStudentsModal = false"
+        @save="handleEditStudent"
+    />
 </template>

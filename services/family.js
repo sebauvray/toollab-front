@@ -52,6 +52,17 @@ export default {
         }
     },
 
+    async updateStudent(familyId, studentId, studentData) {
+        try {
+            const response = await apiClient.put(`/api/families/${familyId}/students/${studentId}`, studentData)
+            return response.data
+        } catch (error) {
+            console.error(`Erreur lors de la mise à jour de l'élève ${studentId}:`, error)
+            throw error
+        }
+    },
+
+
     async addResponsible(familyId, userId) {
         try {
             const response = await apiClient.post(`/api/families/${familyId}/responsibles`, { user_id: userId })
