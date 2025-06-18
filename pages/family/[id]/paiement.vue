@@ -111,12 +111,18 @@ const isValidNewForm = computed(() => {
   if (!newForm.value.type) return false
 
   if (newForm.value.type === 'cheque') {
-    return newForm.value.cheques.every(cheque =>
-        (cheque.banque || newForm.value.memeBanque) &&
-        cheque.numero &&
-        (cheque.nom_emetteur || newForm.value.memeNom) &&
-        cheque.montant && cheque.montant > 0
-    )
+    return newForm.value.cheques.every(cheque => {
+      const banque = newForm.value.memeBanque ? newForm.value.banqueCommune : cheque.banque
+      const nomEmetteur = newForm.value.memeNom ? newForm.value.nomCommun : cheque.nom_emetteur
+
+      // Vérifier que la banque est valide
+      const isBanqueValid = banque && (banquesFrancaises.includes(banque) || banque === 'Autre')
+
+      return isBanqueValid &&
+          cheque.numero &&
+          nomEmetteur &&
+          cheque.montant && cheque.montant > 0
+    })
   }
 
   return newForm.value.montant && newForm.value.montant > 0
@@ -128,6 +134,15 @@ const typesLabels = {
   cheque: 'Chèque',
   exoneration: 'Exonération'
 }
+
+const typesIcons = {
+  espece: '💵',
+  carte: '💳',
+  cheque: '🧾',
+  exoneration: '✋'
+}
+
+
 
 const forceInteger = (value) => {
   if (value === '' || value === null || value === undefined) return ''
@@ -148,19 +163,22 @@ const onBanqueInput = (value, chequeIndex = null) => {
 }
 
 const onBanqueBlur = (value, chequeIndex = null) => {
-  // Vérifier que la banque existe dans la liste quand on quitte l'input
+  // Ne pas valider si l'utilisateur clique sur une suggestion
   setTimeout(() => {
-    const exactMatch = banquesFrancaises.find(banque => banque.toLowerCase() === value.toLowerCase())
-    if (!exactMatch && value !== '') {
-      if (chequeIndex !== null) {
-        newForm.value.cheques[chequeIndex].banque = ''
-      } else {
-        newForm.value.banqueCommune = ''
+    if (!showBanqueSuggestions.value) {
+      const exactMatch = banquesFrancaises.find(banque => banque.toLowerCase() === value.toLowerCase())
+      if (!exactMatch && value !== '' && value !== 'Autre') {
+        // Permettre "Autre" comme valeur valide
+        if (chequeIndex !== null) {
+          newForm.value.cheques[chequeIndex].banque = ''
+        } else {
+          newForm.value.banqueCommune = ''
+        }
+        banqueSearchTerm.value = ''
       }
-      banqueSearchTerm.value = ''
     }
     showBanqueSuggestions.value = false
-  }, 200) // Petit délai pour permettre la sélection d'une suggestion
+  }, 150)
 }
 
 const selectBanque = (banque, chequeIndex = null) => {
@@ -173,6 +191,11 @@ const selectBanque = (banque, chequeIndex = null) => {
   banqueSearchTerm.value = banque
   showBanqueSuggestions.value = false
   selectedBanqueIndex.value = -1
+
+  // Empêcher le blur de s'exécuter après la sélection
+  setTimeout(() => {
+    showBanqueSuggestions.value = false
+  }, 10)
 }
 
 const onEditBanqueInput = (value) => {
@@ -183,15 +206,16 @@ const onEditBanqueInput = (value) => {
 }
 
 const onEditBanqueBlur = (value) => {
-  // Vérifier que la banque existe dans la liste quand on quitte l'input
   setTimeout(() => {
-    const exactMatch = banquesFrancaises.find(banque => banque.toLowerCase() === value.toLowerCase())
-    if (!exactMatch && value !== '') {
-      editForm.value.cheque.banque = ''
-      editBanqueSearchTerm.value = ''
+    if (!showEditBanqueSuggestions.value) {
+      const exactMatch = banquesFrancaises.find(banque => banque.toLowerCase() === value.toLowerCase())
+      if (!exactMatch && value !== '' && value !== 'Autre') {
+        editForm.value.cheque.banque = ''
+        editBanqueSearchTerm.value = ''
+      }
     }
     showEditBanqueSuggestions.value = false
-  }, 200) // Petit délai pour permettre la sélection d'une suggestion
+  }, 150)
 }
 
 const selectEditBanque = (banque) => {
@@ -199,6 +223,11 @@ const selectEditBanque = (banque) => {
   editBanqueSearchTerm.value = banque
   showEditBanqueSuggestions.value = false
   selectedEditBanqueIndex.value = -1
+
+  // Empêcher le blur de s'exécuter après la sélection
+  setTimeout(() => {
+    showEditBanqueSuggestions.value = false
+  }, 10)
 }
 
 const handleBanqueKeydown = (event) => {
@@ -254,8 +283,13 @@ const handleEditBanqueKeydown = (event) => {
 onMounted(async () => {
   await loadData()
 
+  // Gestionnaire de clic global pour fermer les suggestions
   document.addEventListener('click', (event) => {
-    if (!event.target.closest('.banque-autocomplete')) {
+    const target = event.target
+    const isAutocomplete = target.closest('.banque-autocomplete')
+    const isSuggestion = target.closest('.banque-suggestion')
+
+    if (!isAutocomplete && !isSuggestion) {
       showBanqueSuggestions.value = false
       showEditBanqueSuggestions.value = false
     }
@@ -286,7 +320,7 @@ const loadData = async () => {
 const startEdit = (ligne) => {
   editingLineId.value = ligne.id
   editForm.value = {
-    montant: forceInteger(ligne.montant), // Forcer l'entier même depuis la BDD
+    montant: forceInteger(ligne.montant),
     cheque: ligne.type_paiement === 'cheque' ? {...ligne.details} : {
       banque: '',
       numero: '',
@@ -310,6 +344,18 @@ const cancelEdit = () => {
 const saveEdit = async (ligne) => {
   try {
     editForm.value.montant = forceInteger(editForm.value.montant)
+
+    // Vérification supplémentaire pour les chèques
+    if (ligne.type_paiement === 'cheque') {
+      const banque = editForm.value.cheque.banque
+      if (banque && !banquesFrancaises.includes(banque) && banque !== 'Autre') {
+        setFlashMessage({
+          type: 'error',
+          message: 'Veuillez sélectionner une banque valide dans la liste'
+        })
+        return
+      }
+    }
 
     const response = await paiementService.modifierLigne(
         route.params.id,
@@ -383,7 +429,6 @@ const initializeCheques = () => {
 }
 
 const onTypeChange = () => {
-  // Initialiser les chèques quand on sélectionne le type "cheque"
   if (newForm.value.type === 'cheque') {
     initializeCheques()
   }
@@ -408,6 +453,20 @@ const addNewLigne = async () => {
 
   try {
     if (newForm.value.type === 'cheque') {
+      // Vérification supplémentaire avant envoi
+      const isAllBanquesValid = newForm.value.cheques.every(cheque => {
+        const banque = newForm.value.memeBanque ? newForm.value.banqueCommune : cheque.banque
+        return banque && (banquesFrancaises.includes(banque) || banque === 'Autre')
+      })
+
+      if (!isAllBanquesValid) {
+        setFlashMessage({
+          type: 'error',
+          message: 'Veuillez sélectionner des banques valides dans la liste'
+        })
+        return
+      }
+
       const cheques = newForm.value.cheques.map(cheque => ({
         banque: newForm.value.memeBanque ? newForm.value.banqueCommune : cheque.banque,
         numero: cheque.numero,
@@ -491,29 +550,32 @@ const resetNewForm = () => {
     <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-default"></div>
   </div>
 
-  <div v-else class="grid grid-cols-3 mt-6 px-6 font-montserrat w-full gap-x-4 items-start">
-    <section class="col-span-2 bg-white rounded-lg p-4">
-      <h2 class="font-bold text-lg mb-4">Mode de paiement</h2>
+  <div v-else class="grid grid-cols-1 lg:grid-cols-3 mt-6 px-6 font-montserrat w-full gap-4 items-start">
+    <section class="lg:col-span-2 bg-white rounded-lg p-4 shadow-sm order-2 lg:order-1">
+      <h2 class="font-bold text-lg mb-4 text-gray-800">Mode de paiement</h2>
 
       <div class="space-y-3">
         <div
             v-for="ligne in lignesPaiement"
             :key="ligne.id"
-            class="border rounded-lg p-3 hover:bg-gray-50 transition-colors"
+            class="border rounded-lg p-3 transition-colors bg-gray-50 border-gray-200 hover:shadow-sm"
         >
           <div v-if="editingLineId !== ligne.id" class="flex items-center justify-between">
             <div class="flex-1">
               <div class="flex items-center gap-3">
-                <span class="font-medium text-sm">{{ typesLabels[ligne.type_paiement] }}</span>
-                <span class="text-base font-semibold">{{ ligne.montant || 0 }}€</span>
+                <span class="text-xl">{{ typesIcons[ligne.type_paiement] }}</span>
+                <span class="font-medium text-sm text-gray-800">
+                  {{ typesLabels[ligne.type_paiement] }}
+                </span>
+                <span class="text-base font-semibold text-gray-900">{{ ligne.montant || 0 }}€</span>
               </div>
 
-              <div v-if="ligne.type_paiement === 'cheque' && ligne.details" class="mt-2 text-xs text-gray-600">
+              <div v-if="ligne.type_paiement === 'cheque' && ligne.details" class="mt-2 text-xs text-gray-600 ml-8">
                 <span>{{ ligne.details.banque }} - N°{{ ligne.details.numero }}</span>
                 <span class="ml-2">({{ ligne.details.nom_emetteur }})</span>
               </div>
 
-              <div v-else-if="ligne.type_paiement === 'exoneration' && ligne.details?.justification" class="mt-2 text-xs text-gray-600">
+              <div v-else-if="ligne.type_paiement === 'exoneration' && ligne.details?.justification" class="mt-2 text-xs text-gray-600 ml-8">
                 Justification : {{ ligne.details.justification }}
               </div>
             </div>
@@ -521,7 +583,7 @@ const resetNewForm = () => {
             <div class="flex items-center gap-2">
               <button
                   @click="startEdit(ligne)"
-                  class="p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  class="p-2 text-gray-700 hover:bg-white hover:shadow-sm rounded-lg transition-colors"
               >
                 <EditIcon class="w-5 h-5" />
               </button>
@@ -536,7 +598,10 @@ const resetNewForm = () => {
 
           <div v-else class="space-y-3">
             <div class="flex items-center gap-3">
-              <span class="font-medium text-sm">{{ typesLabels[ligne.type_paiement] }}</span>
+              <span class="text-xl">{{ typesIcons[ligne.type_paiement] }}</span>
+              <span class="font-medium text-sm text-gray-800">
+                {{ typesLabels[ligne.type_paiement] }}
+              </span>
               <input
                   v-model="editForm.montant"
                   type="text"
@@ -546,8 +611,8 @@ const resetNewForm = () => {
               />
             </div>
 
-            <div v-if="ligne.type_paiement === 'cheque'" class="banque-autocomplete relative">
-              <div class="grid grid-cols-3 gap-2">
+            <div v-if="ligne.type_paiement === 'cheque'" class="banque-autocomplete relative ml-8">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div class="relative">
                   <input
                       ref="editBanqueInputRef"
@@ -561,10 +626,10 @@ const resetNewForm = () => {
                       autocomplete="off"
                   />
                   <div v-if="showEditBanqueSuggestions && filteredEditBanques.length > 0"
-                       class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                       class="banque-suggestion absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
                     <div v-for="(banque, index) in filteredEditBanques"
                          :key="banque"
-                         @click="selectEditBanque(banque)"
+                         @mousedown="selectEditBanque(banque)"
                          :class="[
                            'px-3 py-2 cursor-pointer text-sm',
                            index === selectedEditBanqueIndex ? 'bg-blue-100' : 'hover:bg-gray-100'
@@ -586,7 +651,7 @@ const resetNewForm = () => {
               </div>
             </div>
 
-            <div v-else-if="ligne.type_paiement === 'exoneration'">
+            <div v-else-if="ligne.type_paiement === 'exoneration'" class="ml-8">
               <textarea
                   v-model="editForm.justification"
                   placeholder="Justification"
@@ -595,7 +660,7 @@ const resetNewForm = () => {
               ></textarea>
             </div>
 
-            <div class="flex justify-end gap-2">
+            <div class="flex flex-col sm:flex-row justify-end gap-2">
               <button
                   @click="cancelEdit"
                   class="px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg text-sm"
@@ -624,7 +689,7 @@ const resetNewForm = () => {
 
         <div v-else class="border-2 border-gray-300 rounded-lg p-3 bg-gray-50">
           <div class="space-y-4">
-            <div class="grid grid-cols-4 gap-3">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <button
                   @click="selectType('espece')"
                   :class="[
@@ -697,7 +762,7 @@ const resetNewForm = () => {
                 </label>
               </div>
 
-              <div v-if="newForm.memeNom || newForm.memeBanque" class="grid grid-cols-2 gap-3 mb-4">
+              <div v-if="newForm.memeNom || newForm.memeBanque" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                 <div v-if="newForm.memeBanque" class="banque-autocomplete relative">
                   <input
                       :value="banqueSearchTerm"
@@ -710,10 +775,10 @@ const resetNewForm = () => {
                       autocomplete="off"
                   />
                   <div v-if="showBanqueSuggestions && filteredBanques.length > 0"
-                       class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                       class="banque-suggestion absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
                     <div v-for="(banque, index) in filteredBanques"
                          :key="banque"
-                         @click="selectBanque(banque)"
+                         @mousedown="selectBanque(banque)"
                          :class="[
                            'px-3 py-2 cursor-pointer text-sm',
                            index === selectedBanqueIndex ? 'bg-blue-100' : 'hover:bg-gray-100'
@@ -733,7 +798,7 @@ const resetNewForm = () => {
               <div class="space-y-3">
                 <div v-for="(cheque, index) in newForm.cheques" :key="index" class="border rounded-lg p-3 bg-white">
                   <h4 class="font-medium mb-2 text-sm">Chèque {{ index + 1 }}</h4>
-                  <div class="grid grid-cols-4 gap-2">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                     <div v-if="!newForm.memeBanque" class="banque-autocomplete relative">
                       <input
                           :value="cheque.banque"
@@ -746,10 +811,10 @@ const resetNewForm = () => {
                           autocomplete="off"
                       />
                       <div v-if="showBanqueSuggestions && filteredBanques.length > 0"
-                           class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                           class="banque-suggestion absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
                         <div v-for="(banque, banqueIndex) in filteredBanques"
                              :key="banque"
-                             @click="selectBanque(banque, index)"
+                             @mousedown="selectBanque(banque, index)"
                              :class="[
                                'px-3 py-2 cursor-pointer text-sm',
                                banqueIndex === selectedBanqueIndex ? 'bg-blue-100' : 'hover:bg-gray-100'
@@ -807,7 +872,7 @@ const resetNewForm = () => {
               ></textarea>
             </div>
 
-            <div class="flex justify-end gap-2">
+            <div class="flex flex-col sm:flex-row justify-end gap-2">
               <button
                   @click="resetNewForm"
                   class="px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg text-sm"
@@ -827,16 +892,16 @@ const resetNewForm = () => {
       </div>
     </section>
 
-    <section class="col-span-1 bg-white rounded-lg p-4 self-start">
-      <h2 class="font-bold text-lg mb-4">Paiement</h2>
+    <section class="lg:col-span-1 bg-white rounded-lg p-4 self-start shadow-sm order-1 lg:order-2">
+      <h2 class="font-bold text-lg mb-4 text-gray-800">Paiement</h2>
 
       <div v-if="tarifDetails">
         <div v-for="eleve in tarifDetails.details_par_eleve" :key="eleve.student_id" class="mb-3">
-          <h3 class="font-semibold text-sm">{{ eleve.student_name }}</h3>
-          <div v-for="cursus in eleve.cursus" :key="cursus.cursus_id" class="flex items-center justify-between font-nunito px-3 font-light text-sm">
+          <h3 class="font-semibold text-sm text-gray-800">{{ eleve.student_name }}</h3>
+          <div v-for="cursus in eleve.cursus" :key="cursus.cursus_id" class="flex items-center justify-between font-nunito px-3 font-light text-sm text-gray-600">
             <div>{{ cursus.cursus_name }}</div>
             <div>x1</div>
-            <div>{{ Math.round(cursus.tarif_final) }}€</div>
+            <div class="font-medium text-gray-800">{{ Math.round(cursus.tarif_final) }}€</div>
           </div>
         </div>
       </div>
@@ -844,63 +909,78 @@ const resetNewForm = () => {
       <div class="my-2 border border-gray-200 mx-3"></div>
 
       <div class="grid grid-cols-4 auto-cols-fr auto-rows-fr w-full font-nunito px-3 font-light text-sm">
-        <div class="font-semibold">Total</div>
+        <div class="font-semibold text-gray-800">Total</div>
         <div class="inline-flex items-center justify-center"></div>
         <div class="inline-flex items-center justify-center"></div>
-        <div class="inline-flex items-center justify-end">{{ Math.round(montantTotal) }}€</div>
+        <div class="inline-flex items-center justify-end font-bold text-lg text-gray-800">{{ Math.round(montantTotal) }}€</div>
       </div>
 
       <div class="my-2 border border-gray-200 mx-3"></div>
 
-      <div class="bg-gray-50 border mx-1 p-2 rounded-lg font-nunito">
-        <div v-if="detailsPaiement?.details" class="flex flex-col gap-y-1 mb-2">
-          <div v-if="detailsPaiement.details.espece > 0" class="grid grid-cols-3 w-full text-xs">
-            <div class="font-semibold">Espèces</div>
+      <div class="bg-gradient-to-br from-gray-50 to-gray-100 border mx-1 p-3 rounded-lg font-nunito shadow-inner">
+        <div v-if="detailsPaiement?.details" class="flex flex-col gap-y-2 mb-3">
+          <div v-if="detailsPaiement.details.espece > 0" class="grid grid-cols-3 w-full text-xs bg-white rounded-md p-2 shadow-sm">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">💵</span>
+              <span class="font-semibold text-gray-700">Espèces</span>
+            </div>
             <div class="inline-flex items-center justify-center"></div>
-            <div class="inline-flex items-center justify-end">{{ Math.round(detailsPaiement.details.espece) }}€</div>
+            <div class="inline-flex items-center justify-end font-medium text-gray-800">{{ Math.round(detailsPaiement.details.espece) }}€</div>
           </div>
 
-          <div v-if="detailsPaiement.details.carte > 0" class="grid grid-cols-3 w-full text-xs">
-            <div class="font-semibold">CB</div>
+          <div v-if="detailsPaiement.details.carte > 0" class="grid grid-cols-3 w-full text-xs bg-white rounded-md p-2 shadow-sm">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">💳</span>
+              <span class="font-semibold text-gray-700">CB</span>
+            </div>
             <div class="inline-flex items-center justify-center"></div>
-            <div class="inline-flex items-center justify-end">{{ Math.round(detailsPaiement.details.carte) }}€</div>
+            <div class="inline-flex items-center justify-end font-medium text-gray-800">{{ Math.round(detailsPaiement.details.carte) }}€</div>
           </div>
 
-          <div v-if="detailsPaiement.details.cheque > 0" class="grid grid-cols-3 w-full text-xs">
-            <div class="font-semibold">Chèques</div>
-            <div class="inline-flex items-center justify-center">x{{ detailsPaiement.details.cheques.length }}</div>
-            <div class="inline-flex items-center justify-end">{{ Math.round(detailsPaiement.details.cheque) }}€</div>
+          <div v-if="detailsPaiement.details.cheque > 0" class="grid grid-cols-3 w-full text-xs bg-white rounded-md p-2 shadow-sm">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">🧾</span>
+              <span class="font-semibold text-gray-700">Chèques</span>
+            </div>
+            <div class="inline-flex items-center justify-center text-gray-600 font-medium">x{{ detailsPaiement.details.cheques.length }}</div>
+            <div class="inline-flex items-center justify-end font-medium text-gray-800">{{ Math.round(detailsPaiement.details.cheque) }}€</div>
           </div>
 
-          <div v-if="detailsPaiement.details.exoneration > 0" class="grid grid-cols-3 w-full text-xs">
-            <div class="font-semibold">Exonération</div>
+          <div v-if="detailsPaiement.details.exoneration > 0" class="grid grid-cols-3 w-full text-xs bg-white rounded-md p-2 shadow-sm">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">✋</span>
+              <span class="font-semibold text-gray-700">Exonération</span>
+            </div>
             <div class="inline-flex items-center justify-center"></div>
-            <div class="inline-flex items-center justify-end">{{ Math.round(detailsPaiement.details.exoneration) }}€</div>
+            <div class="inline-flex items-center justify-end font-medium text-gray-800">{{ Math.round(detailsPaiement.details.exoneration) }}€</div>
           </div>
         </div>
 
-        <div class="flex items-center justify-between text-sm border-t border-gray-200 pt-2">
-          <div class="font-semibold">Payé</div>
-          <div>{{ Math.round(montantPaye) }}€</div>
+        <div class="flex items-center justify-between text-sm border-t border-gray-300 pt-3 bg-white rounded-md p-2 shadow-sm">
+          <div class="font-semibold text-gray-800">Payé</div>
+          <div class="font-bold text-green-600">{{ Math.round(montantPaye) }}€</div>
         </div>
       </div>
 
-      <div class="my-2 border border-gray-200 mx-3"></div>
+      <div class="my-3 border border-gray-200 mx-3"></div>
 
-      <div class="flex items-center justify-between text-base mx-3">
-        <div class="font-bold">Reste à payer</div>
-        <div :class="{ 'text-green-600': resteAPayer === 0, 'text-red-600': resteAPayer < 0 }">
+      <div class="flex items-center justify-between text-lg mx-3 bg-gradient-to-r from-gray-100 to-gray-50 p-3 rounded-lg shadow-sm">
+        <div class="font-bold text-gray-800">Reste à payer</div>
+        <div :class="[
+          'font-bold text-xl',
+          resteAPayer === 0 ? 'text-green-600' : resteAPayer < 0 ? 'text-orange-500' : 'text-red-600'
+        ]">
           {{ Math.round(resteAPayer) }}€
         </div>
       </div>
     </section>
 
     <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-md mx-4">
-        <h3 class="text-lg font-semibold mb-4">Confirmer la suppression</h3>
+      <div class="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
+        <h3 class="text-lg font-semibold mb-4 text-gray-800">Confirmer la suppression</h3>
         <p class="text-gray-600 mb-6">Voulez-vous vraiment supprimer ce paiement ?</p>
 
-        <div class="flex gap-3 justify-end">
+        <div class="flex flex-col sm:flex-row gap-3 justify-end">
           <button
               @click="closeDeleteModal"
               class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
