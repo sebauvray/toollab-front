@@ -54,7 +54,7 @@ const formatBreadcrumbName = (name) => {
                 to="/"
                 class="text-placeholder font-semibold hover:opacity-80 text-2xl"
             >
-                <Home class="size-6 mr-2 fill-gray-600 cursor-pointer"/>
+                <Home class="size-5 mr-2 fill-gray-600 cursor-pointer"/>
             </NuxtLink>
             <span class="text-placeholder font-semibold text-2xl mx-2">
                 <svg class="size-6 mr-2 text-placeholder -rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -66,17 +66,17 @@ const formatBreadcrumbName = (name) => {
                     <template v-if="index !== breadcrumbs.length - 1">
                         <NuxtLink
                             :to="crumb.path"
-                            class="text-placeholder font-semibold hover:opacity-80 text-2xl"
+                            class="text-placeholder font-semibold hover:opacity-80 text-xl"
                         >
                             {{ crumb.name }}
                         </NuxtLink>
-                        <span class="text-placeholder font-semibold text-2xl mx-2">
+                        <span class="text-placeholder font-semibold mx-2">
                             <svg class="size-6 mr-2 text-placeholder -rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                             </svg>
                         </span>
                     </template>
-                    <span v-else class="text-default font-semibold text-2xl">{{ crumb.name }}</span>
+                    <span v-else class="text-default font-semibold text-xl">{{ crumb.name }}</span>
                 </li>
             </template>
         </ol>
