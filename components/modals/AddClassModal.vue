@@ -193,7 +193,7 @@ const handleSave = () => {
 
         <h3 class="text-lg font-semibold mb-2">Ajouter un créneau</h3>
 
-        <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="grid grid-cols-5 gap-4 items-end">
           <div>
             <SelectDay
                 v-model="newSchedule.day"
@@ -206,8 +206,6 @@ const handleSave = () => {
                 placeholder="Nom du professeur"
             />
           </div>
-        </div>
-        <div class="grid grid-cols-3 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Heure de début</label>
             <input
@@ -224,7 +222,7 @@ const handleSave = () => {
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-default"
             />
           </div>
-          <div class="flex items-end">
+          <div>
             <button
                 @click="addSchedule"
                 class="w-full bg-default text-white px-4 py-2 rounded-md hover:opacity-90"
@@ -234,7 +232,7 @@ const handleSave = () => {
           </div>
         </div>
 
-        <div v-if="newClass.schedules.length > 0" class="space-y-2 mb-6">
+        <div v-if="newClass.schedules.length > 0" class="space-y-2 mb-6 mt-6">
           <div
               v-for="(schedule, index) in newClass.schedules"
               :key="index"
@@ -254,7 +252,7 @@ const handleSave = () => {
           </div>
         </div>
 
-        <div class="flex justify-end space-x-4 mt-3">
+        <div class="flex justify-end space-x-4 mt-32">
           <button
               @click="$emit('close')"
               class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
