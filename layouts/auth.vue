@@ -8,7 +8,7 @@ import NavLink from "~/components/navigation/NavLink.vue";
 import FamilyTLB from "~/components/Icons/Family-TLB.vue";
 import UserDropdown from "~/components/UserDropdown.vue";
 import CurrencyEuro from "~/components/Icons/CurrencyEuro.vue";
-import {ref, computed, onMounted} from 'vue';
+import {ref, computed, onMounted, onUnmounted} from 'vue';
 import userService from '~/services/user';
 import schoolService from '~/services/school';
 
@@ -16,7 +16,7 @@ const user = ref(null);
 const schools = ref([]);
 const selectedSchool = ref(null);
 const showSchoolDropdown = ref(false);
-const isDirector = ref(false);
+const hasAdminAccess = ref(false);
 const isSidebarCollapsed = ref(false);
 
 const initials = computed(() => {
@@ -38,10 +38,10 @@ const currentSchoolName = computed(() => {
   return selectedSchool.value.name;
 });
 
-const checkIfDirector = () => {
+const checkAdminAccess = () => {
   if (selectedSchool.value && schools.value.length > 0) {
     const currentSchoolRole = schools.value.find(s => s.id === selectedSchool.value.id);
-    isDirector.value = currentSchoolRole?.role === 'Directeur';
+    hasAdminAccess.value = currentSchoolRole?.role === 'Directeur' || currentSchoolRole?.role === 'Administrateur';
   }
 };
 
@@ -79,7 +79,7 @@ const loadUserSchools = async () => {
             localStorage.setItem('current_school_id', schools.value[0].id);
           }
 
-          checkIfDirector();
+          checkAdminAccess();
         }
       }
     }
@@ -92,7 +92,7 @@ const selectSchool = (school) => {
   selectedSchool.value = school;
   showSchoolDropdown.value = false;
   localStorage.setItem('current_school_id', school.id);
-  checkIfDirector();
+  checkAdminAccess();
 };
 
 const checkScreenSize = () => {
@@ -137,9 +137,9 @@ onUnmounted(() => {
       </div>
       <nav class="inline-flex flex-col gap-y-4 mt-4 flex-1">
         <NavLink to="/" :icon="Home" text="Accueil" :collapsed="isSidebarCollapsed"/>
-        <NavLink to="/cursus" :icon="Cursus" text="Cursus" :collapsed="isSidebarCollapsed"/>
         <NavLink to="/family" :icon="FamilyTLB" text="Familles" :collapsed="isSidebarCollapsed"/>
-        <NavLink v-if="isDirector" to="/tarification" :icon="CurrencyEuro" text="Tarification" :collapsed="isSidebarCollapsed"/>
+        <NavLink v-if="hasAdminAccess" to="/cursus" :icon="Cursus" text="Cursus" :collapsed="isSidebarCollapsed"/>
+        <NavLink v-if="hasAdminAccess" to="/tarification" :icon="CurrencyEuro" text="Tarification" :collapsed="isSidebarCollapsed"/>
       </nav>
 
       <div class="mb-6" :class="isSidebarCollapsed ? 'px-2' : 'px-6'">
@@ -187,9 +187,9 @@ onUnmounted(() => {
                   :class="{ 'bg-gray-50': selectedSchool?.id === school.id }"
               >
                 <div class="w-8 h-8 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
-                                    <span class="text-white text-sm font-semibold">{{
-                                        school.name.charAt(0).toUpperCase()
-                                      }}</span>
+                  <span class="text-white text-sm font-semibold">{{
+                      school.name.charAt(0).toUpperCase()
+                    }}</span>
                 </div>
                 <div class="flex-1">
                   <div class="text-sm text-gray-800">{{ school.name }}</div>

@@ -12,7 +12,8 @@ definePageMeta({
   layout: 'auth',
   layoutData: {
     title: 'Cursus',
-  }
+  },
+  middleware: 'admin-director'
 })
 
 const showAddCursusModal = ref(false)

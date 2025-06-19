@@ -24,12 +24,12 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         const response = await userService.getUserRoles(user.id)
         const userRoles = response.roles
 
-        const isDirector = userRoles.schools?.some(schoolRole =>
+        const hasAccess = userRoles.schools?.some(schoolRole =>
             schoolRole.context.id === parseInt(schoolId) &&
-            schoolRole.role === 'Directeur'
+            (schoolRole.role === 'Directeur' || schoolRole.role === 'Administrateur')
         )
 
-        if (!isDirector) {
+        if (!hasAccess) {
             return navigateTo('/')
         }
     } catch (error) {
