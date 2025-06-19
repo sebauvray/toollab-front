@@ -255,11 +255,19 @@ const handleAddNewResponsable = async (newResponsable) => {
 
 const handleEditResponsable = async (updatedResponsable) => {
     try {
+        const currentSelectedId = selectedResponsible.value?.id;
+
         await fetchFamilyDetails();
 
-        if (selectedResponsible.value && selectedResponsible.value.id === updatedResponsable.id) {
-            selectedResponsible.value = updatedResponsable;
-            updateContactInfo();
+        if (currentSelectedId && family.value.responsibles) {
+            const updatedResponsible = family.value.responsibles.find(
+                resp => resp.id === currentSelectedId
+            );
+
+            if (updatedResponsible) {
+                selectedResponsible.value = updatedResponsible;
+                updateContactInfo();
+            }
         }
 
         const { setFlashMessage } = useFlashMessage();
