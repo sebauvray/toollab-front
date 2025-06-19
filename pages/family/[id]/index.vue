@@ -494,6 +494,9 @@ definePageMeta({
                             </div>
                         </div>
                     </template>
+                    <div v-else class="py-24 text-center text-gray-500 text-sm">
+                        Aucun élève enregistré pour cette famille.
+                    </div>
                     <template v-if="showDeleteStudentsModal">
                         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                             <div class="bg-white p-4 rounded-lg shadow-md w-80">
@@ -513,11 +516,6 @@ definePageMeta({
                             </div>
                         </div>
                     </template>
-
-
-                    <div v-else class="py-24 text-center text-gray-500 text-sm">
-                        Aucun élève enregistré pour cette famille.
-                    </div>
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-x-8 w-full h-80 mt-1">
