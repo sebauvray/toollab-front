@@ -654,12 +654,12 @@ definePageMeta({
     />
     <AddNewResponsableModal
         :is-open="showAddNewResponsableModal"
-        :family-id="route.params.id"
+        :family-id="Number(route.params.id)"
         @close="showAddNewResponsableModal = false"
     />
     <EditResponsableModal
         :is-open="showEditResponsableModal"
-        :family-id="route.params.id"
+        :family-id="Number(route.params.id)"
         :responsable="selectedResponsible"
         @close="showEditResponsableModal = false"
     />

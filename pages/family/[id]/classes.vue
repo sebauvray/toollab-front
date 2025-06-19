@@ -348,7 +348,7 @@ definePageMeta({
                 </div>
                 <div class="grid grid-cols-3 gap-4 mt-6 font-nunito">
                     <div
-                        v-for="classe in classGroup"
+                        v-for="(classe, index) in classGroup"
                         :key="classe.id"
                         @click="toggleClass(classes.findIndex(c => c.id === classe.id), classe)"
                         class="flex flex-col rounded-xl select-none bg-gray-50 p-4 transition-all duration-200 relative"
