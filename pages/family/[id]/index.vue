@@ -669,8 +669,6 @@ definePageMeta({
         @close="showAddNewResponsableModal = false"
     />
 
-    <!-- Dans le fichier parent (paste-2.txt), remplacez cette partie : -->
-
     <EditResponsableModal
         :is-open="showEditResponsableModal"
         :family-id="Number(route.params.id)"
