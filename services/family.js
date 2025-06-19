@@ -32,17 +32,6 @@ export default {
         }
     },
 
-    async updateFamily(familyId, familyData) {
-        try {
-            const response = await apiClient.put(`/api/families/${familyId}`, familyData)
-            return response.data
-        } catch (error) {
-            console.error(`Erreur lors de la mise à jour de la famille ${familyId}:`, error)
-            throw error
-        }
-    },
-
-
     async addComment(familyId, content) {
         try {
             const response = await apiClient.post(`/api/families/${familyId}/comments`, { content })
@@ -92,5 +81,15 @@ export default {
             console.error('Erreur lors de l\'ajout du responsable:', error)
             throw error
         }
-    }
+    },
+
+    async updateResponsible(familyId, responsibleId, responsibleData) {
+        try {
+            const response = await apiClient.put(`/api/families/${familyId}/responsible/${responsibleId}`, responsibleData)
+            return response.data
+        } catch (error) {
+            console.error(`Erreur lors de la mise à jour du responsable ${responsibleId}:`, error)
+            throw error
+        }
+    },
 }

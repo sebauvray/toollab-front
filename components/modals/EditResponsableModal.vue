@@ -12,6 +12,10 @@ const props = defineProps({
         type: Boolean,
         required: true
     },
+    familyId: {
+        type: Number,
+        required: true
+    },
     responsable: {
         type: Object,
         required: true
@@ -74,7 +78,7 @@ const handleSave = async () => {
             is_student: isEleve.value
         };
 
-        const response = await familyService.createFamily(payload);
+        const response = await familyService.updateResponsible(props.familyId, props.responsable.id, payload);
 
         formData.value = {
             firstname: '',
@@ -93,12 +97,12 @@ const handleSave = async () => {
         const {setFlashMessage} = useFlashMessage();
         setFlashMessage({
             type: 'success',
-            message: response.message || 'Famille créée avec succès'
+            message: response.message || 'Responsable mis à jour avec succès'
         });
 
     } catch (err) {
-        error.value = err.response?.data?.message || 'Une erreur est survenue lors de la création de la famille';
-        console.error('Erreur lors de la création de la famille:', err);
+        error.value = err.response?.data?.message || 'Une erreur est survenue lors de la mise à jour du responsable';
+        console.error('Erreur lors de la mise à jour du responsable:', err);
     } finally {
         isSubmitting.value = false;
     }
@@ -113,7 +117,7 @@ watch(isEleve, (newValue) => {
     <div v-if="isOpen" class="fixed inset-0 font-nunito bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white rounded-2xl px-12 pt-6 pb-10 w-[50rem] max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold mx-auto">Ajouter un responsable</h2>
+                <h2 class="text-2xl font-bold mx-auto">Modifier un responsable</h2>
                 <button @click="$emit('close')"
                         class="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-50">
                     <svg class="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,14 +130,11 @@ watch(isEleve, (newValue) => {
             <div v-if="error" class="bg-red-100 text-red-800 p-3 rounded mt-4 mb-2">
                 {{ error }}
             </div>
-
-            <div>{{responsable}}</div>
-
+            
             <div class="text-xl font-bold pl-2 text-default mt-10 mb-6">Responsable</div>
             <div class="grid grid-cols-2 gap-6 ">
                 <InputText v-model="formData.lastname" placeholder="Nom"/>
                 <InputText v-model="formData.firstname" placeholder="Prénom"/>
-
             </div>
 
             <div class="grid grid-cols-2 gap-6 mt-10">
