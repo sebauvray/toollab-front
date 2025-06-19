@@ -1,12 +1,12 @@
 <script setup>
-import { ref, computed } from 'vue'
-import SelectGenre from "~/components/form/SelectGenre.vue"
-import SaveButton from "~/components/form/SaveButton.vue"
-import CancelButton from "~/components/form/CancelButton.vue"
-import Cross from "~/components/Icons/Cross.vue"
-import InputText from "~/components/form/InputText.vue"
-import InputSelect from "~/components/form/InputSelect.vue"
-import InputNumber from "~/components/form/InputNumber.vue"
+import {ref, computed} from 'vue'
+import Cross from '~/components/Icons/Cross.vue'
+import Trash from '~/components/Icons/Trash.vue'
+import InputText from '~/components/form/InputText.vue'
+import InputSelect from '~/components/form/InputSelect.vue'
+import InputNumber from '~/components/form/InputNumber.vue'
+import SelectGenre from '~/components/form/SelectGenre.vue'
+import SelectDay from "~/components/form/SelectDay.vue";
 
 const props = defineProps({
   isOpen: {
@@ -15,23 +15,16 @@ const props = defineProps({
   },
   cursusName: {
     type: String,
-    default: ''
-  },
-  levelId: {
-    type: Number,
-    default: 1
+    required: true
   },
   levels: {
-    type: Array,
-    default: () => []
-  },
-  teachers: {
     type: Array,
     default: () => []
   }
 })
 
 const emit = defineEmits(['close', 'save'])
+
 const error = ref('')
 const isSubmitting = ref(false)
 
@@ -58,34 +51,19 @@ const levelOptions = computed(() => {
   }))
 })
 
-const teacherOptions = computed(() => {
-  return [
-    { value: null, label: 'Aucun professeur' },
-    ...props.teachers.map(teacher => ({
-      value: teacher.id,
-      label: `${teacher.first_name} ${teacher.last_name}`
-    }))
-  ]
-})
-
 const dayOptions = [
-  { value: 'Lundi', label: 'Lundi' },
-  { value: 'Mardi', label: 'Mardi' },
-  { value: 'Mercredi', label: 'Mercredi' },
-  { value: 'Jeudi', label: 'Jeudi' },
-  { value: 'Vendredi', label: 'Vendredi' },
-  { value: 'Samedi', label: 'Samedi' },
-  { value: 'Dimanche', label: 'Dimanche' }
+  {value: 'Lundi', label: 'Lundi'},
+  {value: 'Mardi', label: 'Mardi'},
+  {value: 'Mercredi', label: 'Mercredi'},
+  {value: 'Jeudi', label: 'Jeudi'},
+  {value: 'Vendredi', label: 'Vendredi'},
+  {value: 'Samedi', label: 'Samedi'},
+  {value: 'Dimanche', label: 'Dimanche'}
 ]
 
 const addSchedule = () => {
   if (!newSchedule.value.day || !newSchedule.value.start_time || !newSchedule.value.end_time) {
-    error.value = 'Jour, heure de début et heure de fin sont obligatoires pour ajouter un créneau'
-    return
-  }
-
-  if (newSchedule.value.start_time >= newSchedule.value.end_time) {
-    error.value = 'L\'heure de fin doit être après l\'heure de début'
+    error.value = 'Jour, heure de début et heure de fin sont requis'
     return
   }
 
@@ -168,8 +146,10 @@ const handleSave = () => {
         {{ error }}
       </div>
 
-      <div class="mt-10">
-        <div class="grid grid-cols-2 gap-10 mb-10">
+      <div class="mt-6">
+        <h3 class="text-lg font-semibold mb-2">Informations sur la classe</h3>
+
+        <div class="grid grid-cols-2 gap-4 mb-4">
           <div>
             <InputText
                 v-model="newClass.name"
@@ -186,7 +166,7 @@ const handleSave = () => {
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-10 mb-10">
+        <div class="grid grid-cols-2 gap-4 mb-4">
           <div>
             <SelectGenre
                 v-model="newClass.gender"
@@ -204,93 +184,91 @@ const handleSave = () => {
           </div>
         </div>
 
-        <div class="mb-10">
+        <div class="mb-6">
           <InputText
               v-model="newClass.telegram_link"
               placeholder="Lien Telegram"
           />
         </div>
 
-        <div class="mb-10">
-          <h3 class="text-lg font-semibold mb-4">Créneaux de cours</h3>
+        <h3 class="text-lg font-semibold mb-2">Ajouter un créneau</h3>
 
-          <div class="bg-gray-50 p-4 rounded-lg mb-4">
-            <h4 class="text-md font-medium mb-3">Ajouter un créneau</h4>
-            <div class="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <InputSelect
-                    v-model="newSchedule.day"
-                    :options="dayOptions"
-                    placeholder="Jour"
-                />
-              </div>
-              <div>
-                <InputText
-                    v-model="newSchedule.teacher_name"
-                    placeholder="Nom du professeur"
-                />
-              </div>
-            </div>
-            <div class="grid grid-cols-3 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Heure de début</label>
-                <input
-                    v-model="newSchedule.start_time"
-                    type="time"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Heure de fin</label>
-                <input
-                    v-model="newSchedule.end_time"
-                    type="time"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div class="flex items-end">
-                <button
-                    @click="addSchedule"
-                    class="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  Ajouter
-                </button>
-              </div>
-            </div>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <SelectDay
+                v-model="newSchedule.day"
+                placeholder="Jour"
+            />
           </div>
-
-          <div v-if="newClass.schedules.length > 0" class="space-y-2">
-            <h4 class="text-md font-medium mb-2">Créneaux ajoutés</h4>
-            <div
-                v-for="(schedule, index) in newClass.schedules"
-                :key="index"
-                class="flex items-center justify-between p-3 bg-white border rounded-lg"
-            >
-              <div class="flex-1">
-                <span class="font-medium">{{ schedule.day }}</span>
-                <span class="mx-2">de</span>
-                <span>{{ schedule.start_time }}</span>
-                <span class="mx-2">à</span>
-                <span>{{ schedule.end_time }}</span>
-                <span class="mx-2">-</span>
-                <span class="text-gray-600">{{ getTeacherName(schedule.teacher_name) }}</span>
-              </div>
-              <button
-                  @click="removeSchedule(index)"
-                  class="text-red-500 hover:text-red-700 p-1"
-              >
-                <Cross class="size-4"/>
-              </button>
-            </div>
+          <div>
+            <InputText
+                v-model="newSchedule.teacher_name"
+                placeholder="Nom du professeur"
+            />
           </div>
         </div>
-      </div>
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Heure de début</label>
+            <input
+                v-model="newSchedule.start_time"
+                type="time"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-default"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Heure de fin</label>
+            <input
+                v-model="newSchedule.end_time"
+                type="time"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-default"
+            />
+          </div>
+          <div class="flex items-end">
+            <button
+                @click="addSchedule"
+                class="w-full bg-default text-white px-4 py-2 rounded-md hover:opacity-90"
+            >
+              Ajouter
+            </button>
+          </div>
+        </div>
 
-      <div class="flex justify-center gap-x-3 mt-8">
-        <CancelButton @click="$emit('close')" :disabled="isSubmitting">Annuler</CancelButton>
-        <SaveButton @click="handleSave" :disabled="isSubmitting">
-          {{ isSubmitting ? 'Création en cours...' : 'Enregistrer' }}
-        </SaveButton>
+        <div v-if="newClass.schedules.length > 0" class="space-y-2 mb-6">
+          <div
+              v-for="(schedule, index) in newClass.schedules"
+              :key="index"
+              class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+          >
+            <div class="flex items-center space-x-4">
+              <span class="font-medium">{{ schedule.day }}</span>
+              <span>{{ schedule.start_time }} - {{ schedule.end_time }}</span>
+              <span class="text-gray-600">{{ getTeacherName(schedule.teacher_name) }}</span>
+            </div>
+            <button
+                @click="removeSchedule(index)"
+                class="text-red-500 hover:text-red-700 p-1"
+            >
+              <Trash class="size-5"/>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-4 mt-3">
+          <button
+              @click="$emit('close')"
+              class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+          >
+            Annuler
+          </button>
+          <button
+              @click="handleSave"
+              :disabled="isSubmitting"
+              class="px-6 py-2 bg-default text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+          >
+            {{ isSubmitting ? 'Création...' : 'Créer la classe' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
