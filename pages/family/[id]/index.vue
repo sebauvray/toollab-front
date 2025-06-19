@@ -11,7 +11,8 @@ import UserFemaleTLB from "~/components/Icons/UserFemale-TLB.vue"
 import UserMaleTLB from "~/components/Icons/UserMale-TLB.vue"
 import AddElevesModal from "~/components/modals/AddElevesModal.vue"
 import EditElevesModal from "~/components/modals/EditElevesModal.vue"
-import AddResponsableModal from "~/components/modals/AddResponsableModal.vue"
+import AddNewResponsableModal from "~/components/modals/AddNewResponsableModal.vue"
+import EditResponsableModal from "~/components/modals/EditResponsableModal.vue"
 import familyService from '~/services/family'
 import userService from '~/services/user'
 import paiementService from '~/services/paiement'
@@ -27,7 +28,8 @@ const selectedResponsible = ref(null);
 const showAddStudentsModal = ref(false);
 const showEditStudentsModal = ref(false);
 const selectedStudent = ref(null);
-const showAddResponsableModal = ref(false);
+const showAddNewResponsableModal = ref(false);
+const showEditResponsableModal = ref(false);
 const isEditing = ref(false);
 const contactInfo = ref({
   name: '',
@@ -188,7 +190,7 @@ const handleAddStudents = async (newStudents, callbacks) => {
   }
 };
 
-const handleAddResponsable = async (newResponsable) => {
+const handleAddNewResponsable = async (newResponsable) => {
   try {
     if (newResponsable && newResponsable.user) {
       const response = await familyService.addResponsible(route.params.id, newResponsable.user.id);
@@ -263,7 +265,7 @@ definePageMeta({
     <div class="flex justify-end my-2">
       <div class="flex">
         <button
-            @click="showAddResponsableModal = true"
+            @click="showAddNewResponsableModal = true"
             class="mx-1 inline-flex gap-x-2 justify-between items-center px-4 py-2 text-white text-sm rounded-lg bg-default w-fit hover:opacity-90">
           Ajouter un responsable
         </button>
@@ -320,7 +322,7 @@ definePageMeta({
             <div class="ml-auto font-sans text-xs text-black cursor-pointer" v-if="!isEditing">
               <button
                   class="underline"
-                  @click="handleEdit"
+                  @click="showEditResponsableModal = true"
               >
                 Modifier
               </button>
@@ -564,20 +566,27 @@ definePageMeta({
       </div>
     </div>
   </div>
-  <AddResponsableModal
-      :is-open="showAddResponsableModal"
-      @close="showAddResponsableModal = false"
-      @save="handleAddResponsable"
-  />
   <AddElevesModal
-      :is-open="showAddStudentsModal"
-      @close="showAddStudentsModal = false"
-      @save="handleAddStudents"
-  />
-  <EditElevesModal
-      :is-open="showEditStudentsModal"
-      :student="selectedStudent"
-      @close="showEditStudentsModal = false"
-      @save="handleEditStudent"
-  />
+        :is-open="showAddStudentsModal"
+        @close="showAddStudentsModal = false"
+        @save="handleAddStudents"
+    />
+    <EditElevesModal
+        :is-open="showEditStudentsModal"
+        :student="selectedStudent"
+        @close="showEditStudentsModal = false"
+        @save="handleEditStudent"
+    />
+    <AddNewResponsableModal
+        :is-open="showAddNewResponsableModal"
+        :family-id="route.params.id"
+        @close="showAddNewResponsableModal = false"
+        @save="handleAddNewResponsable"
+    />
+    <EditResponsableModal
+        :is-open="showEditResponsableModal"
+        :responsable="selectedResponsible"
+        @close="showEditResponsableModal = false"
+        @save="handleSave"
+    />
 </template>

@@ -25,7 +25,6 @@ const genderOptions = [
     { value: 'F', label: 'Femme' }
 ]
 
-// local copy of student
 const editStudent = ref({})
 watch(
     () => [props.student, props.isOpen],
