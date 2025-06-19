@@ -1,5 +1,5 @@
 <script setup>
-import {onMounted, ref} from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import SaveButton from "~/components/form/SaveButton.vue"
 import CommentEmpty from "~/components/Icons/Comment-Empty.vue"
 import HomeTLB from "~/components/Icons/Home-TLB.vue"
@@ -20,8 +20,13 @@ import {formatShortDateFr} from '~/utils/dateFormatter'
 import EditIcon from "~/components/Icons/Edit.vue";
 import Trash from "~/components/Icons/Trash.vue";
 import axios from "axios";
+import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 
 const route = useRoute();
+const breadcrumbItems = computed(() => [
+    { name: 'Familles', path: '/family' },
+    { name: family.value.responsibles[0].first_name + ' ' + family.value.responsibles[0].last_name || 'Chargement...', path: null },
+]);
 const loading = ref(true);
 const error = ref(null);
 const family = ref(null);
@@ -68,7 +73,6 @@ const fetchFamilyDetails = async () => {
         }
 
         comments.value = family.value.comments || [];
-
     } catch (err) {
         console.error('Erreur lors de la récupération des détails de la famille:', err);
         error.value = 'Impossible de charger les détails de la famille';
@@ -297,6 +301,8 @@ definePageMeta({
     </div>
 
     <div v-else class="flex flex-col px-8 pt-2 w-full font-montserrat">
+        <BreadCrumb :custom-items="breadcrumbItems" />
+
         <div class="flex justify-end my-2">
             <div class="flex">
                 <button

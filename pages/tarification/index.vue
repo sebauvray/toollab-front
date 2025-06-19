@@ -7,6 +7,7 @@ import Plus from '~/components/Icons/Plus.vue'
 import Trash from '~/components/Icons/Trash.vue'
 import EditIcon from '~/components/Icons/Edit.vue'
 import ConfirmationModal from '~/components/modals/ConfirmationModal.vue'
+import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 
 definePageMeta({
   layout: 'auth',
@@ -17,6 +18,10 @@ definePageMeta({
 })
 
 usePageTitle('Tarification')
+
+const breadcrumbItems = computed(() => [
+    { name: 'Tarification', path: '/tarification' },
+]);
 
 const { user } = useAuth()
 const { setFlashMessage } = useFlashMessage()
@@ -539,9 +544,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 p-6">
+
+    <div class="min-h-screen bg-gray-50 p-6">
     <div class="max-w-7xl mx-auto">
-      <div class="flex flex-col lg:flex-row gap-6">
+        <BreadCrumb :custom-items="breadcrumbItems" />
+
+        <div class="flex flex-col lg:flex-row gap-6">
         <div class="lg:w-1/4">
           <div class="bg-white rounded-lg shadow-sm border border-gray-200">
             <div class="p-4 border-b border-gray-200">

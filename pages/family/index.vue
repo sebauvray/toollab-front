@@ -1,18 +1,19 @@
 <script setup>
 import PlusLight from "~/components/Icons/PlusLight.vue";
 import ResponsableTLB from "~/components/Icons/Responsable-TLB.vue";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import AddResponsableModal from "~/components/modals/AddResponsableModal.vue";
 import Tag from "~/components/Tag.vue";
 import familyService from "~/services/family.js";
 import { formatDateFr } from "~/utils/dateFormatter.js";
 import DataTable from "~/components/table/DataTable.vue";
 import PageContainer from "~/components/layout/PageContainer.vue";
+import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 
 definePageMeta({
   layout: 'auth',
   layoutData: {
-    title: 'Famille'
+    title: 'Familles'
   }
 })
 
@@ -33,6 +34,10 @@ const columns = [
   { key: 'status', label: 'Règlement', width: '2' },
   { key: 'dateInscription', label: 'Date d\'inscription', width: '3' }
 ];
+
+const breadcrumbItems = computed(() => [
+    { name: 'Familles', path: '/family' },
+]);
 
 const fetchFamilies = async (page = 1) => {
   try {
@@ -96,7 +101,9 @@ onMounted(() => {
 
 <template>
   <PageContainer>
-    <AddResponsableModal
+      <BreadCrumb :custom-items="breadcrumbItems" />
+
+      <AddResponsableModal
         :is-open="showAddResponsableModal"
         @close="showAddResponsableModal = false"
         @save="handleAddResponsable"

@@ -11,9 +11,15 @@ import classeService from "~/services/classe.js";
 import studentClassroomService from "~/services/studentClassroom.js";
 import userService from "~/services/user.js";
 import schoolService from "~/services/school.js";
+import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 
 const router = useRouter();
 const route = useRoute();
+const breadcrumbItems = computed(() => [
+    { name: 'Familles', path: '/family' },
+    { name: family.value.responsibles[0].first_name + ' ' + family.value.responsibles[0].last_name || 'Chargement...', path: `/family/${family.value.id}` },
+    { name: 'Classes', path: null },
+]);
 const isModalOpen = ref(false);
 const selectedStudent = ref(null);
 const selectedClasses = ref(new Set());
@@ -337,6 +343,8 @@ definePageMeta({
     </div>
 
     <div v-else class="grid grid-cols-4 mt-6 px-6 font-montserrat w-full gap-x-4">
+        <BreadCrumb :custom-items="breadcrumbItems" />
+
         <section class="bg-white col-span-3 rounded-xl border px-6 py-2">
             <h2 class="font-bold text-2xl mb-6">{{ selectedStudent?.first_name }} {{ selectedStudent?.last_name }}</h2>
             <div v-for="(classGroup, cursus) in groupedClasses" :key="cursus" class="mb-8">

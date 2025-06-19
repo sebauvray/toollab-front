@@ -167,7 +167,7 @@ const columns = [
 
 const breadcrumbItems = computed(() => [
   { name: 'Cursus', path: '/cursus' },
-  { name: cursus.value.name || 'Chargement...', path: null }
+  { name: cursus.value.name || 'Chargement...', path: null },
 ]);
 
 const fetchCursus = async () => {

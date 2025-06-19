@@ -47,9 +47,9 @@ onBeforeUnmount(() => {
   <div class="relative" ref="dropdownRef">
     <button
         @click="toggleDropdown"
-        class="inline-flex items-center justify-center rounded-full text-center bg-gray-light p-2.5 uppercase text-lg text-primary hover:bg-gray-200 transition-colors"
+        class="inline-flex items-center justify-center rounded-full text-center bg-white border p-2.5 uppercase text-primary hover:bg-gray-100 transition-colors"
     >
-      <span class="size-7">{{ initials }}</span>
+      <span class="size-6">{{ initials }}</span>
     </button>
 
     <div

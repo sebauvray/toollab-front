@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue"
+import { ref, onMounted, computed } from "vue"
 import PlusLight from "~/components/Icons/PlusLight.vue"
 import DataTable from "~/components/table/DataTable.vue"
 import AddCursusModal from "~/components/modals/AddCursusModal.vue"
@@ -7,6 +7,7 @@ import PageContainer from "~/components/layout/PageContainer.vue"
 import cursusService from '~/services/cursus'
 import Trash from "~/components/Icons/Trash.vue"
 import ConfirmationModal from "~/components/modals/ConfirmationModal.vue";
+import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 
 definePageMeta({
   layout: 'auth',
@@ -37,6 +38,10 @@ const columns = [
   { key: 'type', label: 'Type de cursus', width: '2' },
   { key: 'actions', label: '', width: '1' }
 ]
+
+const breadcrumbItems = computed(() => [
+    { name: 'Cursus', path: '/cursus' },
+]);
 
 const fetchCursus = async (page = 1) => {
   try {
@@ -148,7 +153,9 @@ onMounted(() => {
 
 <template>
   <PageContainer>
-    <AddCursusModal
+      <BreadCrumb :custom-items="breadcrumbItems" />
+
+      <AddCursusModal
         :is-open="showAddCursusModal"
         @close="showAddCursusModal = false"
         @save="handleAddCursus"

@@ -5,6 +5,7 @@ import paiementService from '~/services/paiement'
 import Plus from '~/components/Icons/Plus.vue'
 import Trash from '~/components/Icons/Trash.vue'
 import EditIcon from '~/components/Icons/Edit.vue'
+import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 
 definePageMeta({
   layout: 'auth',
@@ -15,7 +16,12 @@ definePageMeta({
 
 const route = useRoute()
 const { setFlashMessage } = useFlashMessage()
-
+const breadcrumbItems = computed(() => [
+    { name: 'Familles', path: '/family' },
+    { name: tarifDetails.value.nom_famille || 'Chargement...', path: `/family/${tarifDetails.value.id_famille}` },
+    { name: 'Classes', path: `/family/${tarifDetails.value.id_famille}/classes` },
+    { name: 'Paiement', path: null },
+]);
 const isLoading = ref(true)
 const detailsPaiement = ref(null)
 const lignesPaiement = ref([])
@@ -551,7 +557,9 @@ const resetNewForm = () => {
   </div>
 
   <div v-else class="grid grid-cols-1 lg:grid-cols-3 mt-6 px-6 font-montserrat w-full gap-4 items-start">
-    <section class="lg:col-span-2 bg-white rounded-lg p-4 shadow-sm order-2 lg:order-1">
+      <BreadCrumb :custom-items="breadcrumbItems" />
+
+      <section class="lg:col-span-2 bg-white rounded-lg p-4 shadow-sm order-2 lg:order-1">
       <h2 class="font-bold text-lg mb-4 text-gray-800">Mode de paiement</h2>
 
       <div class="space-y-3">
