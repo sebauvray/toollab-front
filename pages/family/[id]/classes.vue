@@ -424,7 +424,7 @@ definePageMeta({
                         class="p-2 border rounded-lg inline-flex items-center justify-between cursor-pointer hover:bg-gray-50"
                         :class="selectedStudent?.id === student.id ? 'border-black' : 'border-transparent'"
                     >
-                        <span>{{ student.first_name }} {{ student.last_name }} {{ student.gender }}</span>
+                        <span>{{ student.first_name }} {{ student.last_name }}</span>
                         <div class="size-7 flex items-center justify-center">
                             <Valid v-if="hasSelectedClasses(student.id)" class="text-green-600" />
                         </div>
