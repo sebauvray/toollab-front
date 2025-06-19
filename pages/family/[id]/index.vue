@@ -21,6 +21,7 @@ import EditIcon from "~/components/Icons/Edit.vue";
 import Trash from "~/components/Icons/Trash.vue";
 import axios from "axios";
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
+import ConfirmationModal from "~/components/modals/ConfirmationModal.vue";
 
 const route = useRoute();
 const breadcrumbItems = computed(() => [
@@ -134,6 +135,7 @@ const handleDeleteStudent = async () => {
             type: 'success',
             message: 'Élève supprimé avec succès'
         });
+        showDeleteStudentsModal.value = false
     } catch (err) {
         console.error("❌ Erreur suppression élève :", err);
 
@@ -497,25 +499,6 @@ definePageMeta({
                     <div v-else class="py-24 text-center text-gray-500 text-sm">
                         Aucun élève enregistré pour cette famille.
                     </div>
-                    <template v-if="showDeleteStudentsModal">
-                        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                            <div class="bg-white p-4 rounded-lg shadow-md w-80">
-                                <p>
-                                    Cette action supprimera définitivement l'élève ainsi que toutes ses informations associées (coordonnées, rôles, etc.).
-                                    <br>
-                                    Es-tu sûr de vouloir continuer ?
-                                </p>
-                                <div class="mt-4 flex justify-end gap-2">
-                                    <button @click="showDeleteStudentsModal = false"
-                                            class="px-3 py-1 bg-gray-200 rounded">Annuler
-                                    </button>
-                                    <button @click="handleDeleteStudent() ; showDeleteStudentsModal = false"
-                                            class="px-3 py-1 bg-red-600 text-white rounded">Supprimer
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-x-8 w-full h-80 mt-1">
@@ -666,5 +649,13 @@ definePageMeta({
         :family-id="Number(route.params.id)"
         :responsable="selectedResponsible"
         @close="showEditResponsableModal = false"
+    />
+    <ConfirmationModal
+        :is-open="showDeleteStudentsModal"
+        title="Supprimer l'élève"
+        message="Cette action supprimera définitivement l'élève ainsi que toutes ses informations associées (coordonnées, rôles, etc.). Cette action est irréversible. Souhaitez-vous continuer ?"
+        confirm-button-text="Supprimer"
+        @confirm="handleDeleteStudent"
+        @cancel="showDeleteStudentsModal = false"
     />
 </template>
