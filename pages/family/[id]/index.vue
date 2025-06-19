@@ -253,6 +253,30 @@ const handleAddNewResponsable = async (newResponsable) => {
     }
 };
 
+const handleEditResponsable = async (updatedResponsable) => {
+    try {
+        await fetchFamilyDetails();
+
+        if (selectedResponsible.value && selectedResponsible.value.id === updatedResponsable.id) {
+            selectedResponsible.value = updatedResponsable;
+            updateContactInfo();
+        }
+
+        const { setFlashMessage } = useFlashMessage();
+        setFlashMessage({
+            type: 'success',
+            message: 'Responsable mis à jour avec succès'
+        });
+    } catch (err) {
+        console.error('Erreur lors de la mise à jour du responsable:', err);
+        const { setFlashMessage } = useFlashMessage();
+        setFlashMessage({
+            type: 'error',
+            message: 'Erreur lors de la mise à jour du responsable'
+        });
+    }
+};
+
 const handleEditStudent = async (updatedStudent) => {
     try {
         await familyService.updateStudent(route.params.id, updatedStudent.id, updatedStudent);
@@ -644,12 +668,17 @@ definePageMeta({
         :family-id="Number(route.params.id)"
         @close="showAddNewResponsableModal = false"
     />
+
+    <!-- Dans le fichier parent (paste-2.txt), remplacez cette partie : -->
+
     <EditResponsableModal
         :is-open="showEditResponsableModal"
         :family-id="Number(route.params.id)"
         :responsable="selectedResponsible"
         @close="showEditResponsableModal = false"
+        @save="handleEditResponsable"
     />
+
     <ConfirmationModal
         :is-open="showDeleteStudentsModal"
         title="Supprimer l'élève"
