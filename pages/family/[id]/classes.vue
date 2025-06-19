@@ -36,6 +36,21 @@ const currentSchoolId = computed(() => {
     return localStorage.getItem('current_school_id') || 1;
 });
 
+const groupedClasses = computed(() => {
+    const groups = {};
+
+    classes.value.forEach(classe => {
+        if (!shouldShowClass(classe)) return;
+
+        if (!groups[classe.cursus]) {
+            groups[classe.cursus] = [];
+        }
+        groups[classe.cursus].push(classe);
+    });
+
+    return groups;
+});
+
 const checkAdminAccess = () => {
     if (selectedSchool.value && schools.value.length > 0) {
         const currentSchoolRole = schools.value.find(s => s.id === selectedSchool.value.id);
@@ -98,7 +113,7 @@ const shouldShowClass = (classe) => {
         if (studentGender === 'F') return classGender === 'Femmes';
 
         return false;
-    } else{
+    } else {
         return true
     }
 };
@@ -324,63 +339,67 @@ definePageMeta({
     <div v-else class="grid grid-cols-4 mt-6 px-6 font-montserrat w-full gap-x-4">
         <section class="bg-white col-span-3 rounded-xl border px-6 py-2">
             <h2 class="font-bold text-2xl mb-6">{{ selectedStudent?.first_name }} {{ selectedStudent?.last_name }}</h2>
-            <div class="inline-flex items-center gap-x-3">
-                <span class="size-3 rounded-full bg-green-tlb"></span>
-                <span class="font-semibold text-sm">Classes disponibles ({{ classes.filter(c => c.available_spots > 0 && shouldShowClass(c)).length }})</span>
-            </div>
-            <div class="grid grid-cols-3 gap-4 mt-6 font-nunito">
-                <div v-for="(classe, index) in classes"
-                     :key="classe.id"
-                     v-show="shouldShowClass(classe)"
-                     @click="toggleClass(index, classe)"
-                     class="flex flex-col rounded-xl select-none bg-gray-50 p-4 transition-all duration-200 relative"
-                     :class="[
-                       'border-4',
-                       {
-                         'border-green-600': studentClasses[selectedStudent?.id]?.has(index),
-                         'border-transparent': !studentClasses[selectedStudent?.id]?.has(index),
-                         'cursor-pointer': isClassSelectable(index) && !isSaving,
-                         'opacity-50 cursor-not-allowed': !isClassSelectable(index) || classe.available_spots === 0,
-                         'opacity-75': isSaving
-                       }
-                     ]">
-                    <div v-if="loadingClassIndex === index"
-                         class="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center rounded-xl z-10">
-                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-                    </div>
+            <div v-for="(classGroup, cursus) in groupedClasses" :key="cursus" class="mb-8">
+                <div class="h-px bg-gray-100 w-full mb-6"></div>
+                <h3 class="text-xl font-bold mb-3 flex items-center"><span class="text-xs uppercase bg-gray-700 text-white px-2 py-1 rounded-lg mr-2">Cursus</span> {{ cursus }}</h3>
+                <div class="inline-flex items-center gap-x-3">
+                    <span class="size-3 rounded-full bg-green-tlb"></span>
+                    <span class="font-semibold text-sm">Classes disponibles ({{ classGroup.filter(c => c.available_spots > 0 && shouldShowClass(c)).length }})</span>
+                </div>
+                <div class="grid grid-cols-3 gap-4 mt-6 font-nunito">
+                    <div
+                        v-for="classe in classGroup"
+                        :key="classe.id"
+                        @click="toggleClass(classes.findIndex(c => c.id === classe.id), classe)"
+                        class="flex flex-col rounded-xl select-none bg-gray-50 p-4 transition-all duration-200 relative"
+                        :class="[
+                            'border-4',
+                            {
+                              'border-green-600': studentClasses[selectedStudent?.id]?.has(classes.findIndex(c => c.id === classe.id)),
+                              'border-transparent': !studentClasses[selectedStudent?.id]?.has(classes.findIndex(c => c.id === classe.id)),
+                              'cursor-pointer': isClassSelectable(classes.findIndex(c => c.id === classe.id)) && !isSaving,
+                              'opacity-50 cursor-not-allowed': !isClassSelectable(classes.findIndex(c => c.id === classe.id)) || classe.available_spots === 0,
+                              'opacity-75': isSaving
+                            }
+                        ]">
+                        <div v-if="loadingClassIndex === index"
+                             class="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center rounded-xl z-10">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                        </div>
 
-                    <div class="flex items-center gap-x-5">
-                        <div class="bg-[#A2A1A8]/5 p-2 rounded-lg">
-                            <NotebookTLB
-                                :class="{
+                        <div class="flex items-center gap-x-5">
+                            <div class="bg-[#A2A1A8]/5 p-2 rounded-lg">
+                                <NotebookTLB
+                                    :class="{
                                   'text-[#93C5FD]': classe.gender === 'Hommes',
                                   'text-[#FDA4AF]': classe.gender === 'Femmes',
                                   'text-[#FCD34D]': classe.gender === 'Enfants'
                                 }"
-                                class="size-7"
-                            />
+                                    class="size-7"
+                                />
+                            </div>
+
+                            <div class="flex flex-col">
+                                <div class="font-black uppercase text-black text-lg">{{ classe.name }}</div>
+                                <div class="text-gray-tlb text-base">{{ classe.cursus }} - {{ classe.level?.name || 'Sans niveau' }}</div>
+                            </div>
                         </div>
 
-                        <div class="flex flex-col">
-                            <div class="font-black uppercase text-black text-lg">{{ classe.name }}</div>
-                            <div class="text-gray-tlb text-base">{{ classe.cursus }} - {{ classe.level?.name || 'Sans niveau' }}</div>
+                        <div v-if="classe.schedule" class="inline-flex items-center gap-x-2 pl-4 mt-4 font-light text-sm">
+                            <ClockTLB class="size-4" />
+                            <div>{{ classe.schedule.day }}</div>
+                            <div> - {{ classe.schedule.time }}</div>
                         </div>
-                    </div>
 
-                    <div v-if="classe.schedule" class="inline-flex items-center gap-x-2 pl-4 mt-4 font-light text-sm">
-                        <ClockTLB class="size-4" />
-                        <div>{{ classe.schedule.day }}</div>
-                        <div> - {{ classe.schedule.time }}</div>
-                    </div>
+                        <div v-if="classe.schedule?.teacher" class="inline-flex items-center gap-x-2 pl-4 mt-1 font-light text-sm">
+                            <StudentTLB class="size-4" />
+                            <div>{{ classe.schedule.teacher.name }}</div>
+                        </div>
 
-                    <div v-if="classe.schedule?.teacher" class="inline-flex items-center gap-x-2 pl-4 mt-1 font-light text-sm">
-                        <StudentTLB class="size-4" />
-                        <div>{{ classe.schedule.teacher.name }}</div>
-                    </div>
-
-                    <div class="font-black inline-flex items-center justify-center my-3"
-                         :class="getAvailableSpotsColor(classe.available_spots)">
-                        {{ classe.available_spots }} places dispos
+                        <div class="font-black inline-flex items-center justify-center my-3"
+                             :class="getAvailableSpotsColor(classe.available_spots)">
+                            {{ classe.available_spots }} places dispos
+                        </div>
                     </div>
                 </div>
             </div>
