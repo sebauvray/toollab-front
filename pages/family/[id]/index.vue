@@ -280,7 +280,7 @@ definePageMeta({
               name: 'family-id-classes',
               params: { id: $route.params.id }
             }"
-          class="mx-1 inline-flex gap-x-2 justify-between items-center px-4 py-2 rounded-lg bg-yellow-tlb text-default font-bold text-sm w-fit hover:opacity-90">
+          class="mx-1 inline-flex gap-x-2 justify-between items-center px-4 py-2 rounded-lg bg-yellow-tlb text-default font-semibold text-sm w-fit hover:opacity-90">
         <span>Choix des classes</span>
       </NuxtLink>
     </div>

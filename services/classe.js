@@ -33,9 +33,10 @@ export default {
                 size: parseInt(classData.size),
                 school_id: classData.school_id || schoolId,
                 years: new Date().getFullYear(),
-                type: classData.type || 'Standard'
+                type: classData.type || 'Standard',
+                telegram_link: classData.telegram_link,
+                schedules: classData.schedules || []
             }
-
 
             const response = await apiClient.post('/api/classrooms', payload)
             return response.data
@@ -50,7 +51,19 @@ export default {
 
     async updateClass(id, classData) {
         try {
-            const response = await apiClient.put(`/api/classrooms/${id}`, classData)
+            const payload = {
+                name: classData.name,
+                cursus_id: classData.cursus_id,
+                level_id: classData.level_id || classData.levelId,
+                gender: classData.gender,
+                size: parseInt(classData.size),
+                years: classData.years || new Date().getFullYear(),
+                type: classData.type || 'Standard',
+                telegram_link: classData.telegram_link,
+                schedules: classData.schedules || []
+            }
+
+            const response = await apiClient.put(`/api/classrooms/${id}`, payload)
             return response.data
         } catch (error) {
             console.error(`Erreur lors de la mise à jour de la classe ${id}:`, error)
