@@ -73,6 +73,20 @@ export default {
         }
     },
 
+    async deleteStudent(familyId, studentId) {
+        try {
+            console.log('🧪 Appel suppression lancé pour', familyId, studentId);
+
+            const response = await apiClient.delete(`/api/families/${familyId}/students/${studentId}`);
+            return response.data;
+        } catch (error) {
+            console.log(error);
+            console.error(`❌ Erreur suppression élève ${studentId}:`, error);
+            throw error;
+        }
+    },
+
+
 
     async addResponsible(familyId, userId) {
         try {
