@@ -129,7 +129,7 @@ const handleSave = () => {
 
 <template>
   <div v-if="isOpen" class="fixed inset-0 font-nunito bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-2xl px-8 pt-8 pb-10 w-[70rem] max-h-[95vh] overflow-y-auto">
+    <div class="bg-white rounded-2xl px-6 pt-4 pb-5 w-[70rem] max-h-[95vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-bold mx-auto">Ajouter une classe</h2>
         <button
