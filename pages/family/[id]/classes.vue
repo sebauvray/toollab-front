@@ -9,6 +9,8 @@ import ConfirmationClasseModal from "~/components/modals/ConfirmationClasseModal
 import familyService from "~/services/family.js";
 import classeService from "~/services/classe.js";
 import studentClassroomService from "~/services/studentClassroom.js";
+import userService from "~/services/user.js";
+import schoolService from "~/services/school.js";
 
 const router = useRouter();
 const route = useRoute();
@@ -25,22 +27,80 @@ const students = ref([]);
 const classes = ref([]);
 const studentClasses = ref({});
 const studentEnrollments = ref({});
+const hasAdminAccess = ref(false);
+const schools = ref([]);
+const selectedSchool = ref(null);
+const user = ref(null);
 
 const currentSchoolId = computed(() => {
     return localStorage.getItem('current_school_id') || 1;
 });
 
+const checkAdminAccess = () => {
+    if (selectedSchool.value && schools.value.length > 0) {
+        const currentSchoolRole = schools.value.find(s => s.id === selectedSchool.value.id);
+        hasAdminAccess.value = currentSchoolRole?.role === 'Directeur' || currentSchoolRole?.role === 'Administrateur';
+    }
+};
+
+const loadUserSchools = async () => {
+    try {
+        if (user.value) {
+            const response = await userService.getUserRoles(user.value.id);
+            const userRoles = response.roles;
+
+            if (userRoles.schools && userRoles.schools.length > 0) {
+                const schoolPromises = userRoles.schools.map(async (schoolRole) => {
+                    const schoolData = await schoolService.getSchool(schoolRole.context.id);
+                    return {
+                        id: schoolData.id,
+                        name: schoolData.name,
+                        role: schoolRole.role
+                    };
+                });
+
+                schools.value = await Promise.all(schoolPromises);
+
+                if (schools.value.length > 0) {
+                    const savedSchoolId = localStorage.getItem('current_school_id');
+
+                    if (savedSchoolId) {
+                        const savedSchool = schools.value.find(s => s.id === parseInt(savedSchoolId));
+                        if (savedSchool) {
+                            selectedSchool.value = savedSchool;
+                        } else {
+                            selectedSchool.value = schools.value[0];
+                            localStorage.setItem('current_school_id', schools.value[0].id);
+                        }
+                    } else {
+                        selectedSchool.value = schools.value[0];
+                        localStorage.setItem('current_school_id', schools.value[0].id);
+                    }
+
+                    checkAdminAccess();
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Erreur lors du chargement des écoles:', error);
+    }
+};
+
 const shouldShowClass = (classe) => {
-    if (!selectedStudent.value) return false;
+    if (!hasAdminAccess.value) {
+        if (!selectedStudent.value) return false;
 
-    const studentGender = selectedStudent.value.gender;
-    const classGender = classe.gender;
+        const studentGender = selectedStudent.value.gender;
+        const classGender = classe.gender;
 
-    if (classGender === 'Enfants') return true;
-    if (studentGender === 'M') return classGender === 'Hommes';
-    if (studentGender === 'F') return classGender === 'Femmes';
+        if (classGender === 'Enfants') return true;
+        if (studentGender === 'M') return classGender === 'Hommes';
+        if (studentGender === 'F') return classGender === 'Femmes';
 
-    return false;
+        return false;
+    } else{
+        return true
+    }
 };
 
 const getAvailableSpotsColor = (spots) => {
@@ -228,6 +288,20 @@ onMounted(async () => {
     await fetchClasses();
     await fetchEnrollments();
     isLoading.value = false;
+});
+
+onMounted(async () => {
+    if (process.client) {
+        const userJson = localStorage.getItem('auth.user');
+        if (userJson) {
+            try {
+                user.value = JSON.parse(userJson);
+                await loadUserSchools();
+            } catch (e) {
+                console.error('Erreur lors de la récupération des données utilisateur', e);
+            }
+        }
+    }
 });
 
 definePageMeta({
