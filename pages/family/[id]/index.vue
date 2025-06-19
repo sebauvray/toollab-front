@@ -581,7 +581,6 @@ definePageMeta({
         :is-open="showAddNewResponsableModal"
         :family-id="route.params.id"
         @close="showAddNewResponsableModal = false"
-        @save="handleAddNewResponsable"
     />
     <EditResponsableModal
         :is-open="showEditResponsableModal"
