@@ -1,6 +1,7 @@
 services:
   nuxt:
     container_name: nuxt_toollab
+    env_file: .env
     build:
       context: ./docker
       target: dev
@@ -10,8 +11,6 @@ services:
       - web
     volumes:
       - .:/app
-    environment:
-      - NODE_ENV=development
 
 networks:
   web:
