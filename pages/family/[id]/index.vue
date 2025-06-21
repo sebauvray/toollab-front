@@ -360,12 +360,15 @@ definePageMeta({
             <div class="grid grid-cols-3 gap-x-8 mt-1 w-full">
                 <div class="flex relative flex-col col-span-1 gap-y-4 px-6 py-3 bg-white rounded-2xl border">
                     <div
-                        class="flex items-center px-12 py-1.5 mx-auto text-lg font-bold text-center rounded-lg bg-gray-light font-montserrat hover:cursor-pointer"
-                        @click="isDropdownOpen = !isDropdownOpen">
+                        class="flex items-center px-12 py-1.5 mx-auto text-lg font-bold text-center rounded-lg bg-gray-light font-montserrat"
+                        :class="{ 'hover:cursor-pointer': family.responsibles.length > 1 }"
+                        @click="family.responsibles.length > 1 ? isDropdownOpen = !isDropdownOpen : null"
+                    >
                         <div class="mr-3">
                             {{ contactInfo.name }}
                         </div>
                         <svg
+                            v-if="family.responsibles.length > 1"
                             class="size-4 text-placeholder mt-0.5"
                             :class="{ 'rotate-180': isDropdownOpen }"
                             viewBox="0 0 12 12"
