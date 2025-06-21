@@ -123,7 +123,7 @@ import ConfirmationModal from "~/components/modals/ConfirmationModal.vue";
 import PageContainer from "~/components/layout/PageContainer.vue";
 import cursusService from "~/services/cursus";
 import classeService from "~/services/classe";
-import { useRoute } from '#imports';
+import {usePageTitle, useRoute} from '#imports';
 
 const route = useRoute();
 const isLoading = ref(true);
@@ -140,6 +140,8 @@ const cursus = ref({
   levels: [],
   progression: 'levels'
 });
+
+usePageTitle('Cursus')
 
 const classes = ref([]);
 

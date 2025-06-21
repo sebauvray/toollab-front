@@ -8,14 +8,17 @@ import cursusService from '~/services/cursus'
 import Trash from "~/components/Icons/Trash.vue"
 import ConfirmationModal from "~/components/modals/ConfirmationModal.vue";
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
+import {usePageTitle} from "~/composables/usePageTitle.js";
 
 definePageMeta({
   layout: 'auth',
   layoutData: {
-    title: 'Cursus',
+    title: 'Cursus'
   },
   middleware: 'admin-director'
 })
+
+usePageTitle('Cursus')
 
 const showAddCursusModal = ref(false)
 const isLoading = ref(true)

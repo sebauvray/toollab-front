@@ -6,6 +6,7 @@ import Plus from '~/components/Icons/Plus.vue'
 import Trash from '~/components/Icons/Trash.vue'
 import EditIcon from '~/components/Icons/Edit.vue'
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
+import {usePageTitle} from "~/composables/usePageTitle.js";
 
 definePageMeta({
   layout: 'auth',
@@ -13,6 +14,7 @@ definePageMeta({
     title: 'Famille - Paiement'
   }
 })
+usePageTitle('Famille')
 
 const route = useRoute()
 const { setFlashMessage } = useFlashMessage()

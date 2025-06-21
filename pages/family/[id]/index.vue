@@ -22,7 +22,9 @@ import Trash from "~/components/Icons/Trash.vue";
 import axios from "axios";
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 import ConfirmationModal from "~/components/modals/ConfirmationModal.vue";
+import {usePageTitle} from "~/composables/usePageTitle.js";
 
+usePageTitle('Famille')
 const route = useRoute();
 const breadcrumbItems = computed(() => [
     { name: 'Familles', path: '/family' },

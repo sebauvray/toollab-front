@@ -9,6 +9,7 @@ import { formatDateFr } from "~/utils/dateFormatter.js";
 import DataTable from "~/components/table/DataTable.vue";
 import PageContainer from "~/components/layout/PageContainer.vue";
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
+import {usePageTitle} from "~/composables/usePageTitle.js";
 
 definePageMeta({
   layout: 'auth',
@@ -16,6 +17,8 @@ definePageMeta({
     title: 'Familles'
   }
 })
+
+usePageTitle('Famille')
 
 const showAddResponsableModal = ref(false);
 const families = ref([]);

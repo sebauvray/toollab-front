@@ -4,7 +4,7 @@ import ClockTLB from "~/components/Icons/Clock-TLB.vue";
 import StudentTLB from "~/components/Icons/Student-TLB.vue";
 import { ref, computed, onMounted } from 'vue';
 import Valid from "~/components/Icons/Valid.vue";
-import { useRouter, useRoute } from '#imports';
+import {useRouter, useRoute, usePageTitle} from '#imports';
 import ConfirmationClasseModal from "~/components/modals/ConfirmationClasseModal.vue";
 import familyService from "~/services/family.js";
 import classeService from "~/services/classe.js";
@@ -13,6 +13,7 @@ import userService from "~/services/user.js";
 import schoolService from "~/services/school.js";
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 
+usePageTitle('Famille')
 const router = useRouter();
 const route = useRoute();
 const breadcrumbItems = computed(() => [
