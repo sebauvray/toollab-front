@@ -71,7 +71,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="relative min-w-fit">
+  <div class="relative min-w-fit font-nunito">
     <Search
         class="absolute left-5 top-1/2 transform -translate-y-1/2 size-6 text-placeholder"
     />
