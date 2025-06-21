@@ -1,5 +1,6 @@
 <template>
   <span
+      v-if="status && statusLabels[status]"
       class="px-5 py-1.5 rounded-[5px] border min-w-28 text-center"
       :class="statusClasses[status]"
   >
@@ -11,8 +12,9 @@
 defineProps({
   status: {
     type: String,
-    required: true,
-    validator: (value) => ['paid', 'pending', 'incomplete', 'exempted'].includes(value)
+    required: false,
+    default: '',
+    validator: (value) => ['', 'paid', 'pending', 'incomplete', 'exempted'].includes(value)
   }
 })
 
@@ -25,7 +27,7 @@ const statusClasses = {
 
 const statusLabels = {
   paid: 'Payé',
-  pending: 'En cours',
+  pending: 'Partiellement payé',
   incomplete: 'Incomplet',
   exempted: 'Exonéré'
 }
