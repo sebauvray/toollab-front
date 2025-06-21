@@ -79,5 +79,25 @@ export default {
             console.error(`Erreur lors de la suppression de la classe ${id}:`, error)
             throw error
         }
+    },
+
+    async getAdminClassrooms(params = {}) {
+        try {
+            const response = await apiClient.get('/api/admin/classrooms', { params })
+            return response.data
+        } catch (error) {
+            console.error('Erreur lors de la récupération des classes admin:', error)
+            throw error
+        }
+    },
+
+    async removeStudentFromClass(classroomId, studentId) {
+        try {
+            const response = await apiClient.delete(`/api/admin/classrooms/${classroomId}/students/${studentId}`)
+            return response.data
+        } catch (error) {
+            console.error('Erreur lors de la suppression de l\'élève de la classe:', error)
+            throw error
+        }
     }
 }
