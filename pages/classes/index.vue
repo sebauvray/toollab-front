@@ -154,7 +154,7 @@ onMounted(() => {
 
             <div class="p-3">
               <div class="flex justify-between items-center mb-2">
-                <span class="text-xs text-gray-600">Élèves</span>
+                <span class="text-xs text-gray-600 font-nunito">Élèves</span>
                 <span class="font-medium text-sm">{{ classroom.student_count }}/{{ classroom.size }}</span>
               </div>
 
@@ -162,7 +162,7 @@ onMounted(() => {
                 <div
                     v-for="student in classroom.students"
                     :key="student.id"
-                    class="flex justify-between items-center py-1.5 px-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors group"
+                    class="flex justify-between items-center py-1.5 px-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors group font-nunito"
                 >
                   <span class="text-xs text-gray-700 truncate flex-1 mr-2">{{ student.full_name }}</span>
                   <button
