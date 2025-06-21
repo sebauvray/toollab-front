@@ -133,7 +133,7 @@ onMounted(() => {
       <template #default="{ item, isLastRow }">
         <NuxtLink
             :to="`/family/${item.id}`"
-            class="grid py-1.5 px-4 hover:bg-gray-50 transition-colors cursor-pointer"
+            class="grid py-1.5 px-4 hover:bg-gray-50 transition-colors cursor-pointer font-nunito"
             :class="{ 'border-b border-[#E6EFF5]': !isLastRow }"
             :style="`grid-template-columns: repeat(12, minmax(0, 1fr))`"
         >
