@@ -420,6 +420,7 @@ definePageMeta({
                             <MailTLB/>
                             <template v-if="!isEditing">
                                 <span>{{ contactInfo.email }}</span>
+                                <span v-if="contactInfo.email.endsWith('@corriger.com')" class="ml-auto font-nunito bg-red-600 text-white font-bold rounded-lg px-2 py-1">Email à corriger</span>
                             </template>
                             <input
                                 v-else
