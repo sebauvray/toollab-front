@@ -131,6 +131,14 @@ const getAvailableSpotsColor = (spots) => {
     return 'text-red-500';
 };
 
+const canClickClass = (classe) => {
+    const classIndex = classes.value.findIndex(c => c.id === classe.id);
+    const studentId = selectedStudent.value?.id;
+    const alreadyIn = studentClasses.value[studentId]?.has(classIndex);
+
+    return classe.available_spots > 0 || alreadyIn;
+};
+
 const fetchFamilyData = async () => {
     try {
         isLoading.value = true;
@@ -358,17 +366,17 @@ definePageMeta({
                     <div
                         v-for="(classe, index) in classGroup"
                         :key="classe.id"
-                        @click="toggleClass(classes.findIndex(c => c.id === classe.id), classe)"
+                        @click="canClickClass(classe) && toggleClass(classes.findIndex(c => c.id === classe.id), classe)"
                         class="flex flex-col rounded-xl select-none bg-gray-50 p-4 transition-all duration-200 relative"
                         :class="[
-                            'border-4',
-                            {
-                              'border-green-600': studentClasses[selectedStudent?.id]?.has(classes.findIndex(c => c.id === classe.id)),
-                              'border-transparent': !studentClasses[selectedStudent?.id]?.has(classes.findIndex(c => c.id === classe.id)),
-                              'cursor-pointer': isClassSelectable(classes.findIndex(c => c.id === classe.id)) && !isSaving,
-                              'opacity-50 cursor-not-allowed': !isClassSelectable(classes.findIndex(c => c.id === classe.id)) || classe.available_spots === 0,
-                              'opacity-75': isSaving
-                            }
+                          'border-4',
+                          {
+                            'border-green-600': studentClasses[selectedStudent?.id]?.has(classes.findIndex(c => c.id === classe.id)),
+                            'border-transparent': !studentClasses[selectedStudent?.id]?.has(classes.findIndex(c => c.id === classe.id)),
+                            'cursor-pointer': canClickClass(classe) && !isSaving,
+                            'opacity-50 cursor-not-allowed': !canClickClass(classe),
+                            'opacity-75': isSaving
+                          }
                         ]">
                         <div v-if="loadingClassIndex === index"
                              class="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center rounded-xl z-10">

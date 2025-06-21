@@ -103,7 +103,7 @@ onUnmounted(() => {
           @click="selectStudent(student)"
           class="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
       >
-        <div class="font-medium text-gray-900">
+        <div class="font-medium font-nunito text-gray-900">
           {{ student.display_text }}
         </div>
       </div>
