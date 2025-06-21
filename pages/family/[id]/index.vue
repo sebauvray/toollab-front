@@ -120,16 +120,11 @@ const selectResponsible = (responsible) => {
 
 const handleDeleteStudent = async () => {
     try {
-        console.log('👤 Student à supprimer :', deletedStudent.value);
-        console.log('🏠 ID de la famille :', route.params.id);
 
-        // ✅ Appel API avec uniquement les IDs
         await familyService.deleteStudent(route.params.id, deletedStudent.value.id);
 
-        // ✅ Rechargement des infos famille
         await fetchFamilyDetails();
 
-        // ✅ Message succès
         const { setFlashMessage } = useFlashMessage();
         setFlashMessage({
             type: 'success',

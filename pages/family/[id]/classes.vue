@@ -213,7 +213,6 @@ const isClassSelectable = (index) => {
 };
 
 const toggleClass = async (index, classe) => {
-    console.log(index)
     if (!selectedStudent.value || !classes.value[index] || isSaving.value) return;
 
     const classroom = classes.value[index];

@@ -207,7 +207,6 @@ const updateTarif = async () => {
             })
         }
     } catch (error) {
-        console.log(error);
         console.error('Erreur lors de la mise à jour du tarif:', error)
         setFlashMessage({
             type: 'error',
