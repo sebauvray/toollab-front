@@ -48,7 +48,7 @@ const formatBreadcrumbName = (name) => {
 </script>
 
 <template>
-    <nav aria-label="Breadcrumb" class="breadcrumb-nav w-full mb-4 absolute top-6">
+    <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-4 absolute top-6 w-1/2">
         <ol class="flex items-center text-sm">
             <NuxtLink
                 to="/"
