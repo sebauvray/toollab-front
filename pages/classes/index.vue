@@ -121,10 +121,6 @@ onMounted(() => {
   <PageContainer>
     <BreadCrumb :items="breadcrumbItems" />
 
-    <div class="flex justify-between items-center mb-8">
-      <h1 class="text-3xl font-bold text-gray-900">Gestion des classes</h1>
-    </div>
-
     <div v-if="isLoading" class="flex justify-center items-center h-64">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
     </div>
