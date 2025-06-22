@@ -9,7 +9,6 @@ const props = defineProps({
     options: {
         type: Array,
         default: () => [],
-        // Format attendu: [{ value: 'value1', label: 'Label 1' }, ...]
     },
     required: {
         type: Boolean,
