@@ -1017,7 +1017,7 @@ const resetNewForm = () => {
                 </svg>
                 <h2 class="font-bold text-lg text-gray-800 font-montserrat">Infos</h2>
             </div>
-            <div class="mt-4 px-2 text-sm">
+            <div class="my-4 px-2 text-sm">
                 Pour rappel, veuillez préciser aux personnes inscrites :
                 <ul class="list-disc pl-5 mt-2">
                     <li><strong>Aucun remboursement</strong> ne sera effectué.</li>
