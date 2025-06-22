@@ -57,11 +57,12 @@ export default {
         }
     },
 
-    async getClassesByCursus(cursusId) {
+    async getClassesByCursus(cursusId, params = {}) {
         try {
             const response = await apiClient.get(`/api/classrooms`, {
                 params: {
-                    cursus_id: cursusId
+                    cursus_id: cursusId,
+                    ...params
                 }
             })
             return response.data

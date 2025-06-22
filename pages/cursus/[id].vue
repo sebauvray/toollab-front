@@ -200,9 +200,12 @@ const fetchCursus = async () => {
   }
 };
 
-const fetchClasses = async () => {
+const fetchClasses = async (page = 1) => {
   try {
-    const response = await cursusService.getClassesByCursus(cursus.value.id);
+    const response = await cursusService.getClassesByCursus(cursus.value.id, {
+      page: page,
+      per_page: pagination.value.perPage
+    });
 
     if (response.status === 'success') {
       classes.value = response.data.items.map(classroom => ({
@@ -223,8 +226,7 @@ const fetchClasses = async () => {
 };
 
 const handlePageChange = (page) => {
-  pagination.value.currentPage = page;
-  fetchClasses();
+  fetchClasses(page);
 };
 
 const handleAddClass = async (newClass) => {
