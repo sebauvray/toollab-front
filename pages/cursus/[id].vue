@@ -215,7 +215,7 @@ const fetchClasses = async (page = 1) => {
 
       pagination.value = {
         currentPage: response.data.pagination?.current_page || 1,
-        totalPages: response.data.pagination?.last_page || 1,
+        totalPages: response.data.pagination?.total_pages || 1,
         perPage: response.data.pagination?.per_page || 10,
         total: response.data.pagination?.total || 0
       };
