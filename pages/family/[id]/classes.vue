@@ -401,18 +401,21 @@ definePageMeta({
                             </div>
                         </div>
 
-                        <div v-if="classe.schedule" class="inline-flex items-center gap-x-2 pl-4 mt-4 font-light text-sm">
-                            <ClockTLB class="size-4" />
-                            <div>{{ classe.schedule.day }}</div>
-                            <div> - {{ classe.schedule.time }}</div>
+                      <div v-if="classe.schedules && classe.schedules.length > 0" class="mt-4 space-y-2">
+                        <div v-for="(schedule, scheduleIndex) in classe.schedules" :key="scheduleIndex" class="pl-4">
+                          <div class="inline-flex items-center gap-x-2 font-light text-sm">
+                            <ClockTLB class="size-4 text-gray-600" />
+                            <div class="text-gray-700">{{ schedule.day }}</div>
+                            <div class="text-gray-600">{{ schedule.formatted_time }}</div>
+                          </div>
+                          <div v-if="schedule.teacher_name" class="inline-flex items-center gap-x-2 mt-1 font-light text-sm">
+                            <StudentTLB class="size-4 text-gray-600" />
+                            <div class="text-gray-600">{{ schedule.teacher_name }}</div>
+                          </div>
                         </div>
+                      </div>
 
-                        <div v-if="classe.schedule?.teacher" class="inline-flex items-center gap-x-2 pl-4 mt-1 font-light text-sm">
-                            <StudentTLB class="size-4" />
-                            <div>{{ classe.schedule.teacher.name }}</div>
-                        </div>
-
-                        <div class="font-black inline-flex items-center justify-center my-3"
+                        <div class="font-black inline-flex items-center justify-center mt-auto mb-3"
                              :class="getAvailableSpotsColor(classe.available_spots)">
                             {{ classe.available_spots }} places dispos
                         </div>
