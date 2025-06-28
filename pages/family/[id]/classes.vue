@@ -356,7 +356,7 @@ definePageMeta({
         <section class="bg-white col-span-3 rounded-xl border px-6 py-2">
             <div class="flex justify-between mt-2 mb-6">
                 <h2 class="font-bold text-2xl ">{{ selectedStudent?.first_name }} {{ selectedStudent?.last_name }}</h2>
-                <div class="text-xs bg-lime-100 rounded-lg w-fit py-2 px-4"
+                <div class="text-xs rounded-lg w-fit py-2 px-4"
                      :class="{
                         'bg-lime-100': selectedStudent.year_infos?.decision === 'passe',
                         'bg-orange-100': selectedStudent.year_infos?.decision === 'redouble',
