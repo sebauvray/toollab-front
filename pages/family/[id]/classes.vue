@@ -354,7 +354,25 @@ definePageMeta({
         <BreadCrumb :custom-items="breadcrumbItems" />
 
         <section class="bg-white col-span-3 rounded-xl border px-6 py-2">
-            <h2 class="font-bold text-2xl mb-6">{{ selectedStudent?.first_name }} {{ selectedStudent?.last_name }}</h2>
+            <div class="flex justify-between mt-2 mb-6">
+                <h2 class="font-bold text-2xl ">{{ selectedStudent?.first_name }} {{ selectedStudent?.last_name }}</h2>
+                <div class="text-xs bg-lime-100 rounded-lg w-fit py-2 px-4"
+                     :class="{
+                        'bg-lime-100': selectedStudent.year_infos?.decision === 'passe',
+                        'bg-orange-100': selectedStudent.year_infos?.decision === 'redouble',
+                        'bg-red-100': selectedStudent.year_infos?.decision === 'renvoi',
+                        'bg-gray-100': selectedStudent.year_infos?.decision === 'abandon' || selectedStudent.year_infos?.decision === 'autre'
+                    }">
+                    <div class="flex">
+                        <div>Décision :</div>
+                        <div class="ml-2">{{ selectedStudent?.year_infos.decision }}</div>
+                    </div>
+                    <div class="flex">
+                        <div>Commentaire :</div>
+                        <div class="ml-2">{{ selectedStudent?.year_infos.commentaires || 'aucun' }}</div>
+                    </div>
+                </div>
+            </div>
             <div v-for="(classGroup, cursus) in groupedClasses" :key="cursus" class="mb-8">
                 <div class="h-px bg-gray-100 w-full mb-6"></div>
                 <h3 class="text-xl font-bold mb-3 flex items-center"><span class="text-xs uppercase bg-gray-700 text-white px-2 py-1 rounded-lg mr-2">Cursus</span> {{ cursus }}</h3>
@@ -402,7 +420,7 @@ definePageMeta({
                         </div>
 
                       <div v-if="classe.schedules && classe.schedules.length > 0" class="mt-4 space-y-2">
-                        <div v-for="(schedule, scheduleIndex) in classe.schedules" :key="scheduleIndex" class="pl-4">
+                        <div v-for="(schedule, scheduleIndex) in classe.schedules" :key="scheduleIndex" class="flex flex-col pl-4 mb-1">
                           <div class="inline-flex items-center gap-x-2 font-light text-sm">
                             <ClockTLB class="size-4 text-gray-600" />
                             <div class="text-gray-700">{{ schedule.day }}</div>

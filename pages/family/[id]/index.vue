@@ -516,11 +516,11 @@ definePageMeta({
                             <div
                                 class="col-span-2 flex items-center text-xs text-white font-bold w-fit h-fit px-2 py-1 my-auto rounded-lg capitalize relative group cursor-help"
                                 :class="{
-                                'bg-green-600': student.year_infos?.decision === 'passe',
-                                'bg-orange-600': student.year_infos?.decision === 'redouble',
-                                'bg-red-600': student.year_infos?.decision === 'renvoi',
-                                'bg-gray-700': student.year_infos?.decision === 'abandon' || student.year_infos?.decision === 'autre'
-                              }"
+                                    'bg-green-600': student.year_infos?.decision === 'passe',
+                                    'bg-orange-600': student.year_infos?.decision === 'redouble',
+                                    'bg-red-600': student.year_infos?.decision === 'renvoi',
+                                    'bg-gray-700': student.year_infos?.decision === 'abandon' || student.year_infos?.decision === 'autre'
+                                }"
                             >
                                 {{ student.year_infos?.decision || '-' }}
                                 <div v-if="student.year_infos?.commentaires"
