@@ -507,25 +507,25 @@ definePageMeta({
                             <div
                                 class="col-span-1 flex items-center text-xs font-bold capitalize"
                                 :class="{
-                                'text-red-700': student.infos_student?.statut_scolaire === 'red' || student.infos_student?.statut_scolaire === 'trip',
-                                'text-gray-600': student.infos_student?.statut_scolaire !== 'red' && student.infos_student?.statut_scolaire !== 'trip'
+                                'text-red-700': student.year_infos?.statut_scolaire === 'red' || student.year_infos?.statut_scolaire === 'trip',
+                                'text-gray-600': student.year_infos?.statut_scolaire !== 'red' && student.year_infos?.statut_scolaire !== 'trip'
                               }"
                             >
-                                {{ student.infos_student?.statut_scolaire || '-' }}
+                                {{ student.year_infos?.statut_scolaire || '-' }}
                             </div>
                             <div
                                 class="col-span-2 flex items-center text-xs text-white font-bold w-fit h-fit px-2 py-1 my-auto rounded-lg capitalize relative group cursor-help"
                                 :class="{
-                                'bg-green-600': student.infos_student?.decision === 'passe',
-                                'bg-orange-600': student.infos_student?.decision === 'redouble',
-                                'bg-red-600': student.infos_student?.decision === 'renvoi',
-                                'bg-gray-700': student.infos_student?.decision === 'abandon' || student.infos_student?.decision === 'autre'
+                                'bg-green-600': student.year_infos?.decision === 'passe',
+                                'bg-orange-600': student.year_infos?.decision === 'redouble',
+                                'bg-red-600': student.year_infos?.decision === 'renvoi',
+                                'bg-gray-700': student.year_infos?.decision === 'abandon' || student.year_infos?.decision === 'autre'
                               }"
                             >
-                                {{ student.infos_student?.decision || '-' }}
-                                <div v-if="student.infos_student?.commentaires"
+                                {{ student.year_infos?.decision || '-' }}
+                                <div v-if="student.year_infos?.commentaires"
                                      class="absolute z-50 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-200 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 text-xs text-white bg-gray-800 border border-gray-300 rounded-lg shadow-lg whitespace-nowrap max-w-xs text-center normal-case">
-                                    {{ student.infos_student.commentaires }}
+                                    {{ student.year_infos.commentaires }}
                                     <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-300"></div>
                                 </div>
                             </div>
