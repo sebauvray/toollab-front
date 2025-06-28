@@ -485,16 +485,18 @@ definePageMeta({
                 </div>
                 <div class="w-full py-1.5 px-6 col-span-2 bg-white rounded-xl border">
                     <div class="grid grid-cols-12 py-1.5 font-bold text-sm font-montserrat border-b border-[#E6EFF5]">
-                        <div class="inline-flex col-span-5 justify-start items-center pl-6">Élève</div>
-                        <div class="inline-flex col-span-3 justify-start items-center">Classe</div>
-                        <div class="inline-flex col-span-3 justify-start items-center">Date de naissance</div>
+                        <div class="inline-flex col-span-4 justify-start items-center pl-6">Élève</div>
+                        <div class="inline-flex col-span-1 justify-start items-center">Statut</div>
+                        <div class="inline-flex col-span-2 justify-start items-center">Décision</div>
+                        <div class="inline-flex col-span-2 justify-start items-center">Classe</div>
+                        <div class="inline-flex col-span-2 justify-start items-center">Date de naissance</div>
                         <div class="inline-flex col-span-1 justify-start items-center">-</div>
                     </div>
 
                     <template v-if="family.students && family.students.length > 0">
                         <div v-for="(student, index) in family.students" :key="student.id"
-                             class="grid grid-cols-12 py-1.5 text-sm font-nunito border-b border-[#E6EFF5] last:border-b-0">
-                            <div class="inline-flex col-span-5 gap-x-1.5 justify-start items-center pl-0.5">
+                             class="grid grid-cols-12 gap-x-2 py-1.5 text-sm font-nunito border-b border-[#E6EFF5] last:border-b-0">
+                            <div class="inline-flex col-span-4 gap-x-1.5 justify-start items-center pl-0.5">
                                 <div class="inline-flex gap-x-2 items-center">
                                     <ResponsableTLB v-if="student.is_responsible"/>
                                     <UserFemaleTLB v-if="student.gender === 'F'"/>
@@ -502,7 +504,32 @@ definePageMeta({
                                 </div>
                                 <span>{{ student.first_name }} {{ student.last_name }} </span>
                             </div>
-                            <div class="col-span-3 flex">
+                            <div
+                                class="col-span-1 flex items-center text-xs font-bold capitalize"
+                                :class="{
+                                'text-red-700': student.infos_student?.statut_scolaire === 'red' || student.infos_student?.statut_scolaire === 'trip',
+                                'text-gray-600': student.infos_student?.statut_scolaire !== 'red' && student.infos_student?.statut_scolaire !== 'trip'
+                              }"
+                            >
+                                {{ student.infos_student?.statut_scolaire || '-' }}
+                            </div>
+                            <div
+                                class="col-span-2 flex items-center text-xs text-white font-bold w-fit h-fit px-2 py-1 my-auto rounded-lg capitalize relative group cursor-help"
+                                :class="{
+                                'bg-green-600': student.infos_student?.decision === 'passe',
+                                'bg-orange-600': student.infos_student?.decision === 'redouble',
+                                'bg-red-600': student.infos_student?.decision === 'renvoi',
+                                'bg-gray-700': student.infos_student?.decision === 'abandon' || student.infos_student?.decision === 'autre'
+                              }"
+                            >
+                                {{ student.infos_student?.decision || '-' }}
+                                <div v-if="student.infos_student?.commentaires"
+                                     class="absolute z-50 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-200 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 text-xs text-white bg-gray-800 border border-gray-300 rounded-lg shadow-lg whitespace-nowrap max-w-xs text-center normal-case">
+                                    {{ student.infos_student.commentaires }}
+                                    <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-300"></div>
+                                </div>
+                            </div>
+                            <div class="col-span-2 flex">
                                 <div
                                     class="inline-flex justify-start font-bold text-gray-700 items-center rounded-lg text-sm"
                                     v-for="(classroom, index) in student.classrooms">
@@ -510,7 +537,7 @@ definePageMeta({
                                     <span v-if="student.classrooms.length !== index+1" class="mx-0.5"> - </span>
                                 </div>
                             </div>
-                            <div class="inline-flex col-span-3 justify-start items-center text-sm">
+                            <div class="inline-flex col-span-2 justify-start items-center text-sm">
                                 {{ formatShortDateFr(student.birthdate) }}
                             </div>
                             <div class="col-span-1">
