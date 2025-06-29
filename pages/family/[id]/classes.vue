@@ -359,7 +359,7 @@ definePageMeta({
                 <div>
                     <div class="flex items-center text-xs justify-center">
                         <div>Classe précédente :</div>
-                        <div class="ml-2 font-bold">{{ selectedStudent?.year_infos.classe_precedente }}</div>
+                        <div class="ml-2 font-bold">{{ selectedStudent?.year_infos?.classe_precedente || 'Non définie' }}</div>
                     </div>
                     <div class="text-xs rounded-lg w-fit py-2 px-4"
                          :class="{
