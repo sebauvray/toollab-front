@@ -363,18 +363,18 @@ definePageMeta({
                     </div>
                     <div class="text-xs rounded-lg w-fit py-2 px-4"
                          :class="{
-                        'bg-lime-100': selectedStudent.year_infos?.decision === 'passe',
-                        'bg-orange-100': selectedStudent.year_infos?.decision === 'redouble',
-                        'bg-red-100': selectedStudent.year_infos?.decision === 'renvoi',
-                        'bg-gray-100': selectedStudent.year_infos?.decision === 'abandon' || selectedStudent.year_infos?.decision === 'autre'
+                        'bg-lime-100': selectedStudent?.year_infos?.decision === 'passe',
+                        'bg-orange-100': selectedStudent?.year_infos?.decision === 'redouble',
+                        'bg-red-100': selectedStudent?.year_infos?.decision === 'renvoi',
+                        'bg-gray-100': selectedStudent?.year_infos?.decision === 'abandon' || selectedStudent?.year_infos?.decision === 'autre'
                     }">
                         <div class="flex">
                             <div>Décision :</div>
-                            <div class="ml-2">{{ selectedStudent?.year_infos.decision }}</div>
+                            <div class="ml-2">{{ selectedStudent?.year_infos?.decision || 'Non définie' }}</div>
                         </div>
                         <div class="flex">
                             <div>Commentaire :</div>
-                            <div class="ml-2">{{ selectedStudent?.year_infos.commentaires || 'aucun' }}</div>
+                            <div class="ml-2">{{ selectedStudent?.year_infos?.commentaires || 'Aucun' }}</div>
                         </div>
                     </div>
                 </div>
