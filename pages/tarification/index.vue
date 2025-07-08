@@ -1,5 +1,5 @@
 <script setup>
-import {ref, onMounted, computed} from 'vue'
+import {ref, onMounted, computed, nextTick} from 'vue'
 import {useAuth} from '~/composables/useAuth'
 import {usePageTitle} from '~/composables/usePageTitle'
 import tarificationService from '~/services/tarification'
@@ -53,6 +53,10 @@ const familialeForm = ref({
 const multiCursusForm = ref({
     cursus_requis_id: '',
     pourcentage_reduction: ''
+})
+
+const reductionsFamiliales = computed(() => {
+    return selectedCursus.value?.reductions_familiales || []
 })
 
 const availableCursusesForMultiCursus = computed(() => {
@@ -125,11 +129,11 @@ const getTarifPrecedent = (nombreEleves) => {
 
     const tarifBase = parseFloat(selectedCursus.value.tarif.prix)
 
-    if (!selectedCursus.value?.reductions_familiales || selectedCursus.value.reductions_familiales.length === 0) {
+    if (!reductionsFamiliales.value || reductionsFamiliales.value.length === 0) {
         return tarifBase
     }
 
-    const reduction = selectedCursus.value.reductions_familiales.find(r => r.nombre_eleves_min === nombreEleves)
+    const reduction = reductionsFamiliales.value.find(r => r.nombre_eleves_min === nombreEleves)
 
     if (!reduction) {
         return tarifBase
@@ -138,14 +142,22 @@ const getTarifPrecedent = (nombreEleves) => {
     return calculateTarifWithReduction(tarifBase, reduction.pourcentage_reduction)
 }
 
-const fetchCursuses = async () => {
+const fetchCursuses = async (preserveSelection = false) => {
     try {
         isLoading.value = true
+        const currentSelectedId = selectedCursus.value?.id
         const response = await tarificationService.getCursusTarifs()
 
         if (response.status === 'success') {
             cursuses.value = response.data.cursuses
-            if (cursuses.value.length > 0 && !selectedCursus.value) {
+            
+            if (preserveSelection && currentSelectedId) {
+                const updatedCursus = cursuses.value.find(c => c.id === currentSelectedId)
+                if (updatedCursus) {
+                    selectedCursus.value = updatedCursus
+                    tarifForm.value.prix = updatedCursus.tarif ? updatedCursus.tarif.prix : ''
+                }
+            } else if (cursuses.value.length > 0 && !selectedCursus.value) {
                 selectCursus(cursuses.value[0])
             }
         }
@@ -231,29 +243,8 @@ const addReductionFamiliale = async () => {
                 pourcentage_reduction: parseFloat(familialeForm.value.pourcentage_reduction)
             }
         )
-
-        if (response.status === 'success' && response.data.reduction) {
-            if (!selectedCursus.value.reductions_familiales) {
-                selectedCursus.value.reductions_familiales = []
-            }
-
-            const newReduction = {
-                ...response.data.reduction,
-                nombre_eleves_min: parseInt(response.data.reduction.nombre_eleves_min),
-                pourcentage_reduction: parseFloat(response.data.reduction.pourcentage_reduction)
-            }
-
-            selectedCursus.value.reductions_familiales.push(newReduction)
-            selectedCursus.value.reductions_familiales.sort((a, b) => a.nombre_eleves_min - b.nombre_eleves_min)
-
-            const index = cursuses.value.findIndex(c => c.id === selectedCursus.value.id)
-            if (index !== -1) {
-                if (!cursuses.value[index].reductions_familiales) {
-                    cursuses.value[index].reductions_familiales = []
-                }
-                cursuses.value[index].reductions_familiales = [...selectedCursus.value.reductions_familiales]
-            }
-
+        
+        if (response.status === 'success' && response.data) {
             showAddFamiliale.value = false
             editingFamiliale.value = null
             resetFamilialeForm()
@@ -262,6 +253,8 @@ const addReductionFamiliale = async () => {
                 type: 'success',
                 message: 'Réduction familiale ajoutée avec succès'
             })
+            
+            await fetchCursuses(true)
         }
     } catch (error) {
         console.error('Erreur lors de l\'ajout de la réduction familiale:', error)
@@ -289,18 +282,21 @@ const updateReductionFamiliale = async () => {
         )
 
         if (response.status === 'success') {
-            const index = selectedCursus.value.reductions_familiales.findIndex(r => r.id === editingFamiliale.value.id)
-            if (index !== -1) {
-                selectedCursus.value.reductions_familiales[index] = {
-                    ...response.data.reduction,
-                    nombre_eleves_min: parseInt(response.data.reduction.nombre_eleves_min),
-                    pourcentage_reduction: parseFloat(response.data.reduction.pourcentage_reduction)
-                }
+            const updatedReduction = {
+                ...response.data.reduction,
+                nombre_eleves_min: parseInt(response.data.reduction.nombre_eleves_min),
+                pourcentage_reduction: parseFloat(response.data.reduction.pourcentage_reduction)
             }
 
             const cursusIndex = cursuses.value.findIndex(c => c.id === selectedCursus.value.id)
             if (cursusIndex !== -1) {
-                cursuses.value[cursusIndex].reductions_familiales = [...selectedCursus.value.reductions_familiales]
+                const reductionIndex = cursuses.value[cursusIndex].reductions_familiales.findIndex(r => r.id === editingFamiliale.value.id)
+                if (reductionIndex !== -1) {
+                    cursuses.value[cursusIndex].reductions_familiales[reductionIndex] = updatedReduction
+                }
+                
+                await nextTick()
+                selectedCursus.value = { ...cursuses.value[cursusIndex] }
             }
 
             showAddFamiliale.value = false
@@ -337,13 +333,14 @@ const deleteReductionFamiliale = async () => {
         const response = await tarificationService.deleteReductionFamiliale(deletingReductionId.value)
 
         if (response.status === 'success') {
-            selectedCursus.value.reductions_familiales = selectedCursus.value.reductions_familiales.filter(
-                r => r.id !== deletingReductionId.value
-            )
-
             const index = cursuses.value.findIndex(c => c.id === selectedCursus.value.id)
             if (index !== -1) {
-                cursuses.value[index].reductions_familiales = [...selectedCursus.value.reductions_familiales]
+                cursuses.value[index].reductions_familiales = cursuses.value[index].reductions_familiales.filter(
+                    r => r.id !== deletingReductionId.value
+                )
+                
+                await nextTick()
+                selectedCursus.value = { ...cursuses.value[index] }
             }
 
             setFlashMessage({
@@ -617,9 +614,9 @@ onMounted(() => {
                                 </button>
                             </div>
 
-                            <div v-if="selectedCursus.reductions_familiales?.length > 0" class="space-y-3">
+                            <div v-if="reductionsFamiliales.length > 0" class="space-y-3">
                                 <div
-                                    v-for="(reduction, index) in selectedCursus.reductions_familiales"
+                                    v-for="(reduction, index) in reductionsFamiliales"
                                     :key="reduction.id || `temp-${index}`"
                                     class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                                 >
