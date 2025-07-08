@@ -397,24 +397,7 @@ const addReductionMultiCursus = async () => {
             }
         )
 
-        if (response.status === 'success') {
-            if (!selectedCursus.value.reductions_multi_cursus) {
-                selectedCursus.value.reductions_multi_cursus = []
-            }
-
-            const newReduction = {
-                ...response.data.reduction,
-                cursus_requis_id: parseInt(response.data.reduction.cursus_requis_id),
-                pourcentage_reduction: parseFloat(response.data.reduction.pourcentage_reduction)
-            }
-
-            selectedCursus.value.reductions_multi_cursus.push(newReduction)
-
-            const index = cursuses.value.findIndex(c => c.id === selectedCursus.value.id)
-            if (index !== -1) {
-                cursuses.value[index].reductions_multi_cursus = [...selectedCursus.value.reductions_multi_cursus]
-            }
-
+        if (response.status === 'success' && response.data) {
             showAddMultiCursus.value = false
             resetMultiCursusForm()
 
@@ -422,13 +405,17 @@ const addReductionMultiCursus = async () => {
                 type: 'success',
                 message: 'Réduction multi-cursus ajoutée avec succès'
             })
+            
+            await fetchCursuses(true)
         }
     } catch (error) {
         console.error('Erreur lors de l\'ajout de la réduction multi-cursus:', error)
-        setFlashMessage({
-            type: 'error',
-            message: 'Erreur lors de l\'ajout de la réduction multi-cursus'
-        })
+        if (error.response && error.response.status !== 200) {
+            setFlashMessage({
+                type: 'error',
+                message: 'Erreur lors de l\'ajout de la réduction multi-cursus'
+            })
+        }
     } finally {
         isSaving.value = false
     }
