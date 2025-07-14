@@ -9,6 +9,7 @@ import FamilyTLB from "~/components/Icons/Family-TLB.vue";
 import UserDropdown from "~/components/UserDropdown.vue";
 import CurrencyEuro from "~/components/Icons/CurrencyEuro.vue";
 import StudentTLB from "~/components/Icons/Student-TLB.vue";
+import ChartBar from "~/components/Icons/ChartBar.vue";
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import userService from '~/services/user';
 import schoolService from '~/services/school';
@@ -137,6 +138,7 @@ onUnmounted(() => {
         <NavLink v-if="hasAdminAccess" to="/cursus" :icon="Cursus" text="Cursus" :collapsed="isSidebarCollapsed" />
         <NavLink v-if="hasAdminAccess" to="/classes" :icon="StudentTLB" text="Classes" :collapsed="isSidebarCollapsed" />
         <NavLink v-if="hasAdminAccess" to="/tarification" :icon="CurrencyEuro" text="Tarification" :collapsed="isSidebarCollapsed" />
+        <NavLink v-if="hasAdminAccess" to="/statistiques" :icon="ChartBar" text="Statistiques" :collapsed="isSidebarCollapsed" />
       </nav>
 
       <div class="mb-6" :class="isSidebarCollapsed ? 'px-2' : 'px-6'">
