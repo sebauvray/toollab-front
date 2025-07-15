@@ -135,7 +135,7 @@ const columns = [
 ]
 
 const bankDisplay = computed(() => {
-  if (selectedBanks.value.length === 0) return ''
+  if (selectedBanks.value.length === 0) return 'Aucune banque sélectionnée'
   if (selectedBanks.value.length === availableBanks.value.length) return 'Toutes les banques'
   if (selectedBanks.value.length === 1) return selectedBanks.value[0]
   return `${selectedBanks.value.length} banques sélectionnées`
@@ -185,7 +185,19 @@ const loadCheques = async (page = 1) => {
       params.search = searchTerm.value
     }
     
-    if (selectedBanks.value.length > 0 && selectedBanks.value.length < availableBanks.value.length) {
+    if (selectedBanks.value.length === 0) {
+      cheques.value = []
+      pagination.value = {
+        currentPage: 1,
+        totalPages: 0,
+        perPage: pagination.value.perPage,
+        total: 0
+      }
+      loading.value = false
+      return
+    }
+    
+    if (selectedBanks.value.length < availableBanks.value.length) {
       params.banks = selectedBanks.value.join(',')
     }
     
@@ -222,6 +234,7 @@ const selectAllBanks = () => {
   } else {
     selectedBanks.value = [...availableBanks.value]
   }
+  showBankDropdown.value = false
   handleSearch()
 }
 
