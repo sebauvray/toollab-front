@@ -128,11 +128,11 @@ onUnmounted(() => {
   <div class="flex bg-gray-blue h-screen antialiased overflow-hidden">
     <aside class="flex flex-col bg-white h-screen border-r font-medium font-montserrat transition-all duration-300"
            :class="isSidebarCollapsed ? 'w-20' : 'w-64'">
-      <div class="w-full flex items-center justify-center h-20">
-        <Logo v-if="isSidebarCollapsed" class="w-10 h-10" />
-        <LogoText v-else class="w-44" />
+      <div class="w-full flex items-center justify-center h-16">
+        <Logo v-if="isSidebarCollapsed" class="w-8 h-8" />
+        <LogoText v-else class="w-36" />
       </div>
-      <nav class="inline-flex flex-col gap-y-4 mt-4 flex-1">
+      <nav class="inline-flex flex-col gap-y-2 mt-2 flex-1">
         <NavLink to="/" :icon="Home" text="Accueil" :collapsed="isSidebarCollapsed" />
         <NavLink to="/family" :icon="FamilyTLB" text="Familles" :collapsed="isSidebarCollapsed" />
         <NavLink v-if="hasAdminAccess" to="/cursus" :icon="Cursus" text="Cursus" :collapsed="isSidebarCollapsed" />
@@ -141,26 +141,26 @@ onUnmounted(() => {
         <NavLink v-if="hasAdminAccess" to="/statistiques" :icon="ChartBar" text="Statistiques" :collapsed="isSidebarCollapsed" />
       </nav>
 
-      <div class="mb-6" :class="isSidebarCollapsed ? 'px-2' : 'px-6'">
-        <div v-if="schools.length <= 1 && currentSchoolName" class="flex items-center gap-x-3 py-3"
+      <div class="mb-4" :class="isSidebarCollapsed ? 'px-2' : 'px-4'">
+        <div v-if="schools.length <= 1 && currentSchoolName" class="flex items-center gap-x-2 py-2"
              :class="isSidebarCollapsed ? 'justify-center' : ''">
           <div class="w-8 h-8 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
             <span class="text-white text-sm font-semibold">{{ currentSchoolInitial }}</span>
           </div>
-          <div v-if="!isSidebarCollapsed" class="text-sm text-gray-800">{{ currentSchoolName }}</div>
+          <div v-if="!isSidebarCollapsed" class="text-base text-gray-800">{{ currentSchoolName }}</div>
         </div>
 
         <div v-else-if="schools.length > 1" class="relative">
           <button
               @click="showSchoolDropdown = !showSchoolDropdown"
-              class="w-full flex items-center gap-x-3 px-4 py-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+              class="w-full flex items-center gap-x-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
               :class="isSidebarCollapsed ? 'justify-center px-2' : ''"
           >
             <div class="w-8 h-8 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
               <span class="text-white text-sm font-semibold">{{ currentSchoolInitial }}</span>
             </div>
             <div v-if="!isSidebarCollapsed" class="flex-1 text-left">
-              <div class="text-sm text-gray-800">{{ currentSchoolName }}</div>
+              <div class="text-base text-gray-800">{{ currentSchoolName }}</div>
             </div>
             <svg v-if="!isSidebarCollapsed" class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -177,17 +177,17 @@ onUnmounted(() => {
                   v-for="school in schools"
                   :key="school.id"
                   @click="selectSchool(school)"
-                  class="w-full flex items-center gap-x-3 px-4 py-3 hover:bg-gray-100 transition-colors"
+                  class="w-full flex items-center gap-x-2 px-3 py-2 hover:bg-gray-100 transition-colors"
                   :class="{ 'bg-gray-50': selectedSchool?.id === school.id }"
               >
-                <div class="w-8 h-8 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
-                  <span class="text-white text-sm font-semibold">{{
+                <div class="w-7 h-7 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
+                  <span class="text-white text-xs font-semibold">{{
                       school.name.charAt(0).toUpperCase()
                     }}</span>
                 </div>
                 <div class="flex-1">
-                  <div class="text-sm text-gray-800">{{ school.name }}</div>
-                  <div class="text-xs text-gray-500">{{ school.role }}</div>
+                  <div class="text-base text-gray-800">{{ school.name }}</div>
+                  <div class="text-sm text-gray-500">{{ school.role }}</div>
                 </div>
                 <svg
                     v-if="selectedSchool?.id === school.id"

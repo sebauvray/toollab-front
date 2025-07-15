@@ -69,7 +69,7 @@
             <div class="col-span-2">
               {{ formatCurrency(item.expected) }}
             </div>
-            <div class="col-span-2">
+            <div class="col-span-2 text-green-600 font-medium">
               {{ formatCurrency(item.paid) }}
             </div>
             <div class="col-span-1 font-medium text-red-600">

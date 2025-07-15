@@ -31,17 +31,17 @@ const isActive = computed(() => {
 <template>
   <NuxtLink
       :to="to"
-      class="inline-flex items-center h-[3.75rem] relative group"
+      class="inline-flex items-center h-14 relative group"
       :class="[isActive ? 'text-default' : 'text-placeholder hover:text-default']"
   >
     <span
-        class="w-1.5 bg-default rounded-r-xl h-full absolute left-0"
+        class="w-1 bg-default rounded-r-xl h-full absolute left-0"
         :class="[isActive ? 'bg-default' : 'bg-white']"
     ></span>
     <p class="inline-flex items-center w-full"
-       :class="collapsed ? 'justify-center px-6' : 'justify-start pl-12 pr-6'">
-      <span class="inline-flex items-center gap-x-4">
-        <component :is="icon" class="size-7" />
+       :class="collapsed ? 'justify-center px-4' : 'justify-start pl-10 pr-4'">
+      <span class="inline-flex items-center gap-x-3">
+        <component :is="icon" class="size-6" />
         <span v-if="!collapsed" class="text-lg leading-5 font-medium">{{ text }}</span>
       </span>
     </p>
