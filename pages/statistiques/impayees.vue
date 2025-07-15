@@ -1,104 +1,98 @@
 <template>
-  <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-    <BreadCrumb />
-    <div class="mb-8">
-      <h1 class="text-2xl font-bold text-gray-900">Familles avec paiements en attente</h1>
-    </div>
+  <div>
+    <PageContainer>
+      <ClientOnly>
+        <BreadCrumb />
+      </ClientOnly>
+      <h1 class="text-2xl font-bold text-gray-900 mb-6">Familles avec paiements en attente</h1>
 
-    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-      <div class="flex gap-4">
-        <input
-          v-model="searchTerm"
-          type="text"
-          placeholder="Rechercher par nom, email..."
-          class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
-        />
-        <select
-          v-model="filterType"
-          class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
-        >
-          <option value="all">Toutes</option>
-          <option value="unpaid">Non payées</option>
-          <option value="partial">Partiellement payées</option>
-        </select>
+      <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div class="flex gap-4">
+          <input
+            v-model="searchTerm"
+            type="text"
+            placeholder="Rechercher par nom, téléphone..."
+            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900"
+            @input="handleSearch"
+          />
+          <div class="relative" ref="filterDropdownRef">
+            <input
+              v-model="filterTypeDisplay"
+              type="text"
+              readonly
+              placeholder="Filtrer par statut"
+              class="px-4 py-2 border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:border-gray-900 pr-10"
+              @click="showFilterDropdown = !showFilterDropdown"
+            />
+            <svg class="absolute right-3 top-3 w-4 h-4 text-gray-600 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+            <div v-if="showFilterDropdown" class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+              <div 
+                v-for="option in filterOptions" 
+                :key="option.value"
+                @click="selectFilter(option)"
+                class="px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                :class="{ 'bg-gray-50': filterType === option.value }"
+              >
+                {{ option.label }}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <div v-if="loading" class="text-center py-8">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto"></div>
-      <p class="mt-4 text-gray-600">Chargement...</p>
-    </div>
-
-    <div v-else-if="filteredFamilies.length > 0" class="bg-white rounded-lg shadow-sm overflow-hidden">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Famille</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Élèves</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Attendu</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payé</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reste</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Taux</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="family in filteredFamilies" :key="family.id">
-            <td class="px-6 py-4 whitespace-nowrap text-sm">
-              <div>
-                <div v-for="responsible in family.responsibles" :key="responsible.id" class="text-gray-900">
-                  {{ responsible.name }}
-                </div>
+      <DataTable
+        :columns="columns"
+        :items="unpaidFamilies"
+        :pagination="pagination"
+        :loading="loading"
+        @page-change="handlePageChange"
+      >
+        <template #default="{ item, isLastRow }">
+          <div 
+            class="grid py-1.5 px-4 hover:bg-gray-50 transition-colors font-nunito"
+            :class="{ 'border-b border-[#E6EFF5]': !isLastRow }"
+            :style="`grid-template-columns: repeat(12, minmax(0, 1fr))`"
+          >
+            <div class="col-span-3">
+              <div v-for="responsible in item.responsibles" :key="responsible.id" class="text-gray-900">
+                {{ responsible.name }}
               </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm">
-              {{ family.responsibles[0]?.email || '' }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
-              {{ family.students_count }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm">
-              {{ formatCurrency(family.expected) }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm">
-              {{ formatCurrency(family.paid) }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
-              {{ formatCurrency(family.remaining) }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm">
-              <div class="flex items-center">
-                <div class="w-full bg-gray-200 rounded-full h-2.5 mr-2">
-                  <div 
-                    class="h-2.5 rounded-full"
-                    :class="family.payment_rate > 50 ? 'bg-green-600' : family.payment_rate > 0 ? 'bg-yellow-600' : 'bg-red-600'"
-                    :style="`width: ${family.payment_rate}%`"
-                  ></div>
-                </div>
-                <span class="text-xs">{{ family.payment_rate }}%</span>
-              </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm">
-              <NuxtLink :to="`/family/${family.id}`" class="text-gray-900 hover:text-gray-700 underline">
-                Voir détails
+            </div>
+            <div class="col-span-2 text-sm text-gray-600">
+              {{ item.responsibles[0]?.phone || '-' }}
+            </div>
+            <div class="col-span-1 text-center">
+              {{ item.students_count }}
+            </div>
+            <div class="col-span-2">
+              {{ formatCurrency(item.expected) }}
+            </div>
+            <div class="col-span-2">
+              {{ formatCurrency(item.paid) }}
+            </div>
+            <div class="col-span-1 font-medium text-red-600">
+              {{ formatCurrency(item.remaining) }}
+            </div>
+            <div class="col-span-1">
+              <NuxtLink :to="`/family/${item.id}/paiement`" class="text-gray-900 hover:text-gray-700 underline">
+                Paiement
               </NuxtLink>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div v-else class="bg-white rounded-lg shadow-sm p-8 text-center">
-      <p class="text-gray-600">Aucune famille trouvée</p>
-    </div>
+            </div>
+          </div>
+        </template>
+      </DataTable>
+    </PageContainer>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { statisticsService } from '~/services/statistics'
 import BreadCrumb from '~/components/navigation/BreadCrumb.vue'
+import DataTable from '~/components/table/DataTable.vue'
+import PageContainer from '~/components/layout/PageContainer.vue'
 
 usePageTitle('Familles impayées')
 definePageMeta({
@@ -110,6 +104,35 @@ const unpaidFamilies = ref([])
 const searchTerm = ref('')
 const filterType = ref('all')
 const loading = ref(true)
+const showFilterDropdown = ref(false)
+const filterDropdownRef = ref(null)
+const pagination = ref({
+  currentPage: 1,
+  totalPages: 1,
+  perPage: 10,
+  total: 0
+})
+
+const filterOptions = [
+  { value: 'all', label: 'Toutes les familles' },
+  { value: 'unpaid', label: 'Non payées' },
+  { value: 'partial', label: 'Partiellement payées' }
+]
+
+const filterTypeDisplay = computed(() => {
+  const option = filterOptions.find(opt => opt.value === filterType.value)
+  return option ? option.label : ''
+})
+
+const columns = [
+  { key: 'responsables', label: 'Nom du responsable', width: '3' },
+  { key: 'phone', label: 'Téléphone', width: '2' },
+  { key: 'students_count', label: 'Élèves', width: '1' },
+  { key: 'expected', label: 'Attendu', width: '2' },
+  { key: 'paid', label: 'Payé', width: '2' },
+  { key: 'remaining', label: 'Reste', width: '1' },
+  { key: 'actions', label: 'Actions', width: '1' }
+]
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('fr-FR', {
@@ -120,38 +143,35 @@ const formatCurrency = (amount) => {
   }).format(amount)
 }
 
-const filteredFamilies = computed(() => {
-  let families = unpaidFamilies.value
-  
-  // Filtrer par type
-  if (filterType.value === 'unpaid') {
-    families = families.filter(f => f.paid === 0)
-  } else if (filterType.value === 'partial') {
-    families = families.filter(f => f.paid > 0 && f.paid < f.expected)
-  }
-  
-  // Filtrer par recherche
-  if (searchTerm.value) {
-    const search = searchTerm.value.toLowerCase()
-    families = families.filter(family => 
-      family.responsibles.some(r => 
-        r.name.toLowerCase().includes(search) || 
-        r.email.toLowerCase().includes(search)
-      ) ||
-      family.expected.toString().includes(search) ||
-      family.paid.toString().includes(search)
-    )
-  }
-  
-  return families
-})
-
-const loadUnpaidFamilies = async () => {
+const loadUnpaidFamilies = async (page = 1) => {
   try {
     loading.value = true
     const schoolId = localStorage.getItem('current_school_id') || 1
-    const response = await statisticsService.getUnpaidFamilies(schoolId)
-    unpaidFamilies.value = response.data
+    
+    const params = {
+      page: page,
+      per_page: pagination.value.perPage
+    }
+    
+    if (searchTerm.value) {
+      params.search = searchTerm.value
+    }
+    
+    if (filterType.value !== 'all') {
+      params.filter = filterType.value
+    }
+    
+    const response = await statisticsService.getUnpaidFamilies(schoolId, params)
+    
+    if (response.status === 'success') {
+      unpaidFamilies.value = response.data.items
+      pagination.value = {
+        currentPage: response.data.pagination.current_page,
+        totalPages: response.data.pagination.total_pages,
+        perPage: response.data.pagination.per_page,
+        total: response.data.pagination.total
+      }
+    }
   } catch (error) {
     console.error('Erreur:', error)
   } finally {
@@ -159,7 +179,42 @@ const loadUnpaidFamilies = async () => {
   }
 }
 
+const handlePageChange = (page) => {
+  loadUnpaidFamilies(page)
+}
+
+const handleSearch = () => {
+  pagination.value.currentPage = 1
+  loadUnpaidFamilies(1)
+}
+
+const handleFilter = () => {
+  pagination.value.currentPage = 1
+  loadUnpaidFamilies(1)
+}
+
+const selectFilter = (option) => {
+  filterType.value = option.value
+  showFilterDropdown.value = false
+  handleFilter()
+}
+
+// Gérer le clic en dehors du dropdown
+const handleClickOutside = (event) => {
+  if (filterDropdownRef.value && !filterDropdownRef.value.contains(event.target)) {
+    showFilterDropdown.value = false
+  }
+}
+
 onMounted(() => {
   loadUnpaidFamilies()
+  // Ajouter un petit délai pour éviter les conflits d'événements
+  setTimeout(() => {
+    document.addEventListener('click', handleClickOutside)
+  }, 100)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>

@@ -12,10 +12,13 @@ export const statisticsService = {
     }
   },
 
-  async getUnpaidFamilies(schoolId) {
+  async getUnpaidFamilies(schoolId, params = {}) {
     try {
       const response = await apiClient.get('/api/statistics/unpaid-families', {
-        params: { school_id: schoolId }
+        params: { 
+          school_id: schoolId,
+          ...params
+        }
       })
       return response.data
     } catch (error) {
