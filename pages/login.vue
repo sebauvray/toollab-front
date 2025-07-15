@@ -7,6 +7,10 @@ import { useAuth } from '~/composables/useAuth'
 import { useRouter, useRoute } from '#imports'
 import authService from '~/services/auth'
 
+useHead({
+  title: 'Connexion'
+})
+
 definePageMeta({
   layout: 'default',
   middleware: 'guest',

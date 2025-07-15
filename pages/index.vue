@@ -3,6 +3,12 @@ import AuthGuard from '~/components/auth/AuthGuard.vue'
 import SearchInput from "~/components/form/SearchInput.vue"
 
 usePageTitle('Accueil')
+useSeoMeta({
+  description: 'Plateforme de gestion des inscriptions pour écoles et instituts. Gérez facilement vos élèves, classes et paiements.',
+  ogTitle: 'Toollab - Gestion des inscriptions',
+  ogDescription: 'Gérez facilement les inscriptions de votre école ou institut avec Toollab.'
+})
+
 definePageMeta({
   layout: 'auth',
   layoutData: {
