@@ -204,12 +204,19 @@
               <p class="text-lg font-bold text-gray-900">{{ formatCurrency(stats.payments?.by_type?.carte?.amount || 0) }}</p>
               <p class="text-xs text-gray-500">{{ stats.payments?.by_type?.carte?.count || 0 }} paiements</p>
             </div>
-            <div class="text-center p-3 bg-orange-50 rounded">
-              <IconGift class="w-6 h-6 text-orange-600 mx-auto mb-1" />
-              <p class="text-xs text-gray-600">Exonérations</p>
-              <p class="text-lg font-bold text-gray-900">{{ formatCurrency(stats.payments?.by_type?.exoneration?.amount || 0) }}</p>
-              <p class="text-xs text-gray-500">{{ stats.payments?.by_type?.exoneration?.count || 0 }} exonérations</p>
-            </div>
+            <NuxtLink to="/statistiques/exonerations" class="block relative">
+              <div class="text-center p-3 bg-orange-50 rounded hover:bg-orange-100 transition-colors cursor-pointer">
+                <div class="absolute top-2 right-2">
+                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                  </svg>
+                </div>
+                <IconGift class="w-6 h-6 text-orange-600 mx-auto mb-1" />
+                <p class="text-xs text-gray-600">Exonérations</p>
+                <p class="text-lg font-bold text-gray-900">{{ formatCurrency(stats.payments?.by_type?.exoneration?.amount || 0) }}</p>
+                <p class="text-xs text-gray-500">{{ stats.payments?.by_type?.exoneration?.count || 0 }} exonérations</p>
+              </div>
+            </NuxtLink>
           </div>
         </div>
 
@@ -324,11 +331,18 @@ const createGenderChart = () => {
     stats.value.enrollments?.women || 0,
     stats.value.enrollments?.children || 0
   ]
+  
+  const total = data.reduce((a, b) => a + b, 0)
+  const percentages = data.map(val => total > 0 ? Math.round((val / total) * 100) : 0)
 
   genderChartInstance = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: ['Hommes', 'Femmes', 'Enfants'],
+      labels: [
+        `Hommes (${percentages[0]}%)`,
+        `Femmes (${percentages[1]}%)`, 
+        `Enfants (${percentages[2]}%)`
+      ],
       datasets: [{
         data: data,
         backgroundColor: [
@@ -356,9 +370,7 @@ const createGenderChart = () => {
         tooltip: {
           callbacks: {
             label: function(context) {
-              const total = context.dataset.data.reduce((a, b) => a + b, 0)
-              const percentage = total > 0 ? Math.round((context.parsed / total) * 100) : 0
-              return context.label + ': ' + context.parsed + ' (' + percentage + '%)'
+              return context.parsed + ' personnes'
             }
           }
         }
@@ -379,10 +391,12 @@ const createFillRateChart = () => {
   const enrolled = stats.value.cursus.map(c => c.enrolled_students)
   const available = stats.value.cursus.map(c => c.available_places)
 
+  const fillRates = stats.value.cursus.map(c => c.fill_rate)
+  
   fillRateChartInstance = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: labels,
+      labels: labels.map((label, index) => `${label} (${fillRates[index]}%)`),
       datasets: [
         {
           label: 'Élèves inscrits',
