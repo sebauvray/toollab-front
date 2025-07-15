@@ -1,10 +1,8 @@
 <template>
   <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
+    <BreadCrumb />
     <div class="mb-8">
-      <NuxtLink to="/statistiques" class="text-gray-600 hover:text-gray-900">
-        ← Retour aux statistiques
-      </NuxtLink>
-      <h1 class="text-2xl font-bold text-gray-900 mt-4">Familles avec paiements en attente</h1>
+      <h1 class="text-2xl font-bold text-gray-900">Familles avec paiements en attente</h1>
     </div>
 
     <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
@@ -100,6 +98,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { statisticsService } from '~/services/statistics'
+import BreadCrumb from '~/components/navigation/BreadCrumb.vue'
 
 usePageTitle('Familles impayées')
 definePageMeta({

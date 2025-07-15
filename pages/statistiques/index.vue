@@ -19,14 +19,14 @@
         <!-- Cartes de statistiques principales -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
           <!-- Inscriptions -->
-          <div class="bg-white rounded-lg border border-gray-200 p-3">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-500">Total des inscrits</p>
-                <p class="text-xl font-bold text-gray-900">{{ stats.enrollments?.total || 0 }}</p>
+          <div class="bg-white rounded-lg border border-gray-200 p-4">
+            <div class="flex items-start gap-3">
+              <div class="p-2 bg-blue-50 rounded">
+                <IconUsers class="w-6 h-6 text-blue-600" />
               </div>
-              <div class="p-1.5 bg-blue-50 rounded">
-                <IconUsers class="w-5 h-5 text-blue-600" />
+              <div class="flex-1">
+                <p class="text-sm font-medium text-gray-500">Total des inscrits</p>
+                <p class="text-xl font-bold text-gray-900 mt-1">{{ stats.enrollments?.total || 0 }}</p>
               </div>
             </div>
             <div class="mt-2 space-y-0.5">
@@ -46,14 +46,14 @@
           </div>
 
           <!-- Montant payé -->
-          <div class="bg-white rounded-lg border border-gray-200 p-3">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-500">Montant payé</p>
-                <p class="text-xl font-bold text-gray-900">{{ formatCurrency(stats.payments?.total_amount || 0) }}</p>
+          <div class="bg-white rounded-lg border border-gray-200 p-4">
+            <div class="flex items-start gap-3">
+              <div class="p-2 bg-green-50 rounded">
+                <IconCash class="w-6 h-6 text-green-600" />
               </div>
-              <div class="p-1.5 bg-green-50 rounded">
-                <IconMoney class="w-5 h-5 text-green-600" />
+              <div class="flex-1">
+                <p class="text-sm font-medium text-gray-500">Montant payé</p>
+                <p class="text-xl font-bold text-gray-900 mt-1">{{ formatCurrency(stats.payments?.total_amount || 0) }}</p>
               </div>
             </div>
             <div class="mt-2">
@@ -62,15 +62,20 @@
           </div>
 
           <!-- Reste à payer -->
-          <NuxtLink to="/statistiques/impayees" class="block">
-            <div class="bg-white rounded-lg border border-gray-200 p-6 hover:border-gray-300 transition-colors cursor-pointer">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm font-medium text-gray-500">Reste à payer</p>
-                  <p class="text-xl font-bold text-gray-900">{{ formatCurrency(stats.payments?.remaining || 0) }}</p>
+          <NuxtLink to="/statistiques/impayees" class="block relative">
+            <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-400 transition-all hover:shadow-md cursor-pointer">
+              <div class="absolute top-3 right-3">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                </svg>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="p-2 bg-red-50 rounded">
+                  <IconNotification class="w-6 h-6 text-red-600" />
                 </div>
-                <div class="p-1.5 bg-red-50 rounded">
-                  <IconMoney class="w-5 h-5 text-red-600" />
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-gray-500">Reste à payer</p>
+                  <p class="text-xl font-bold text-gray-900 mt-1">{{ formatCurrency(stats.payments?.remaining || 0) }}</p>
                 </div>
               </div>
               <div class="mt-2 space-y-0.5">
@@ -91,14 +96,14 @@
           </NuxtLink>
 
           <!-- Classes -->
-          <div class="bg-white rounded-lg border border-gray-200 p-3">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-500">Total des classes</p>
-                <p class="text-xl font-bold text-gray-900">{{ stats.classes?.total || 0 }}</p>
+          <div class="bg-white rounded-lg border border-gray-200 p-4">
+            <div class="flex items-start gap-3">
+              <div class="p-2 bg-purple-50 rounded">
+                <IconClassroom class="w-6 h-6 text-purple-600" />
               </div>
-              <div class="p-1.5 bg-purple-50 rounded">
-                <IconClassroom class="w-5 h-5 text-purple-600" />
+              <div class="flex-1">
+                <p class="text-sm font-medium text-gray-500">Total des classes</p>
+                <p class="text-xl font-bold text-gray-900 mt-1">{{ stats.classes?.total || 0 }}</p>
               </div>
             </div>
             <div class="mt-2 space-y-0.5">
@@ -118,14 +123,14 @@
           </div>
 
           <!-- Familles -->
-          <div class="bg-white rounded-lg border border-gray-200 p-3">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-500">Total des familles</p>
-                <p class="text-xl font-bold text-gray-900">{{ stats.families?.total || 0 }}</p>
+          <div class="bg-white rounded-lg border border-gray-200 p-4">
+            <div class="flex items-start gap-3">
+              <div class="p-2 bg-amber-50 rounded">
+                <IconFamily class="w-6 h-6 text-amber-600" />
               </div>
-              <div class="p-1.5 bg-amber-50 rounded">
-                <IconFamily class="w-5 h-5 text-amber-600" />
+              <div class="flex-1">
+                <p class="text-sm font-medium text-gray-500">Total des familles</p>
+                <p class="text-xl font-bold text-gray-900 mt-1">{{ stats.families?.total || 0 }}</p>
               </div>
             </div>
             <div class="mt-2 space-y-0.5">
@@ -146,7 +151,7 @@
         </div>
 
         <!-- Détails des paiements -->
-        <div class="bg-white rounded-lg shadow-sm p-3">
+        <div class="bg-white rounded-lg shadow-sm p-4">
           <h2 class="text-base font-semibold text-gray-900 mb-2">Répartition des paiements</h2>
           <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
             <NuxtLink to="/statistiques/cheques" class="block">
@@ -181,7 +186,7 @@
         <!-- Graphiques -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <!-- Graphique répartition par genre -->
-          <div class="bg-white rounded-lg shadow-sm p-3">
+          <div class="bg-white rounded-lg shadow-sm p-4">
             <h2 class="text-base font-semibold text-gray-900 mb-2">Répartition par genre</h2>
             <div style="position: relative; height: 250px;">
               <canvas ref="genderChart"></canvas>
@@ -189,7 +194,7 @@
           </div>
 
           <!-- Graphique taux de remplissage -->
-          <div class="bg-white rounded-lg shadow-sm p-3">
+          <div class="bg-white rounded-lg shadow-sm p-4">
             <h2 class="text-base font-semibold text-gray-900 mb-2">Taux de remplissage par cursus</h2>
             <div style="position: relative; height: 250px;">
               <canvas ref="fillRateChart"></canvas>
@@ -217,6 +222,7 @@ import IconCheck from '~/components/Icons/Check-TLB.vue'
 import IconCash from '~/components/Icons/IconCash.vue'
 import IconCard from '~/components/Icons/IconCard.vue'
 import IconGift from '~/components/Icons/IconGift.vue'
+import IconNotification from '~/components/Icons/Notification.vue'
 
 usePageTitle('Statistiques')
 
