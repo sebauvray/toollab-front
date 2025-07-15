@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
+    <div class="px-4 sm:px-6 lg:px-8 pb-8 w-full max-w-9xl mx-auto">
       <!-- Loading state -->
       <div v-if="isLoading" class="flex justify-center items-center py-12">
         <div class="text-center">
@@ -156,11 +156,11 @@
         </div>
 
         <!-- Détails des paiements -->
-        <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200">
           <h2 class="text-base font-semibold text-gray-900 mb-2">Répartition des paiements</h2>
           
           <!-- Montant total payé -->
-          <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-6 mb-4 border border-green-200">
+          <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 mb-4 border border-green-200">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-4">
                 <div class="p-3 bg-green-600 rounded-lg shadow-md">
@@ -221,9 +221,9 @@
         </div>
 
         <!-- Graphiques -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 ">
           <!-- Graphique répartition par genre -->
-          <div class="bg-white rounded-lg shadow-sm p-4">
+          <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200">
             <h2 class="text-base font-semibold text-gray-900 mb-2">Répartition par genre</h2>
             <div style="position: relative; height: 250px;">
               <canvas ref="genderChart"></canvas>
@@ -231,7 +231,7 @@
           </div>
 
           <!-- Graphique taux de remplissage -->
-          <div class="bg-white rounded-lg shadow-sm p-4">
+          <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200">
             <h2 class="text-base font-semibold text-gray-900 mb-2">Taux de remplissage par cursus</h2>
             <div style="position: relative; height: 250px;">
               <canvas ref="fillRateChart"></canvas>
