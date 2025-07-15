@@ -40,6 +40,17 @@ const currentSchoolName = computed(() => {
   return selectedSchool.value.name;
 });
 
+const currentSchoolLogo = computed(() => {
+  if (!selectedSchool.value || !selectedSchool.value.logo) return '';
+  return selectedSchool.value.logo;
+});
+
+const logoUrl = computed(() => {
+  if (!currentSchoolLogo.value) return '';
+  const runtimeConfig = useRuntimeConfig();
+  return `${runtimeConfig.public.apiUrl}/storage/${currentSchoolLogo.value}`;
+});
+
 const checkAdminAccess = () => {
   if (selectedSchool.value && schools.value.length > 0) {
     const currentSchoolRole = schools.value.find(s => s.id === selectedSchool.value.id);
@@ -56,6 +67,7 @@ const loadUserSchools = async () => {
       schools.value = rolesResponse.roles.schools.map(schoolRole => ({
         id: schoolRole.context.id,
         name: schoolRole.context.name,
+        logo: schoolRole.context.logo || null,
         role: schoolRole.role
       }));
 
@@ -144,10 +156,13 @@ onUnmounted(() => {
       <div class="mb-4" :class="isSidebarCollapsed ? 'px-2' : 'px-4'">
         <div v-if="schools.length <= 1 && currentSchoolName" class="flex items-center gap-x-2 py-2"
              :class="isSidebarCollapsed ? 'justify-center' : ''">
-          <div class="w-8 h-8 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
+          <div v-if="currentSchoolLogo" class="w-10 h-10 flex-shrink-0">
+            <img :src="logoUrl" alt="Logo" class="w-full h-full object-contain rounded-full" />
+          </div>
+          <div v-else class="w-10 h-10 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
             <span class="text-white text-sm font-semibold">{{ currentSchoolInitial }}</span>
           </div>
-          <div v-if="!isSidebarCollapsed" class="text-base text-gray-800">{{ currentSchoolName }}</div>
+          <div v-if="!isSidebarCollapsed" class="text-base text-gray-800 truncate">{{ currentSchoolName }}</div>
         </div>
 
         <div v-else-if="schools.length > 1" class="relative">
@@ -156,11 +171,14 @@ onUnmounted(() => {
               class="w-full flex items-center gap-x-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
               :class="isSidebarCollapsed ? 'justify-center px-2' : ''"
           >
-            <div class="w-8 h-8 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
+            <div v-if="currentSchoolLogo" class="w-10 h-10 flex-shrink-0">
+              <img :src="logoUrl" alt="Logo" class="w-full h-full object-contain rounded-full" />
+            </div>
+            <div v-else class="w-10 h-10 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
               <span class="text-white text-sm font-semibold">{{ currentSchoolInitial }}</span>
             </div>
             <div v-if="!isSidebarCollapsed" class="flex-1 text-left">
-              <div class="text-base text-gray-800">{{ currentSchoolName }}</div>
+              <div class="text-base text-gray-800 truncate">{{ currentSchoolName }}</div>
             </div>
             <svg v-if="!isSidebarCollapsed" class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -180,13 +198,20 @@ onUnmounted(() => {
                   class="w-full flex items-center gap-x-2 px-3 py-2 hover:bg-gray-100 transition-colors"
                   :class="{ 'bg-gray-50': selectedSchool?.id === school.id }"
               >
-                <div class="w-7 h-7 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
+                <div v-if="school.logo" class="w-9 h-9 flex-shrink-0">
+                  <img 
+                    :src="`${useRuntimeConfig().public.apiUrl}/storage/${school.logo}`" 
+                    alt="Logo" 
+                    class="w-full h-full object-contain rounded-full"
+                  />
+                </div>
+                <div v-else class="w-9 h-9 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
                   <span class="text-white text-xs font-semibold">{{
                       school.name.charAt(0).toUpperCase()
                     }}</span>
                 </div>
                 <div class="flex-1">
-                  <div class="text-base text-gray-800">{{ school.name }}</div>
+                  <div class="text-base text-gray-800 truncate">{{ school.name }}</div>
                   <div class="text-sm text-gray-500">{{ school.role }}</div>
                 </div>
                 <svg
@@ -204,6 +229,7 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
+      
     </aside>
     <div class="flex flex-col flex-1 overflow-hidden">
       <div class="h-20 flex items-center justify-end pr-12 gap-x-10 flex-shrink-0">

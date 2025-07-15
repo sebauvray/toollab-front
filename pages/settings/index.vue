@@ -216,7 +216,7 @@ const handleUpdateSchool = async () => {
     console.error('Erreur lors de la mise à jour de l\'école:', error)
     message.value = {
       type: 'error',
-      text:  'Une erreur est survenue lors de la mise à jour de l\'école'
+      text: error.response?.data?.message || error.response?.data?.error || 'Une erreur est survenue lors de la mise à jour de l\'école'
     }
   }
 }
@@ -443,7 +443,7 @@ onMounted(async () => {
                 <span>{{ logoPreview ? 'Changer le logo' : 'Ajouter un logo' }}</span>
                 <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/jpg,image/png,image/gif,image/svg+xml"
                     class="hidden"
                     @change="handleFileChange"
                 />
