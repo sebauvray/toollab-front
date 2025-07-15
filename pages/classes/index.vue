@@ -133,7 +133,7 @@ onMounted(() => {
       <p class="text-gray-500">Aucune classe trouvée</p>
     </div>
 
-    <div v-else class="space-y-6">
+    <div v-else class="space-y-6 pb-8">
       <div v-for="group in groupedClasses" :key="`${group.cursus}_${group.level}`" class="space-y-3">
         <h2 class="text-lg font-semibold text-gray-800">
           {{ group.cursus }} - {{ group.level }}
@@ -158,7 +158,7 @@ onMounted(() => {
                 <span class="font-medium text-sm">{{ classroom.student_count }}/{{ classroom.size }}</span>
               </div>
 
-              <div class="space-y-1 max-h-48 overflow-y-auto">
+              <div class="space-y-1">
                 <div
                     v-for="student in classroom.students"
                     :key="student.id"
