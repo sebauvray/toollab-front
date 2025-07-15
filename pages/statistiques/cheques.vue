@@ -80,7 +80,7 @@
             <div class="col-span-2 text-green-600 font-medium">
               {{ formatCurrency(item.amount) }}
             </div>
-            <div class="col-span-3">
+            <div class="col-span-2">
               {{ item.details?.banque || '-' }}
             </div>
             <div class="col-span-3">
@@ -91,6 +91,15 @@
             </div>
             <div class="col-span-2 text-sm text-gray-600">
               {{ (item.family?.responsibles && item.family.responsibles.length > 0 && item.family.responsibles[0].phone) || '-' }}
+            </div>
+            <div class="col-span-1">
+              <NuxtLink 
+                v-if="item.family?.id"
+                :to="`/family/${item.family.id}/paiement`"
+                class="text-gray-900 hover:text-gray-700 underline text-sm"
+              >
+                Voir
+              </NuxtLink>
             </div>
           </div>
         </template>
@@ -129,9 +138,10 @@ const pagination = ref({
 const columns = [
   { key: 'numero', label: 'N° Chèque', width: '2' },
   { key: 'amount', label: 'Montant', width: '2' },
-  { key: 'bank', label: 'Banque', width: '3' },
+  { key: 'bank', label: 'Banque', width: '2' },
   { key: 'responsable', label: 'Nom du responsable', width: '3' },
-  { key: 'phone', label: 'Téléphone', width: '2' }
+  { key: 'phone', label: 'Téléphone', width: '2' },
+  { key: 'actions', label: 'Actions', width: '1' }
 ]
 
 const bankDisplay = computed(() => {
