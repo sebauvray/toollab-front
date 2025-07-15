@@ -63,5 +63,32 @@ export const statisticsService = {
       console.error('Erreur lors de la récupération des revenus mensuels:', error)
       throw error
     }
+  },
+
+  async searchPaymentsPaginated(schoolId, params = {}) {
+    try {
+      const response = await apiClient.get('/api/statistics/payments', {
+        params: { 
+          school_id: schoolId,
+          ...params
+        }
+      })
+      return response.data
+    } catch (error) {
+      console.error('Erreur lors de la recherche de paiements:', error)
+      throw error
+    }
+  },
+
+  async getAvailableBanks(schoolId) {
+    try {
+      const response = await apiClient.get('/api/statistics/available-banks', {
+        params: { school_id: schoolId }
+      })
+      return response.data
+    } catch (error) {
+      console.error('Erreur lors de la récupération des banques:', error)
+      throw error
+    }
   }
 }

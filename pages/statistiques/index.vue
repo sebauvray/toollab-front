@@ -154,8 +154,13 @@
         <div class="bg-white rounded-lg shadow-sm p-4">
           <h2 class="text-base font-semibold text-gray-900 mb-2">Répartition des paiements</h2>
           <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
-            <NuxtLink to="/statistiques/cheques" class="block">
+            <NuxtLink to="/statistiques/cheques" class="block relative">
               <div class="text-center p-3 bg-blue-50 rounded hover:bg-blue-100 transition-colors cursor-pointer">
+                <div class="absolute top-2 right-2">
+                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                  </svg>
+                </div>
                 <IconCheck class="w-6 h-6 text-blue-600 mx-auto mb-1" />
                 <p class="text-xs text-gray-600">Chèques</p>
                 <p class="text-lg font-bold text-gray-900">{{ formatCurrency(stats.payments?.by_type?.cheque?.amount || 0) }}</p>
