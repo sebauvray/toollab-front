@@ -46,13 +46,14 @@ const formatBreadcrumbName = (name) => {
         .join(' ')
 }
 
-const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 0)
+const windowWidth = ref(1024)
 
 const updateWindowWidth = () => {
   windowWidth.value = window.innerWidth
 }
 
 onMounted(() => {
+  updateWindowWidth()
   window.addEventListener('resize', updateWindowWidth)
 })
 

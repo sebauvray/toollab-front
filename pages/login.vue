@@ -6,6 +6,7 @@ import { ref } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { useRouter, useRoute } from '#imports'
 import authService from '~/services/auth'
+import schoolService from '~/services/school'
 
 useHead({
   title: 'Connexion'
@@ -44,14 +45,31 @@ const handleSubmit = async () => {
       return
     }
 
-    await authService.login({
+    const loginResponse = await authService.login({
       email: form.value.email,
       password: form.value.password,
       remember: form.value.remember
     })
 
-    const redirectPath = route.query.redirect || '/'
-    router.push(redirectPath)
+    if (process.client) {
+      localStorage.removeItem('current_school_id')
+    }
+
+    const schools = await schoolService.getSchools()
+    const isSuperAdmin = !!loginResponse?.user?.is_super_admin
+    const redirectPath = route.query.redirect
+
+    if (Array.isArray(schools) && schools.length === 1) {
+      localStorage.setItem('current_school_id', String(schools[0].id))
+      router.push(redirectPath || '/')
+    } else if (Array.isArray(schools) && schools.length > 1) {
+      router.push({ path: '/select-school', query: redirectPath ? { redirect: redirectPath } : {} })
+    } else if (isSuperAdmin) {
+      router.push('/admin')
+    } else {
+      formError.value = 'Votre compte n\'est associé à aucune école. Contactez votre administrateur.'
+      await authService.logout()
+    }
   } catch (error) {
     console.error('Erreur de connexion:', error)
     if (error.response?.status === 500) {

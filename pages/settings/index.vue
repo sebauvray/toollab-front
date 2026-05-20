@@ -65,36 +65,37 @@ const roles = [
 
 const checkUserRoles = async () => {
   try {
+    const currentSchoolId = process.client
+        ? parseInt(localStorage.getItem('current_school_id') || '0', 10)
+        : 0;
+    if (!currentSchoolId) {
+      return;
+    }
+
     const response = await userService.getUserRoles(user.value.id);
     const userRoles = response.roles;
 
-    if (userRoles.schools && userRoles.schools.length) {
-      const directorRole = userRoles.schools.find(role =>
-          role.role.toLowerCase() === 'director' ||
-          role.role.toLowerCase() === 'directeur'
-      );
+    const currentSchoolRole = userRoles.schools?.find(
+        (r) => r.context?.id === currentSchoolId
+    );
 
-      const adminRole = userRoles.schools.find(role =>
-          role.role.toLowerCase() === 'admin' ||
-          role.role.toLowerCase() === 'administrateur'
-      );
+    const isSuperAdmin = !!user.value?.is_super_admin;
+    const roleName = currentSchoolRole?.role?.toLowerCase();
+    const isDirectorHere = roleName === 'director' || roleName === 'directeur';
+    const isAdminHere = roleName === 'admin' || roleName === 'administrateur';
 
-      if (directorRole) {
-        isDirector.value = true;
-        const schoolResponse = await schoolService.getSchool(directorRole.context.id);
-        school.value = schoolResponse;
-        populateSchoolForm();
-      } else if (adminRole) {
-        isAdmin.value = true;
-        const schoolResponse = await schoolService.getSchool(adminRole.context.id);
-        school.value = schoolResponse;
-      }
+    if (isDirectorHere || isSuperAdmin) {
+      isDirector.value = true;
+      const schoolResponse = await schoolService.getSchool(currentSchoolId);
+      school.value = schoolResponse;
+      populateSchoolForm();
+    } else if (isAdminHere) {
+      isAdmin.value = true;
+      const schoolResponse = await schoolService.getSchool(currentSchoolId);
+      school.value = schoolResponse;
     }
   } catch (error) {
     console.error('Erreur lors de la vérification du rôle:', error);
-    if (error.response) {
-      console.error('Détails de l\'erreur:', error.response.data);
-    }
   } finally {
     isLoading.value = false;
   }

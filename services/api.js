@@ -17,6 +17,11 @@ export function setupInterceptors() {
                 if (token) {
                     config.headers.Authorization = `Bearer ${token}`
                 }
+
+                const schoolId = localStorage.getItem('current_school_id')
+                if (schoolId) {
+                    config.headers['X-School-Id'] = schoolId
+                }
             }
             return config
         },

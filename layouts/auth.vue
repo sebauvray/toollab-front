@@ -11,8 +11,11 @@ import CurrencyEuro from "~/components/Icons/CurrencyEuro.vue";
 import StudentTLB from "~/components/Icons/Student-TLB.vue";
 import ChartBar from "~/components/Icons/ChartBar.vue";
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useRouter } from '#imports';
 import userService from '~/services/user';
 import schoolService from '~/services/school';
+
+const router = useRouter();
 
 const user = ref(null);
 const schools = ref([]);
@@ -51,7 +54,13 @@ const logoUrl = computed(() => {
   return `${runtimeConfig.public.apiUrl}/storage/${currentSchoolLogo.value}`;
 });
 
+const isSuperAdmin = computed(() => !!user.value?.is_super_admin);
+
 const checkAdminAccess = () => {
+  if (isSuperAdmin.value) {
+    hasAdminAccess.value = true;
+    return;
+  }
   if (selectedSchool.value && schools.value.length > 0) {
     const currentSchoolRole = schools.value.find(s => s.id === selectedSchool.value.id);
     if (currentSchoolRole) {
@@ -62,36 +71,40 @@ const checkAdminAccess = () => {
 
 const loadUserSchools = async () => {
   try {
-    const rolesResponse = await userService.getUserRoles(user.value.id);
-    if (rolesResponse.roles && rolesResponse.roles.schools) {
-      schools.value = rolesResponse.roles.schools.map(schoolRole => ({
-        id: schoolRole.context.id,
-        name: schoolRole.context.name,
-        logo: schoolRole.context.logo || null,
-        role: schoolRole.role
-      }));
+    const [allSchools, rolesResponse] = await Promise.all([
+      schoolService.getSchools(),
+      userService.getUserRoles(user.value.id),
+    ]);
 
-      if (schools.value.length > 0) {
-        const savedSchoolId = localStorage.getItem('current_school_id');
-        if (savedSchoolId) {
-          const savedSchool = schools.value.find(s => s.id === parseInt(savedSchoolId));
-          if (savedSchool) {
-            selectedSchool.value = savedSchool;
-            checkAdminAccess();
-          } else {
-            selectedSchool.value = schools.value[0];
-            localStorage.setItem('current_school_id', schools.value[0].id);
-          }
-        } else {
-          if (schools.value.length === 1) {
-            selectedSchool.value = schools.value[0];
-            localStorage.setItem('current_school_id', schools.value[0].id);
-          }
-
-          checkAdminAccess();
-        }
-      }
+    const roleMap = {};
+    if (rolesResponse?.roles?.schools) {
+      rolesResponse.roles.schools.forEach((r) => {
+        roleMap[r.context.id] = r.role;
+      });
     }
+
+    schools.value = (allSchools || []).map((s) => ({
+      id: s.id,
+      name: s.name,
+      logo: s.logo || null,
+      role: roleMap[s.id] || (isSuperAdmin.value ? 'Super-admin' : null),
+    }));
+
+    const savedSchoolId = localStorage.getItem('current_school_id');
+    if (savedSchoolId) {
+      const savedSchool = schools.value.find(s => s.id === parseInt(savedSchoolId, 10));
+      if (savedSchool) {
+        selectedSchool.value = savedSchool;
+      } else if (schools.value.length > 0) {
+        selectedSchool.value = schools.value[0];
+        localStorage.setItem('current_school_id', String(schools.value[0].id));
+      }
+    } else if (schools.value.length === 1) {
+      selectedSchool.value = schools.value[0];
+      localStorage.setItem('current_school_id', String(schools.value[0].id));
+    }
+
+    checkAdminAccess();
   } catch (error) {
     console.error('Erreur lors du chargement des écoles:', error);
   }
@@ -100,8 +113,17 @@ const loadUserSchools = async () => {
 const selectSchool = (school) => {
   selectedSchool.value = school;
   showSchoolDropdown.value = false;
-  localStorage.setItem('current_school_id', school.id);
+  localStorage.setItem('current_school_id', String(school.id));
   checkAdminAccess();
+  if (process.client) {
+    window.location.reload();
+  }
+};
+
+const goToAdmin = () => {
+  showSchoolDropdown.value = false;
+  localStorage.removeItem('current_school_id');
+  router.push('/admin');
 };
 
 const checkScreenSize = () => {
@@ -154,7 +176,7 @@ onUnmounted(() => {
       </nav>
 
       <div class="mb-4" :class="isSidebarCollapsed ? 'px-2' : 'px-4'">
-        <div v-if="schools.length <= 1 && currentSchoolName" class="flex items-center gap-x-2 py-2"
+        <div v-if="schools.length <= 1 && !isSuperAdmin && currentSchoolName" class="flex items-center gap-x-2 py-2"
              :class="isSidebarCollapsed ? 'justify-center' : ''">
           <div v-if="currentSchoolLogo" class="w-10 h-10 flex-shrink-0">
             <img :src="logoUrl" alt="Logo" class="w-full h-full object-contain rounded-full" />
@@ -165,7 +187,7 @@ onUnmounted(() => {
           <div v-if="!isSidebarCollapsed" class="text-base text-gray-800 truncate">{{ currentSchoolName }}</div>
         </div>
 
-        <div v-else-if="schools.length > 1" class="relative">
+        <div v-else-if="schools.length > 1 || isSuperAdmin" class="relative">
           <button
               @click="showSchoolDropdown = !showSchoolDropdown"
               class="w-full flex items-center gap-x-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
@@ -191,6 +213,19 @@ onUnmounted(() => {
               :class="isSidebarCollapsed ? 'left-full ml-2 bottom-0 mb-0' : 'left-0 right-0'"
           >
             <div class="max-h-64 overflow-y-auto" :class="isSidebarCollapsed ? 'w-64' : ''">
+              <button
+                  v-if="isSuperAdmin"
+                  @click="goToAdmin"
+                  class="w-full flex items-center gap-x-2 px-3 py-2 hover:bg-purple-50 transition-colors border-b"
+              >
+                <div class="w-9 h-9 flex items-center justify-center rounded-full bg-purple-600 flex-shrink-0">
+                  <span class="text-white text-sm">🛡</span>
+                </div>
+                <div class="flex-1 text-left">
+                  <div class="text-sm font-bold text-purple-900">Administration Toollab</div>
+                  <div class="text-xs text-purple-700">Mode plateforme</div>
+                </div>
+              </button>
               <button
                   v-for="school in schools"
                   :key="school.id"

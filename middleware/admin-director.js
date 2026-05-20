@@ -13,12 +13,19 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         return navigateTo('/login')
     }
 
-    const user = JSON.parse(userJson)
+    let user
+    try {
+        user = JSON.parse(userJson)
+    } catch {
+        return navigateTo('/login')
+    }
+
+    if (user?.is_super_admin) return
 
     try {
         const schoolId = localStorage.getItem('current_school_id')
         if (!schoolId) {
-            return navigateTo('/')
+            return navigateTo('/select-school')
         }
 
         const response = await userService.getUserRoles(user.id)
