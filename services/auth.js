@@ -32,20 +32,6 @@ export default {
         }
     },
 
-    async register(userData) {
-        const axios = useApi()
-        const response = await axios.post('/api/register', userData)
-
-        if (response.data && response.data.token) {
-            localStorage.setItem('auth.token', response.data.token)
-            localStorage.setItem('auth.user', JSON.stringify(response.data.user))
-
-            axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`
-        }
-
-        return response.data
-    },
-
     async forgotPassword(email) {
         try {
             const axios = useApi()

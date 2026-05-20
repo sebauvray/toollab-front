@@ -67,22 +67,6 @@ export function useAuth() {
             }
         },
 
-        register: async (userData) => {
-            isLoading.value = true
-            error.value = null
-            try {
-                const response = await authService.register(userData)
-                user.value = response.user
-                isAuthenticated.value = true
-                return response
-            } catch (err) {
-                error.value = err.response?.data?.message || 'Une erreur est survenue lors de l\'inscription'
-                throw err
-            } finally {
-                isLoading.value = false
-            }
-        },
-
         refreshUser: () => {
             syncFromStorage()
         }
