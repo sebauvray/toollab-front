@@ -199,17 +199,17 @@ onUnmounted(() => {
             <div v-else class="w-10 h-10 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
               <span class="text-white text-sm font-semibold">{{ currentSchoolInitial }}</span>
             </div>
-            <div v-if="!isSidebarCollapsed" class="flex-1 text-left">
+            <div v-if="!isSidebarCollapsed" class="flex-1 min-w-0 text-left">
               <div class="text-base text-gray-800 truncate">{{ currentSchoolName }}</div>
             </div>
-            <svg v-if="!isSidebarCollapsed" class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg v-if="!isSidebarCollapsed" class="w-4 h-4 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
             </svg>
           </button>
 
           <div
               v-if="showSchoolDropdown"
-              class="absolute bottom-full bg-white border rounded-lg shadow-lg z-50"
+              class="absolute bottom-full mb-1 bg-white border rounded-lg shadow-lg z-50 overflow-hidden"
               :class="isSidebarCollapsed ? 'left-full ml-2 bottom-0 mb-0' : 'left-0 right-0'"
           >
             <div class="max-h-64 overflow-y-auto" :class="isSidebarCollapsed ? 'w-64' : ''">
@@ -221,9 +221,9 @@ onUnmounted(() => {
                 <div class="w-9 h-9 flex items-center justify-center rounded-full bg-purple-600 flex-shrink-0">
                   <span class="text-white text-sm">🛡</span>
                 </div>
-                <div class="flex-1 text-left">
-                  <div class="text-sm font-bold text-purple-900">Administration Toollab</div>
-                  <div class="text-xs text-purple-700">Mode plateforme</div>
+                <div class="flex-1 min-w-0 text-left">
+                  <div class="text-sm font-bold text-purple-900 truncate">Administration Toollab</div>
+                  <div class="text-xs text-purple-700 truncate">Mode plateforme</div>
                 </div>
               </button>
               <button
@@ -245,13 +245,16 @@ onUnmounted(() => {
                       school.name.charAt(0).toUpperCase()
                     }}</span>
                 </div>
-                <div class="flex-1">
+                <div class="flex-1 min-w-0 text-left">
                   <div class="text-base text-gray-800 truncate">{{ school.name }}</div>
-                  <div class="text-sm text-gray-500">{{ school.role }}</div>
+                  <div
+                      class="text-sm truncate"
+                      :class="school.role === 'Super-admin' ? 'text-gray-400 italic' : 'text-gray-500'"
+                  >{{ school.role || '—' }}</div>
                 </div>
                 <svg
                     v-if="selectedSchool?.id === school.id"
-                    class="w-4 h-4 text-primary"
+                    class="w-4 h-4 text-primary flex-shrink-0"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                 >
