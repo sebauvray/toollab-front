@@ -56,7 +56,8 @@
       >
         <template #default="{ item, isLastRow }">
           <div
-              class="grid py-1.5 px-4 hover:bg-gray-50 transition-colors"
+              :id="`class-${item.id}`"
+              class="grid py-1.5 px-4 hover:bg-gray-50 transition-colors scroll-mt-24"
               :class="{ 'border-b border-[#E6EFF5]': !isLastRow }"
               :style="`grid-template-columns: repeat(12, minmax(0, 1fr))`"
           >
@@ -337,8 +338,26 @@ const handleDeleteClass = async () => {
   }
 };
 
-onMounted(() => {
-  fetchCursus();
+const openModalFromHash = async () => {
+  if (isReadOnly.value) return
+  const match = (route.hash || '').match(/^#class-(\d+)$/)
+  if (!match) return
+
+  const classId = parseInt(match[1], 10)
+  try {
+    const response = await classeService.getClassById(classId)
+    if (response.status === 'success' && response.data) {
+      selectedClass.value = response.data
+      showUpdateClassModal.value = true
+    }
+  } catch (err) {
+    console.error('Erreur ouverture classe depuis hash:', err)
+  }
+}
+
+onMounted(async () => {
+  await fetchCursus();
+  await openModalFromHash();
 });
 
 definePageMeta({

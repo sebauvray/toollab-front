@@ -91,5 +91,15 @@ export default {
             console.error('Erreur lors de la recherche d\'étudiants:', error)
             throw error
         }
+    },
+
+    async listTeachers() {
+        try {
+            const response = await apiClient.get('/api/users/teachers')
+            return response.data
+        } catch (error) {
+            console.error('Erreur lors de la récupération des professeurs:', error)
+            throw error
+        }
     }
 }

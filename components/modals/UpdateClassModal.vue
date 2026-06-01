@@ -72,9 +72,10 @@
             />
           </div>
           <div>
-            <InputText
-                v-model="newSchedule.teacher_name"
-                placeholder="Nom du professeur"
+            <InputSelect
+                v-model="newSchedule.teacher_id"
+                :options="teacherOptions"
+                placeholder="Professeur"
             />
           </div>
           <div>
@@ -112,7 +113,7 @@
             <div class="flex items-center space-x-4">
               <span class="font-medium">{{ schedule.day }}</span>
               <span>{{ schedule.start_time }} - {{ schedule.end_time }}</span>
-              <span class="text-gray-600">{{ getTeacherName(schedule.teacher_name) }}</span>
+              <span class="text-gray-600">{{ getScheduleTeacherLabel(schedule) }}</span>
             </div>
             <button
                 @click="removeSchedule(index)"
@@ -152,6 +153,7 @@ import InputSelect from '~/components/form/InputSelect.vue'
 import InputNumber from '~/components/form/InputNumber.vue'
 import SelectGenre from '~/components/form/SelectGenre.vue'
 import SelectDay from "~/components/form/SelectDay.vue";
+import userService from '~/services/user'
 
 const props = defineProps({
   isOpen: {
@@ -191,8 +193,38 @@ const newSchedule = ref({
   day: '',
   start_time: '',
   end_time: '',
-  teacher_name: ''
+  teacher_id: null
 })
+
+const teachers = ref([])
+
+const teacherOptions = computed(() => [
+  {value: null, label: 'Aucun professeur'},
+  ...teachers.value.map(t => ({
+    value: t.id,
+    label: `${t.first_name} ${t.last_name}`
+  }))
+])
+
+const teacherById = computed(() => {
+  const map = new Map()
+  teachers.value.forEach(t => map.set(t.id, t))
+  return map
+})
+
+const fetchTeachers = async () => {
+  try {
+    const response = await userService.listTeachers()
+    teachers.value = response.data || []
+  } catch (e) {
+    console.error('Erreur récupération profs:', e)
+    teachers.value = []
+  }
+}
+
+watch(() => props.isOpen, (isOpen) => {
+  if (isOpen) fetchTeachers()
+}, {immediate: true})
 
 const levelOptions = computed(() => {
   return props.levels.map(level => ({
@@ -225,14 +257,14 @@ const addSchedule = () => {
     day: newSchedule.value.day,
     start_time: newSchedule.value.start_time,
     end_time: newSchedule.value.end_time,
-    teacher_name: newSchedule.value.teacher_name
+    teacher_id: newSchedule.value.teacher_id
   })
 
   newSchedule.value = {
     day: '',
     start_time: '',
     end_time: '',
-    teacher_name: ''
+    teacher_id: null
   }
   error.value = ''
 }
@@ -241,8 +273,15 @@ const removeSchedule = (index) => {
   editClass.value.schedules.splice(index, 1)
 }
 
-const getTeacherName = (teacherName) => {
-  return teacherName || 'Aucun professeur'
+const getScheduleTeacherLabel = (schedule) => {
+  if (schedule.teacher_id && teacherById.value.has(schedule.teacher_id)) {
+    const t = teacherById.value.get(schedule.teacher_id)
+    return `${t.first_name} ${t.last_name}`
+  }
+  if (schedule.teacher && schedule.teacher.first_name) {
+    return `${schedule.teacher.first_name} ${schedule.teacher.last_name}`
+  }
+  return schedule.teacher_name || 'Aucun professeur'
 }
 
 const handleUpdate = () => {

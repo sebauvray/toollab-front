@@ -414,9 +414,11 @@ definePageMeta({
                             <div class="text-gray-700">{{ schedule.day }}</div>
                             <div class="text-gray-600">{{ schedule.formatted_time }}</div>
                           </div>
-                          <div v-if="schedule.teacher_name" class="inline-flex items-center gap-x-2 mt-1 font-light text-sm">
+                          <div v-if="schedule.teacher || schedule.teacher_name" class="inline-flex items-center gap-x-2 mt-1 font-light text-sm">
                             <StudentTLB class="size-4 text-gray-600" />
-                            <div class="text-gray-600">{{ schedule.teacher_name }}</div>
+                            <div class="text-gray-600">
+                              {{ schedule.teacher ? `${schedule.teacher.first_name} ${schedule.teacher.last_name}` : schedule.teacher_name }}
+                            </div>
                           </div>
                         </div>
                       </div>

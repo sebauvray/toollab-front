@@ -23,7 +23,7 @@ const roleLabels = {
   'director': 'Directeur',
   'admin': 'Administrateur',
   'registar': 'Responsable des inscriptions',
-  'teacher': 'Enseignant',
+  'teacher': 'Professeur',
   'student': 'Élève',
   'responsible': 'Responsable'
 }
@@ -34,7 +34,7 @@ const fetchUsers = async () => {
     const response = await staffService.getSchoolUsers(props.schoolId)
 
     const filteredData = response.filter(item =>
-        ['director', 'admin', 'registar'].includes(item.role)
+        ['director', 'admin', 'registar', 'teacher'].includes(item.role)
     )
 
     const userMap = new Map()
@@ -167,7 +167,8 @@ defineExpose({
                   :class="{
                   'bg-purple-100 text-purple-800': role === 'director',
                   'bg-blue-100 text-blue-800': role === 'admin',
-                  'bg-green-100 text-green-800': role === 'registar'
+                  'bg-green-100 text-green-800': role === 'registar',
+                  'bg-orange-100 text-orange-800': role === 'teacher'
                 }">
                 <span>{{ roleLabels[role] }}</span>
                 <button

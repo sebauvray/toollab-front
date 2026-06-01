@@ -104,6 +104,7 @@ const groupedClasses = computed(() => {
     if (!groups[key]) {
       groups[key] = {
         cursus: classroom.cursus,
+        cursus_id: classroom.cursus_id,
         level: classroom.level,
         classrooms: []
       }
@@ -137,9 +138,12 @@ onMounted(() => {
 
     <div v-else class="space-y-6 pb-8">
       <div v-for="group in groupedClasses" :key="`${group.cursus}_${group.level}`" class="space-y-3">
-        <h2 class="text-lg font-semibold text-gray-800">
+        <NuxtLink
+            :to="`/cursus/${group.cursus_id}`"
+            class="inline-block text-lg font-semibold text-gray-800 hover:text-primary hover:underline underline-offset-4 decoration-2 transition-colors"
+        >
           {{ group.cursus }} - {{ group.level }}
-        </h2>
+        </NuxtLink>
 
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
           <div
@@ -151,7 +155,12 @@ onMounted(() => {
                 class="px-3 py-2 text-white font-medium text-sm"
                 :style="{ backgroundColor: genderColors[classroom.gender] || '#6B7280' }"
             >
-              {{ classroom.name }}
+              <NuxtLink
+                  :to="`/cursus/${classroom.cursus_id}#class-${classroom.id}`"
+                  class="hover:underline underline-offset-4 decoration-2 decoration-white/80"
+              >
+                {{ classroom.name }}
+              </NuxtLink>
             </div>
 
             <div class="p-3">
@@ -164,13 +173,18 @@ onMounted(() => {
                 <div
                     v-for="student in classroom.students"
                     :key="student.id"
-                    class="flex justify-between items-center py-1.5 px-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors group font-nunito"
+                    class="flex justify-between items-center py-1.5 px-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors group/row font-nunito"
                 >
-                  <span class="text-xs text-gray-700 truncate flex-1 mr-2">{{ student.full_name }}</span>
+                  <NuxtLink
+                      :to="`/family/${student.family_id}`"
+                      class="text-xs text-gray-700 hover:text-primary hover:underline underline-offset-2 truncate flex-1 mr-2 transition-colors"
+                  >
+                    {{ student.full_name }}
+                  </NuxtLink>
                   <button
                       v-if="!isReadOnly"
                       @click="openDeleteModal(student, classroom)"
-                      class="text-red-500 hover:text-red-700 transition-colors opacity-0 group-hover:opacity-100 p-0.5"
+                      class="text-red-500 hover:text-red-700 transition-colors opacity-0 group-hover/row:opacity-100 p-0.5"
                       title="Retirer de la classe"
                   >
                     <Trash class="w-3.5 h-3.5" />
