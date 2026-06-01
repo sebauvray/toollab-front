@@ -12,6 +12,9 @@ import studentClassroomService from "~/services/studentClassroom.js";
 import userService from "~/services/user.js";
 import schoolService from "~/services/school.js";
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
+import { useSchoolYear } from "~/composables/useSchoolYear";
+
+const { isReadOnly } = useSchoolYear();
 
 usePageTitle('Famille')
 const router = useRouter();
@@ -368,15 +371,16 @@ definePageMeta({
                     <div
                         v-for="(classe, index) in classGroup"
                         :key="classe.id"
-                        @click="canClickClass(classe) && toggleClass(classes.findIndex(c => c.id === classe.id), classe)"
+                        @click="!isReadOnly && canClickClass(classe) && toggleClass(classes.findIndex(c => c.id === classe.id), classe)"
+                        :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
                         class="flex flex-col rounded-xl select-none bg-gray-50 p-4 transition-all duration-200 relative"
                         :class="[
                           'border-4',
                           {
                             'border-green-600': studentClasses[selectedStudent?.id]?.has(classes.findIndex(c => c.id === classe.id)),
                             'border-transparent': !studentClasses[selectedStudent?.id]?.has(classes.findIndex(c => c.id === classe.id)),
-                            'cursor-pointer': canClickClass(classe) && !isSaving,
-                            'opacity-50 cursor-not-allowed': !canClickClass(classe),
+                            'cursor-pointer': !isReadOnly && canClickClass(classe) && !isSaving,
+                            'opacity-50 cursor-not-allowed': isReadOnly || !canClickClass(classe),
                             'opacity-75': isSaving
                           }
                         ]">

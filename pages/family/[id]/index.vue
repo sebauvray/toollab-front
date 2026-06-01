@@ -23,6 +23,9 @@ import axios from "axios";
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 import ConfirmationModal from "~/components/modals/ConfirmationModal.vue";
 import {usePageTitle} from "~/composables/usePageTitle.js";
+import { useSchoolYear } from "~/composables/useSchoolYear";
+
+const { isReadOnly } = useSchoolYear();
 
 usePageTitle('Famille')
 const route = useRoute();
@@ -338,18 +341,23 @@ definePageMeta({
             <div class="flex">
                 <button
                     @click="showAddNewResponsableModal = true"
-                    class="mx-1 inline-flex gap-x-2 justify-between items-center px-4 py-2 text-white text-sm rounded-lg bg-default w-fit hover:opacity-90">
+                    :disabled="isReadOnly"
+                    :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
+                    class="mx-1 inline-flex gap-x-2 justify-between items-center px-4 py-2 text-white text-sm rounded-lg bg-default w-fit hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed">
                     Ajouter un responsable
                 </button>
             </div>
             <div class="flex">
                 <button
                     @click="showAddStudentsModal = true"
-                    class="mx-1 inline-flex gap-x-2 justify-between items-center px-4 py-2 text-white text-sm rounded-lg bg-default w-fit hover:opacity-90">
+                    :disabled="isReadOnly"
+                    :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
+                    class="mx-1 inline-flex gap-x-2 justify-between items-center px-4 py-2 text-white text-sm rounded-lg bg-default w-fit hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed">
                     Ajouter des élèves
                 </button>
             </div>
             <NuxtLink
+                v-if="!isReadOnly"
                 :to="{
               name: 'family-id-classes',
               params: { id: $route.params.id }
@@ -395,7 +403,7 @@ definePageMeta({
                         </ul>
                     </div>
                     <div class="flex flex-col gap-y-0.5 justify-center text-default">
-                        <div class="ml-auto font-sans text-xs text-black cursor-pointer" v-if="!isEditing">
+                        <div class="ml-auto font-sans text-xs text-black cursor-pointer" v-if="!isEditing && !isReadOnly">
                             <button
                                 class="underline"
                                 @click="showEditResponsableModal = true"
@@ -513,7 +521,7 @@ definePageMeta({
                             <div class="inline-flex col-span-3 justify-start items-center text-sm">
                                 {{ formatShortDateFr(student.birthdate) }}
                             </div>
-                            <div class="inline-flex col-span-2 gap-x-1.5 justify-start items-center pl-0.5">
+                            <div class="inline-flex col-span-2 gap-x-1.5 justify-start items-center pl-0.5" v-if="!isReadOnly">
                                 <button
                                     @click="selectedStudent = student; showEditStudentsModal = true"
                                     class="py-1.5 pr-1.5 text-gray-600 hover:text-gray-900"

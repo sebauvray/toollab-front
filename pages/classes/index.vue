@@ -5,6 +5,7 @@ import BreadCrumb from "~/components/navigation/BreadCrumb.vue"
 import ConfirmationModal from "~/components/modals/ConfirmationModal.vue"
 import Trash from "~/components/Icons/Trash.vue"
 import classeService from '~/services/classe'
+import { useSchoolYear } from '~/composables/useSchoolYear'
 import { usePageTitle } from "~/composables/usePageTitle.js"
 
 definePageMeta({
@@ -27,6 +28,7 @@ const classes = ref([])
 const showDeleteModal = ref(false)
 const studentToRemove = ref(null)
 const classroomToRemove = ref(null)
+const { isReadOnly } = useSchoolYear()
 
 const genderColors = {
   'Hommes': '#93C5FD',
@@ -166,6 +168,7 @@ onMounted(() => {
                 >
                   <span class="text-xs text-gray-700 truncate flex-1 mr-2">{{ student.full_name }}</span>
                   <button
+                      v-if="!isReadOnly"
                       @click="openDeleteModal(student, classroom)"
                       class="text-red-500 hover:text-red-700 transition-colors opacity-0 group-hover:opacity-100 p-0.5"
                       title="Retirer de la classe"

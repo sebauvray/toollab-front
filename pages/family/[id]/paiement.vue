@@ -7,6 +7,9 @@ import Trash from '~/components/Icons/Trash.vue'
 import EditIcon from '~/components/Icons/Edit.vue'
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 import { usePageTitle } from "~/composables/usePageTitle.js";
+import { useSchoolYear } from "~/composables/useSchoolYear";
+
+const { isReadOnly } = useSchoolYear();
 
 definePageMeta({
     layout: 'auth',
@@ -589,7 +592,7 @@ const resetNewForm = () => {
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2" v-if="!isReadOnly">
                             <button
                                 @click="startEdit(ligne)"
                                 class="p-2 text-gray-700 hover:bg-white hover:shadow-sm rounded-lg transition-colors"
@@ -686,7 +689,7 @@ const resetNewForm = () => {
                     </div>
                 </div>
 
-                <div v-if="!showNewForm">
+                <div v-if="!showNewForm && !isReadOnly">
                     <button
                         @click="showNewForm = true"
                         class="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-700 transition-colors flex items-center justify-center gap-2 text-sm"
@@ -696,7 +699,7 @@ const resetNewForm = () => {
                     </button>
                 </div>
 
-                <div v-else class="border-2 border-gray-300 rounded-lg p-3 bg-gray-50">
+                <div v-else-if="showNewForm && !isReadOnly" class="border-2 border-gray-300 rounded-lg p-3 bg-gray-50">
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             <button

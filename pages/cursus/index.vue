@@ -9,6 +9,9 @@ import Trash from "~/components/Icons/Trash.vue"
 import ConfirmationModal from "~/components/modals/ConfirmationModal.vue";
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 import {usePageTitle} from "~/composables/usePageTitle.js";
+import { useSchoolYear } from "~/composables/useSchoolYear";
+
+const { isReadOnly } = useSchoolYear();
 
 definePageMeta({
   layout: 'auth',
@@ -175,7 +178,9 @@ onMounted(() => {
 
     <button
         @click="showAddCursusModal = true"
-        class="bg-default text-white px-5 py-2 w-fit rounded-lg hover:opacity-90 inline-flex items-center justify-between gap-x-2 ml-auto">
+        :disabled="isReadOnly"
+        :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
+        class="bg-default text-white px-5 py-2 w-fit rounded-lg hover:opacity-90 inline-flex items-center justify-between gap-x-2 ml-auto disabled:opacity-40 disabled:cursor-not-allowed">
       <PlusLight class="size-4"/>
       <span>Créer un cursus</span>
     </button>
@@ -213,7 +218,7 @@ onMounted(() => {
               {{ item.type }}
             </span>
           </div>
-          <div class="col-span-1 inline-flex items-center justify-center">
+          <div class="col-span-1 inline-flex items-center justify-center" v-if="!isReadOnly">
             <button
                 @click.stop="openDeleteModal(item)"
                 class="text-gray-500 hover:text-red-600 transition-colors"

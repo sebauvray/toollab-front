@@ -8,6 +8,9 @@ import Trash from '~/components/Icons/Trash.vue'
 import EditIcon from '~/components/Icons/Edit.vue'
 import ConfirmationModal from '~/components/modals/ConfirmationModal.vue'
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
+import { useSchoolYear } from "~/composables/useSchoolYear";
+
+const { isReadOnly } = useSchoolYear();
 
 definePageMeta({
     layout: 'auth',
@@ -581,7 +584,8 @@ onMounted(() => {
                                 </div>
                                 <button
                                     @click="updateTarif"
-                                    :disabled="isSaving"
+                                    :disabled="isSaving || isReadOnly"
+                                    :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
                                     class="mt-6 px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Enregistrer
@@ -594,7 +598,9 @@ onMounted(() => {
                                 <h2 class="text-xl font-semibold">Réductions familiales</h2>
                                 <button
                                     @click="showAddFamiliale = true; editingFamiliale = null; resetFamilialeForm()"
-                                    class="flex items-center gap-2 px-3 py-1.5 bg-black text-white rounded-md hover:bg-gray-800"
+                                    :disabled="isReadOnly"
+                                    :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
+                                    class="flex items-center gap-2 px-3 py-1.5 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     <Plus class="w-4 h-4"/>
                                     Ajouter
@@ -617,7 +623,7 @@ onMounted(() => {
                                             {{ formatPrice(getTarifPrecedent(reduction.nombre_eleves_min)) }}
                                         </p>
                                     </div>
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex items-center gap-2" v-if="!isReadOnly">
                                         <button
                                             @click="editReductionFamiliale(reduction)"
                                             class="p-1.5 text-gray-600 hover:text-gray-900"
@@ -643,7 +649,8 @@ onMounted(() => {
                                 <h2 class="text-xl font-semibold">Réductions multi-cursus</h2>
                                 <button
                                     @click="showAddMultiCursus = true; editingMultiCursus = null; resetMultiCursusForm()"
-                                    :disabled="availableCursusesForMultiCursus.length === 0"
+                                    :disabled="availableCursusesForMultiCursus.length === 0 || isReadOnly"
+                                    :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
                                     class="flex items-center gap-2 px-3 py-1.5 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <Plus class="w-4 h-4"/>
@@ -664,7 +671,7 @@ onMounted(() => {
                                                 reduction.pourcentage_reduction
                                             }}%</p>
                                     </div>
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex items-center gap-2" v-if="!isReadOnly">
                                         <button
                                             @click="editReductionMultiCursus(reduction)"
                                             class="p-1.5 text-gray-600 hover:text-gray-900"

@@ -22,6 +22,11 @@ export function setupInterceptors() {
                 if (schoolId) {
                     config.headers['X-School-Id'] = schoolId
                 }
+
+                const schoolYearId = localStorage.getItem('current_school_year_id')
+                if (schoolYearId) {
+                    config.headers['X-School-Year-Id'] = schoolYearId
+                }
             }
             return config
         },

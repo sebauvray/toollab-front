@@ -14,13 +14,19 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from '#imports';
 import userService from '~/services/user';
 import schoolService from '~/services/school';
+import { useSchoolYear } from '~/composables/useSchoolYear';
 
 const router = useRouter();
+
+const { years, currentYear, isReadOnly, load: loadYears, switchTo: switchYear, reset: resetYears } = useSchoolYear();
+const showYearDropdown = ref(false);
+const yearDropdownRef = ref(null);
 
 const user = ref(null);
 const schools = ref([]);
 const selectedSchool = ref(null);
 const showSchoolDropdown = ref(false);
+const schoolDropdownRef = ref(null);
 const hasAdminAccess = ref(false);
 const isSidebarCollapsed = ref(false);
 
@@ -105,6 +111,14 @@ const loadUserSchools = async () => {
     }
 
     checkAdminAccess();
+
+    if (selectedSchool.value) {
+      try {
+        await loadYears();
+      } catch (e) {
+        console.error('Erreur lors du chargement des années scolaires:', e);
+      }
+    }
   } catch (error) {
     console.error('Erreur lors du chargement des écoles:', error);
   }
@@ -114,10 +128,16 @@ const selectSchool = (school) => {
   selectedSchool.value = school;
   showSchoolDropdown.value = false;
   localStorage.setItem('current_school_id', String(school.id));
+  resetYears();
   checkAdminAccess();
   if (process.client) {
     window.location.reload();
   }
+};
+
+const selectYear = (yearId) => {
+  showYearDropdown.value = false;
+  switchYear(yearId);
 };
 
 const goToAdmin = () => {
@@ -131,6 +151,15 @@ const checkScreenSize = () => {
     isSidebarCollapsed.value = true;
   } else {
     isSidebarCollapsed.value = false;
+  }
+};
+
+const handleClickOutside = (event) => {
+  if (showYearDropdown.value && yearDropdownRef.value && !yearDropdownRef.value.contains(event.target)) {
+    showYearDropdown.value = false;
+  }
+  if (showSchoolDropdown.value && schoolDropdownRef.value && !schoolDropdownRef.value.contains(event.target)) {
+    showSchoolDropdown.value = false;
   }
 };
 
@@ -148,12 +177,14 @@ onMounted(async () => {
 
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
+    document.addEventListener('click', handleClickOutside);
   }
 });
 
 onUnmounted(() => {
   if (process.client) {
     window.removeEventListener('resize', checkScreenSize);
+    document.removeEventListener('click', handleClickOutside);
   }
 });
 </script>
@@ -187,7 +218,7 @@ onUnmounted(() => {
           <div v-if="!isSidebarCollapsed" class="text-base text-gray-800 truncate">{{ currentSchoolName }}</div>
         </div>
 
-        <div v-else-if="schools.length > 1 || isSuperAdmin" class="relative">
+        <div v-else-if="schools.length > 1 || isSuperAdmin" class="relative" ref="schoolDropdownRef">
           <button
               @click="showSchoolDropdown = !showSchoolDropdown"
               class="w-full flex items-center gap-x-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
@@ -271,13 +302,78 @@ onUnmounted(() => {
     </aside>
     <div class="flex flex-col flex-1 overflow-hidden">
       <div class="h-20 flex items-center justify-end pr-12 gap-x-10 flex-shrink-0">
-        <div class="flex items-center gap-x-6">
+        <div class="flex items-center gap-x-4">
+          <div v-if="years.length > 0" class="relative" ref="yearDropdownRef">
+            <button
+                @click="showYearDropdown = !showYearDropdown"
+                class="inline-flex items-center gap-x-2 px-3 py-2 rounded-lg border bg-white hover:bg-gray-100 transition-colors text-sm"
+                :class="isReadOnly ? 'border-amber-400 text-amber-700' : 'text-gray-700'"
+            >
+              <span class="font-medium">{{ currentYear?.label || 'Année' }}</span>
+              <span v-if="isReadOnly" class="text-xs uppercase tracking-wide">archivée</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div
+                v-if="showYearDropdown"
+                class="absolute right-0 mt-1 w-56 bg-white border rounded-lg shadow-lg z-50 overflow-hidden"
+            >
+              <div class="max-h-72 overflow-y-auto">
+                <button
+                    v-for="year in years"
+                    :key="year.id"
+                    @click="selectYear(year.id)"
+                    class="w-full flex items-center justify-between gap-x-2 px-3 py-2 hover:bg-gray-100 transition-colors text-left"
+                    :class="{ 'bg-gray-50': currentYear?.id === year.id }"
+                >
+                  <span class="flex flex-col">
+                    <span class="text-sm text-gray-800">{{ year.label }}</span>
+                    <span class="text-xs text-gray-500">
+                      <template v-if="year.is_active">Année active</template>
+                      <template v-else-if="year.closed_at">Clôturée — lecture seule</template>
+                      <template v-else>Lecture seule</template>
+                    </span>
+                  </span>
+                  <svg
+                      v-if="currentYear?.id === year.id"
+                      class="w-4 h-4 text-primary flex-shrink-0"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                  >
+                    <path fill-rule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+              <NuxtLink
+                  v-if="hasAdminAccess"
+                  to="/annees-scolaires"
+                  @click="showYearDropdown = false"
+                  class="flex items-center gap-x-2 px-3 py-2 border-t bg-gray-50 hover:bg-gray-100 transition-colors text-sm text-gray-700"
+              >
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <span>Gérer les années scolaires</span>
+              </NuxtLink>
+            </div>
+          </div>
           <NuxtLink to="/settings"
                     class="inline-flex items-center justify-center rounded-full bg-white border p-2.5 hover:bg-gray-100 transition-colors duration-200">
             <Setting class="size-6 text-primary cursor-pointer" />
           </NuxtLink>
           <UserDropdown :user="user" :initials="initials" />
         </div>
+      </div>
+
+      <div v-if="isReadOnly" class="bg-amber-50 border-y border-amber-200 text-amber-800 text-sm px-6 py-2 flex items-center gap-x-2">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span>Vous consultez l'année <strong>{{ currentYear?.label }}</strong> en lecture seule. Toute modification est désactivée.</span>
       </div>
 
       <div class="flex-1 overflow-auto">

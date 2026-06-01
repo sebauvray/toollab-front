@@ -4,7 +4,9 @@
 
     <button
         @click="showAddClassModal = true"
-        class="bg-default text-white px-5 py-2 w-fit rounded-lg hover:opacity-90 inline-flex items-center justify-between gap-x-2 ml-auto">
+        :disabled="isReadOnly"
+        :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
+        class="bg-default text-white px-5 py-2 w-fit rounded-lg hover:opacity-90 inline-flex items-center justify-between gap-x-2 ml-auto disabled:opacity-40 disabled:cursor-not-allowed">
       <PlusLight class="size-4"/>
       <span>Ajouter une classe</span>
     </button>
@@ -87,7 +89,7 @@
                 </div>
               </div>
             </div>
-            <div class="col-span-2 inline-flex items-center justify-end gap-x-2 pr-4">
+            <div class="col-span-2 inline-flex items-center justify-end gap-x-2 pr-4" v-if="!isReadOnly">
               <button
                   @click="openUpdateModal(item)"
                   class="text-gray-500 hover:text-blue-600 transition-colors"
@@ -124,6 +126,9 @@ import PageContainer from "~/components/layout/PageContainer.vue";
 import cursusService from "~/services/cursus";
 import classeService from "~/services/classe";
 import {usePageTitle, useRoute} from '#imports';
+import { useSchoolYear } from "~/composables/useSchoolYear";
+
+const { isReadOnly } = useSchoolYear();
 
 const route = useRoute();
 const isLoading = ref(true);

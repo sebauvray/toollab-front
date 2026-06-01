@@ -10,6 +10,9 @@ import DataTable from "~/components/table/DataTable.vue";
 import PageContainer from "~/components/layout/PageContainer.vue";
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 import {usePageTitle} from "~/composables/usePageTitle.js";
+import { useSchoolYear } from "~/composables/useSchoolYear";
+
+const { isReadOnly } = useSchoolYear();
 
 definePageMeta({
     layout: 'auth',
@@ -104,7 +107,9 @@ onMounted(() => {
 
         <button
             @click="showAddResponsableModal = true"
-            class="bg-default text-white px-5 py-2 w-fit rounded-lg hover:opacity-90 inline-flex items-center justify-between gap-x-2 ml-auto">
+            :disabled="isReadOnly"
+            :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
+            class="bg-default text-white px-5 py-2 w-fit rounded-lg hover:opacity-90 inline-flex items-center justify-between gap-x-2 ml-auto disabled:opacity-40 disabled:cursor-not-allowed">
             <PlusLight class="size-4"/>
             <span>Créer une famille</span>
         </button>
