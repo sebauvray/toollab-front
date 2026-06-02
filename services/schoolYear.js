@@ -13,6 +13,10 @@ export default {
         const { data } = await apiClient.post(`/api/school-years/${id}/close`)
         return data?.data
     },
+    async toggleOutcomes(id, open) {
+        const { data } = await apiClient.post(`/api/school-years/${id}/outcomes-toggle`, { open })
+        return data?.data
+    },
     async reconductClassroom(classroomId, payload = {}) {
         const { data } = await apiClient.post(`/api/classrooms/${classroomId}/reconduct`, payload)
         return data?.data

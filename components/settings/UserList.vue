@@ -34,7 +34,7 @@ const fetchUsers = async () => {
     const response = await staffService.getSchoolUsers(props.schoolId)
 
     const filteredData = response.filter(item =>
-        ['director', 'admin', 'registar', 'teacher'].includes(item.role)
+        ['director', 'admin', 'registar'].includes(item.role)
     )
 
     const userMap = new Map()

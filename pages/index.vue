@@ -1,6 +1,9 @@
 <script setup>
+import {onMounted} from 'vue'
 import AuthGuard from '~/components/auth/AuthGuard.vue'
 import SearchInput from "~/components/form/SearchInput.vue"
+import {useAuth} from '~/composables/useAuth'
+import userService from '~/services/user'
 
 usePageTitle('Accueil')
 useSeoMeta({
@@ -13,6 +16,23 @@ definePageMeta({
   layout: 'auth',
   layoutData: {
     title: 'Dashboard'
+  }
+})
+
+const {user} = useAuth()
+
+onMounted(async () => {
+  if (!process.client || !user.value) return
+  try {
+    const schoolId = parseInt(localStorage.getItem('current_school_id') || '0', 10)
+    if (!schoolId) return
+    const response = await userService.getUserRoles(user.value.id)
+    const current = response.roles?.schools?.find(s => s.context?.id === schoolId)
+    if (current && current.role === 'Professeur') {
+      await navigateTo('/professeur/classes')
+    }
+  } catch (e) {
+    console.error('Erreur détection rôle prof:', e)
   }
 })
 </script>

@@ -9,6 +9,7 @@ import FamilyTLB from "~/components/Icons/Family-TLB.vue";
 import UserDropdown from "~/components/UserDropdown.vue";
 import CurrencyEuro from "~/components/Icons/CurrencyEuro.vue";
 import StudentTLB from "~/components/Icons/Student-TLB.vue";
+import TeacherTLB from "~/components/Icons/Teacher-TLB.vue";
 import ChartBar from "~/components/Icons/ChartBar.vue";
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from '#imports';
@@ -28,6 +29,7 @@ const selectedSchool = ref(null);
 const showSchoolDropdown = ref(false);
 const schoolDropdownRef = ref(null);
 const hasAdminAccess = ref(false);
+const isTeacher = ref(false);
 const isSidebarCollapsed = ref(false);
 
 const initials = computed(() => {
@@ -65,12 +67,14 @@ const isSuperAdmin = computed(() => !!user.value?.is_super_admin);
 const checkAdminAccess = () => {
   if (isSuperAdmin.value) {
     hasAdminAccess.value = true;
+    isTeacher.value = false;
     return;
   }
   if (selectedSchool.value && schools.value.length > 0) {
     const currentSchoolRole = schools.value.find(s => s.id === selectedSchool.value.id);
     if (currentSchoolRole) {
       hasAdminAccess.value = currentSchoolRole.role === 'Directeur' || currentSchoolRole.role === 'Administrateur';
+      isTeacher.value = currentSchoolRole.role === 'Professeur';
     }
   }
 };
@@ -199,11 +203,14 @@ onUnmounted(() => {
       </div>
       <nav class="inline-flex flex-col gap-y-2 mt-2 flex-1">
         <NavLink to="/" :icon="Home" text="Accueil" :collapsed="isSidebarCollapsed" />
-        <NavLink to="/family" :icon="FamilyTLB" text="Familles" :collapsed="isSidebarCollapsed" />
+        <NavLink v-if="!isTeacher" to="/family" :icon="FamilyTLB" text="Familles" :collapsed="isSidebarCollapsed" />
         <NavLink v-if="hasAdminAccess" to="/cursus" :icon="Cursus" text="Cursus" :collapsed="isSidebarCollapsed" />
         <NavLink v-if="hasAdminAccess" to="/classes" :icon="StudentTLB" text="Classes" :collapsed="isSidebarCollapsed" />
+        <NavLink v-if="hasAdminAccess" to="/professeurs" :icon="TeacherTLB" text="Professeurs" :collapsed="isSidebarCollapsed" />
         <NavLink v-if="hasAdminAccess" to="/tarification" :icon="CurrencyEuro" text="Tarification" :collapsed="isSidebarCollapsed" />
         <NavLink v-if="hasAdminAccess" to="/statistiques" :icon="ChartBar" text="Statistiques" :collapsed="isSidebarCollapsed" />
+        <NavLink v-if="isTeacher" to="/professeur/classes" :icon="StudentTLB" text="Mes classes" :collapsed="isSidebarCollapsed" />
+        <NavLink v-if="isTeacher" to="/professeur/planning" :icon="Cursus" text="Mon planning" :collapsed="isSidebarCollapsed" />
       </nav>
 
       <div class="mb-4" :class="isSidebarCollapsed ? 'px-2' : 'px-4'">
@@ -376,7 +383,7 @@ onUnmounted(() => {
         <span>Vous consultez l'année <strong>{{ currentYear?.label }}</strong> en lecture seule. Toute modification est désactivée.</span>
       </div>
 
-      <div class="flex-1 overflow-auto">
+      <div class="flex-1 overflow-auto overscroll-contain">
         <slot />
       </div>
     </div>

@@ -60,8 +60,7 @@ const newUserForm = ref({
 
 const roles = [
   {value: 'admin', label: 'Administrateur'},
-  {value: 'registar', label: 'Responsable des inscriptions'},
-  {value: 'teacher', label: 'Professeur'}
+  {value: 'registar', label: 'Responsable des inscriptions'}
 ]
 
 const checkUserRoles = async () => {
@@ -526,8 +525,9 @@ onMounted(async () => {
 
           <h2 class="text-lg font-semibold mb-6">Ajouter un utilisateur</h2>
           <p class="text-sm text-gray-600 mb-6">
-            Créez un compte administrateur, un responsable des inscriptions ou un professeur pour votre établissement.
+            Créez un compte administrateur ou un responsable des inscriptions pour votre établissement.
             Un email d'invitation sera envoyé à l'utilisateur pour définir son mot de passe.
+            Pour les professeurs, utilisez l'onglet dédié.
           </p>
 
           <div class="grid grid-cols-1 gap-6 md:grid-cols-4">

@@ -71,6 +71,29 @@ const openClose = (year) => {
   showCloseModal.value = true
 }
 
+const togglingOutcomesId = ref(null)
+const toggleOutcomes = async (year) => {
+  if (togglingOutcomesId.value) return
+  togglingOutcomesId.value = year.id
+  try {
+    await schoolYearService.toggleOutcomes(year.id, !year.outcomes_open)
+    setFlashMessage({
+      type: 'success',
+      message: year.outcomes_open
+          ? 'Saisie des décisions désactivée'
+          : 'Saisie des décisions activée'
+    })
+    await load()
+  } catch (e) {
+    setFlashMessage({
+      type: 'error',
+      message: e?.response?.data?.message || 'Erreur lors de la bascule'
+    })
+  } finally {
+    togglingOutcomesId.value = null
+  }
+}
+
 const confirmClose = async () => {
   if (!yearToClose.value) return
   isClosing.value = true
@@ -127,6 +150,54 @@ onMounted(async () => {
       Les classes ne sont pas reconduites automatiquement. Vous pouvez recopier les tarifs et réductions
       depuis une année précédente.
     </p>
+
+    <div
+        v-if="activeYear"
+        class="bg-white rounded-lg border p-5 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+    >
+      <div class="flex-1">
+        <h3 class="font-semibold text-default mb-1">Décisions de fin d'année · {{ activeYear.label }}</h3>
+        <p class="text-sm text-gray-600">
+          Quand cette option est activée, chaque professeur peut saisir, pour ses élèves,
+          le résultat de fin d'année (passage, redoublement, exclusion, fin de cursus).
+          Désactivez-la une fois les décisions rendues.
+        </p>
+      </div>
+      <button
+          type="button"
+          @click="toggleOutcomes(activeYear)"
+          :disabled="togglingOutcomesId === activeYear.id"
+          :class="[
+            'flex items-center gap-3 px-4 py-2.5 rounded-lg border transition-colors shrink-0',
+            activeYear.outcomes_open
+              ? 'bg-green-50 border-green-300 hover:bg-green-100'
+              : 'bg-gray-50 border-gray-300 hover:bg-gray-100',
+            togglingOutcomesId === activeYear.id ? 'opacity-60 cursor-wait' : ''
+          ]"
+      >
+        <span
+            :class="[
+              'relative inline-block w-10 h-5 rounded-full transition-colors',
+              activeYear.outcomes_open ? 'bg-green-500' : 'bg-gray-300'
+            ]"
+        >
+          <span
+              :class="[
+                'absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all',
+                activeYear.outcomes_open ? 'left-[1.375rem]' : 'left-0.5'
+              ]"
+          ></span>
+        </span>
+        <span
+            :class="[
+              'text-sm font-medium',
+              activeYear.outcomes_open ? 'text-green-800' : 'text-gray-700'
+            ]"
+        >
+          Saisie {{ activeYear.outcomes_open ? 'activée' : 'désactivée' }}
+        </span>
+      </button>
+    </div>
 
     <div class="bg-white rounded-lg border overflow-hidden">
       <div class="grid grid-cols-12 px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-600 uppercase tracking-wide">
