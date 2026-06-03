@@ -4,7 +4,7 @@
       <ClientOnly>
         <BreadCrumb />
       </ClientOnly>
-      <h1 class="text-xl font-bold text-gray-900 mb-5">Recherche de chèques</h1>
+      <h1 class="text-lg font-bold text-gray-900 mb-5">Recherche de chèques</h1>
 
       <div class="bg-white rounded-lg shadow-sm p-5 mb-5">
         <div class="flex gap-3">

@@ -62,11 +62,11 @@ const handleSubmit = async () => {
     <NuxtLink to="/admin/schools" class="text-xs text-gray-500 hover:text-default mb-3 inline-block">
       ← Retour aux écoles
     </NuxtLink>
-    <h1 class="text-xl font-bold mb-5">Créer une école</h1>
+    <h1 class="text-lg font-bold mb-5">Créer une école</h1>
 
     <form @submit.prevent="handleSubmit" class="bg-white rounded-lg border p-5 space-y-5">
       <div>
-        <h2 class="text-base font-bold mb-3">Informations école</h2>
+        <h2 class="text-sm font-semibold mb-2">Informations école</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <InputText v-model="form.name" placeholder="Nom de l'école" required />
@@ -85,7 +85,7 @@ const handleSubmit = async () => {
       </div>
 
       <div class="border-t pt-5">
-        <h2 class="text-base font-bold mb-1">Directeur·ice</h2>
+        <h2 class="text-sm font-semibold mb-1">Directeur·ice</h2>
         <p class="text-xs text-gray-600 mb-3">Un email d'invitation lui sera envoyé pour qu'il/elle définisse son mot de passe.</p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>

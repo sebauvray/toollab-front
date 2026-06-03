@@ -33,7 +33,7 @@ onMounted(fetchSchools)
   <div class="p-6">
     <div class="flex justify-between items-center mb-5">
       <div>
-        <h1 class="text-xl font-bold">Écoles</h1>
+        <h1 class="text-lg font-bold">Écoles</h1>
         <p class="text-gray-600 text-xs">{{ schools.length }} école{{ schools.length > 1 ? 's' : '' }} sur la plateforme</p>
       </div>
       <NuxtLink

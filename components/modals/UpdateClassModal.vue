@@ -3,7 +3,7 @@
     <div class="bg-white rounded-2xl w-[95vw] max-w-[70rem] h-[90dvh] sm:h-[85vh] flex flex-col">
       <div class="px-5 pt-3 shrink-0">
         <div class="flex justify-between items-center mb-3">
-          <h2 class="text-xl font-bold mx-auto">Modifier la classe</h2>
+          <h2 class="text-lg font-bold mx-auto">Modifier la classe</h2>
           <button
               @click="$emit('close')"
               class="text-gray-500 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-50"

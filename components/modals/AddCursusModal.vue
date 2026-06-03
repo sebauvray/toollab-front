@@ -73,7 +73,7 @@ const handleSave = () => {
   <div v-if="isOpen" class="fixed inset-0 font-nunito bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-2xl px-6 pt-5 pb-8 w-[50rem] max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-3">
-        <h2 class="text-xl font-bold mx-auto">Ajouter un cursus</h2>
+        <h2 class="text-lg font-bold mx-auto">Ajouter un cursus</h2>
         <button
             @click="$emit('close')"
             class="text-gray-500 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-50"
@@ -91,7 +91,7 @@ const handleSave = () => {
       <div class="mt-6">
         <div class="grid grid-cols-2 gap-5 mb-6">
           <div class="flex flex-col gap-y-1.5">
-            <div class="text-base font-bold text-default mb-1.5 pl-1.5">Nom du cursus</div>
+            <div class="text-sm font-semibold text-default mb-1 pl-1">Nom du cursus</div>
             <InputText
                 v-model="currentCursus.name"
                 placeholder="Nom du cursus"
@@ -99,13 +99,13 @@ const handleSave = () => {
             />
           </div>
           <div class="flex flex-col justify-between">
-            <div class="text-base font-bold text-default mb-1.5 pl-1.5">Type de cursus</div>
+            <div class="text-sm font-semibold text-default mb-1 pl-1">Type de cursus</div>
             <ToogleCursus v-model="currentCursus.progression" />
           </div>
         </div>
 
         <div v-if="currentCursus.progression === 'levels'" class="flex flex-col gap-y-3 mt-8">
-          <div class="text-base font-bold text-default mb-1.5 pl-1.5">Nombre de niveaux</div>
+          <div class="text-sm font-semibold text-default mb-1 pl-1">Nombre de niveaux</div>
           <div class="w-1/2">
             <InputNumber
                 v-model="currentCursus.levels_count"

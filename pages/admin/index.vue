@@ -25,7 +25,7 @@ onMounted(async () => {
 
 <template>
   <div class="p-6">
-    <h1 class="text-xl font-bold mb-1.5">Administration Toollab</h1>
+    <h1 class="text-lg font-bold mb-1.5">Administration Toollab</h1>
     <p class="text-gray-600 mb-6">Vue plateforme — gestion globale des écoles.</p>
 
     <div v-if="isLoading" class="py-6 text-center">
@@ -34,8 +34,8 @@ onMounted(async () => {
 
     <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
       <div class="bg-white p-5 rounded-lg border">
-        <div class="text-2xl font-bold text-default">{{ schools.length }}</div>
-        <div class="text-gray-500 mt-1">École{{ schools.length > 1 ? 's' : '' }} sur la plateforme</div>
+        <div class="text-xl font-bold text-default">{{ schools.length }}</div>
+        <div class="text-xs text-gray-500 mt-1">École{{ schools.length > 1 ? 's' : '' }} sur la plateforme</div>
       </div>
     </div>
 

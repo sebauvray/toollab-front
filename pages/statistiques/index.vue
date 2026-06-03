@@ -168,11 +168,11 @@
                 </div>
                 <div>
                   <p class="text-xs font-medium text-gray-600">Montant total payé</p>
-                  <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(stats.payments?.total_amount || 0) }}</p>
+                  <p class="text-lg font-bold text-gray-900">{{ formatCurrency(stats.payments?.total_amount || 0) }}</p>
                 </div>
               </div>
               <div class="text-right">
-                <p class="text-xl font-bold text-green-600">{{ stats.payments?.payment_rate || 0 }}%</p>
+                <p class="text-base font-bold text-green-600">{{ stats.payments?.payment_rate || 0 }}%</p>
                 <p class="text-xs text-gray-600">Taux de recouvrement</p>
               </div>
             </div>

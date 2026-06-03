@@ -370,7 +370,7 @@ definePageMeta({
             <div class="grid grid-cols-3 gap-x-6 mt-1 w-full">
                 <div class="flex relative flex-col col-span-1 gap-y-3 px-5 py-2 bg-white rounded-2xl border">
                     <div
-                        class="flex items-center px-10 py-1 mx-auto text-base font-bold text-center rounded-lg bg-gray-light font-montserrat"
+                        class="flex items-center px-5 py-1 mx-auto text-sm font-semibold text-center rounded-lg bg-gray-light font-montserrat"
                         :class="{ 'hover:cursor-pointer': family.responsibles.length > 1 }"
                         @click="family.responsibles.length > 1 ? isDropdownOpen = !isDropdownOpen : null"
                     >
@@ -544,7 +544,7 @@ definePageMeta({
             </div>
             <div class="grid grid-cols-2 gap-x-6 w-full h-80 mt-1">
                 <div class="flex flex-col col-span-1 gap-y-3 py-2 bg-white rounded-2xl border">
-                    <div class="px-5 text-lg font-bold font-montserrat">Paiements</div>
+                    <div class="px-5 text-sm font-semibold font-montserrat">Paiements</div>
 
                     <div v-if="isPaiementLoading" class="flex justify-center py-6">
                         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-default"></div>
@@ -624,7 +624,7 @@ definePageMeta({
                     </div>
                 </div>
                 <div class="flex flex-col col-span-1 bg-white py-2 px-5 rounded-2xl border text-default h-80">
-                    <div class="mb-3 text-lg font-bold font-montserrat">Commentaires</div>
+                    <div class="mb-3 text-sm font-semibold font-montserrat">Commentaires</div>
                     <div class="overflow-hidden flex-1 mb-2">
                         <div
                             v-if="comments.length"

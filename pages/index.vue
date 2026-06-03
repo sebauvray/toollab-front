@@ -41,7 +41,7 @@ onMounted(async () => {
   <AuthGuard>
     <div class="flex flex-col items-center justify-center w-full min-h-full">
       <div class="flex flex-col items-center gap-6 md:gap-10 w-full py-6 md:pt-16 font-montserrat">
-        <h2 class="font-bold text-default text-3xl md:text-4xl">Recherche</h2>
+        <h2 class="font-bold text-default text-2xl md:text-3xl">Recherche</h2>
         <SearchInput class="w-11/12 sm:w-2/3 lg:w-1/2" />
       </div>
       <div class="flex gap-x-3"></div>

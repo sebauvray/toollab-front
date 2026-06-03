@@ -125,29 +125,34 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="p-6">
-    <div class="mb-5">
-      <button @click="router.push('/annees-scolaires')" class="text-xs text-gray-500 hover:text-gray-700 mb-1.5">← Retour</button>
-      <h1 class="text-xl font-bold text-default">Reconduire des classes</h1>
-      <p class="text-xs text-gray-600 mt-1">
+  <div class="p-4 xl:p-6">
+    <div class="mb-4">
+      <button
+          @click="router.push('/annees-scolaires')"
+          class="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 mb-1.5"
+      >
+        <span>←</span> Retour
+      </button>
+      <h1 class="text-lg font-bold text-default">Reconduire des classes</h1>
+      <p class="text-xs text-gray-600 mt-0.5 max-w-3xl">
         Crée des copies vides (sans élèves) des classes sélectionnées dans l'année active.
-        Les classes déjà reconduites sont marquées et ne peuvent pas être sélectionnées.
+        Les classes déjà reconduites sont grisées.
       </p>
     </div>
 
-    <div class="bg-white border rounded-lg p-3 mb-5 flex flex-wrap items-end gap-x-5 gap-y-2">
+    <div class="bg-white border border-gray-200 rounded-lg p-3 mb-4 flex flex-wrap items-end gap-x-4 gap-y-2">
       <div>
-        <label class="block text-xs uppercase text-gray-500 mb-1">Année source</label>
-        <select v-model="sourceYearId" class="px-2 py-1.5 border rounded-md min-w-[220px]">
+        <label class="block text-[11px] uppercase tracking-wide text-gray-500 mb-1">Année source</label>
+        <select v-model="sourceYearId" class="px-2 py-1.5 text-sm border border-gray-300 rounded-md min-w-[220px] focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
           <option :value="null" disabled>— sélectionner —</option>
           <option v-for="y in archivedYears" :key="y.id" :value="y.id">{{ y.label }} (clôturée)</option>
-          <option v-for="y in years.filter(y => y.is_active)" :key="y.id" :value="y.id">{{ y.label }} (active — pour copie interne)</option>
+          <option v-for="y in years.filter(y => y.is_active)" :key="y.id" :value="y.id">{{ y.label }} (active — copie interne)</option>
         </select>
       </div>
-      <div class="text-gray-400 text-xl pb-1">→</div>
+      <div class="text-gray-400 text-base pb-1.5">→</div>
       <div>
-        <label class="block text-xs uppercase text-gray-500 mb-1">Année cible</label>
-        <div class="px-2 py-1.5 border rounded-md bg-gray-50 min-w-[220px]">
+        <label class="block text-[11px] uppercase tracking-wide text-gray-500 mb-1">Année cible</label>
+        <div class="px-2 py-1.5 text-sm border border-gray-200 rounded-md bg-gray-50 min-w-[220px]">
           <span v-if="activeYear" class="text-default font-medium">{{ activeYear.label }}</span>
           <span v-else class="text-red-600 text-xs">Aucune année active</span>
         </div>
@@ -156,128 +161,151 @@ onMounted(async () => {
         <button
             @click="submitReconduction"
             :disabled="!someSelected || !activeYear || reconducting"
-            class="px-3 py-1.5 bg-primary text-white rounded-lg hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-medium"
+            class="px-3 py-1.5 bg-primary text-white rounded-md hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium transition-opacity"
         >
-          {{ reconducting ? 'Reconduction...' : `Reconduire ${selected.size} classe(s)` }}
+          {{ reconducting ? 'Reconduction…' : `Reconduire ${selected.size} classe${selected.size > 1 ? 's' : ''}` }}
         </button>
       </div>
     </div>
 
-    <div v-if="loading" class="text-center py-10 text-gray-500">Chargement...</div>
+    <div v-if="loading" class="text-center py-10 text-sm text-gray-500">Chargement…</div>
 
-    <div v-else-if="!sourceYearId" class="text-center py-10 text-gray-500">
+    <div v-else-if="!sourceYearId" class="text-center py-10 text-sm text-gray-500">
       Sélectionne une année source pour voir ses classes.
     </div>
 
-    <div v-else-if="classrooms.length === 0" class="text-center py-10 text-gray-500">
+    <div v-else-if="classrooms.length === 0" class="text-center py-10 text-sm text-gray-500">
       Aucune classe sur cette année.
     </div>
 
-    <div v-else>
-      <div class="flex items-center justify-between flex-wrap gap-2 mb-3 text-xs">
+    <div v-else class="space-y-5">
+      <div class="flex items-center justify-between flex-wrap gap-2 text-xs">
         <div class="flex items-center gap-x-2">
           <button
               @click="toggleAll"
               :disabled="selectableClassrooms.length === 0"
-              class="px-2 py-1 rounded border text-xs hover:bg-gray-50 disabled:opacity-40"
+              class="px-2 py-1 rounded-md border border-gray-300 text-xs hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {{ allSelectableSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
           </button>
           <span class="text-gray-500">
-            {{ selectableClassrooms.length }} sélectionnable(s),
-            {{ classrooms.length - selectableClassrooms.length }} déjà reconduite(s)
+            {{ selectableClassrooms.length }} sélectionnable{{ selectableClassrooms.length > 1 ? 's' : '' }} ·
+            {{ classrooms.length - selectableClassrooms.length }} déjà reconduite{{ (classrooms.length - selectableClassrooms.length) > 1 ? 's' : '' }}
           </span>
         </div>
-        <div class="flex items-center gap-x-2 text-xs text-gray-600">
+        <div class="flex items-center gap-x-3 text-xs text-gray-600">
           <span
               v-for="g in genderLabels"
               :key="g"
               class="inline-flex items-center gap-x-1"
           >
-            <span class="inline-block w-3 h-3 rounded-full" :style="{ backgroundColor: genderColors[g] }"></span>
+            <span class="inline-block w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: genderColors[g] }"></span>
             {{ g }}
           </span>
         </div>
       </div>
 
-      <div v-for="group in groupedClassrooms" :key="group.cursus_id" class="mb-5">
-        <h2 class="text-base font-semibold text-default mb-1.5 flex items-center gap-x-1.5">
-          <span class="text-xs uppercase bg-gray-700 text-white px-1.5 py-1 rounded">Cursus</span>
-          {{ group.cursus_name }}
-        </h2>
+      <div v-for="group in groupedClassrooms" :key="group.cursus_id" class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div class="px-3 py-2 border-b border-gray-200 bg-gray-50 flex items-center gap-2">
+          <span class="text-[10px] uppercase tracking-wide bg-gray-700 text-white px-1.5 py-0.5 rounded">Cursus</span>
+          <h2 class="text-sm font-semibold text-gray-800">{{ group.cursus_name }}</h2>
+          <span class="text-[11px] text-gray-500 ml-auto">
+            {{ group.levels.reduce((n, l) => n + l.classrooms.length, 0) }} classe{{ group.levels.reduce((n, l) => n + l.classrooms.length, 0) > 1 ? 's' : '' }}
+          </span>
+        </div>
 
-        <div v-for="lvl in group.levels" :key="lvl.level_id" class="mb-3">
-          <h3 class="text-xs font-medium text-gray-600 mb-1.5 pl-1.5 border-l-4 border-primary">{{ lvl.level_name }}</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 pl-2">
-            <div
-                v-for="c in lvl.classrooms"
-                :key="c.id"
-                :class="[
-                  'rounded-lg border overflow-hidden transition-all',
-                  c.already_in_active_year
-                    ? 'border-gray-200 bg-gray-50 opacity-60'
-                    : selected.has(c.id)
-                      ? 'border-primary shadow-sm ring-1 ring-primary/30 bg-white'
-                      : 'border-gray-200 bg-white hover:border-gray-400'
-                ]"
-            >
-              <!-- header : checkbox + pastille + gender + badge déjà reconduite -->
-              <div
-                  class="px-2 py-1.5 flex items-center gap-x-1.5 text-xs uppercase tracking-wide font-semibold text-default"
-                  :style="{ backgroundColor: (genderColors[c.gender] || '#E5E7EB') + '40' }"
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200 text-[11px] uppercase tracking-wide text-gray-500">
+            <tr>
+              <th class="px-2 py-1.5 w-8"></th>
+              <th class="px-2 py-1.5 text-left">Genre</th>
+              <th class="px-2 py-1.5 text-left">Niveau</th>
+              <th class="px-2 py-1.5 text-left">Nom de la classe</th>
+              <th class="px-2 py-1.5 text-left w-32">Effectif max</th>
+              <th class="px-2 py-1.5 text-right w-28">État</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <template v-for="lvl in group.levels" :key="lvl.level_id">
+              <tr
+                  v-for="c in lvl.classrooms"
+                  :key="c.id"
+                  :class="[
+                    'transition-colors',
+                    c.already_in_active_year
+                      ? 'bg-gray-50/60 text-gray-400'
+                      : selected.has(c.id)
+                        ? 'bg-primary/5'
+                        : 'hover:bg-gray-50'
+                  ]"
               >
-                <input
-                    type="checkbox"
-                    :checked="selected.has(c.id)"
-                    :disabled="c.already_in_active_year"
-                    @change="toggle(c.id)"
-                    class="flex-shrink-0 w-3.5 h-3.5 cursor-pointer"
-                />
-                <span
-                    class="inline-block w-3 h-3 rounded-full flex-shrink-0"
-                    :style="{ backgroundColor: genderColors[c.gender] || '#9CA3AF' }"
-                ></span>
-                <span class="flex-1">{{ c.gender }}</span>
-                <span
-                    v-if="c.already_in_active_year"
-                    class="text-xs text-emerald-700 font-semibold flex items-center gap-x-1 flex-shrink-0 normal-case tracking-normal"
-                >
-                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z" clip-rule="evenodd"/>
-                  </svg>
-                  Reconduite
-                </span>
-              </div>
-
-              <!-- corps : nom éditable + taille éditable -->
-              <div class="px-2 py-2 flex flex-col gap-y-2">
-                <div class="flex flex-col gap-y-1">
-                  <label class="text-xs text-gray-500 uppercase tracking-wide">Nom de la classe</label>
+                <td class="px-2 py-1.5 text-center">
+                  <input
+                      type="checkbox"
+                      :checked="selected.has(c.id)"
+                      :disabled="c.already_in_active_year"
+                      @change="toggle(c.id)"
+                      class="cursor-pointer accent-primary disabled:cursor-not-allowed"
+                  />
+                </td>
+                <td class="px-2 py-1.5">
+                  <div class="inline-flex items-center gap-1.5">
+                    <span
+                        class="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                        :style="{ backgroundColor: genderColors[c.gender] || '#9CA3AF' }"
+                    ></span>
+                    <span class="text-xs">{{ c.gender }}</span>
+                  </div>
+                </td>
+                <td class="px-2 py-1.5 text-xs text-gray-600">
+                  {{ lvl.level_name }}
+                </td>
+                <td class="px-2 py-1.5">
                   <input
                       type="text"
                       v-model="names[c.id]"
                       :disabled="c.already_in_active_year"
                       :placeholder="c.name"
-                      class="px-1.5 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-gray-100 disabled:text-gray-500"
+                      class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary disabled:bg-transparent disabled:border-transparent disabled:text-gray-400"
                   />
-                </div>
-                <div class="flex items-end justify-between gap-x-2">
-                  <div class="flex flex-col gap-y-1 flex-1">
-                    <label class="text-xs text-gray-500 uppercase tracking-wide">Nombre max d'élèves</label>
-                    <input
-                        type="number"
-                        min="1"
-                        max="999"
-                        v-model.number="sizes[c.id]"
-                        :disabled="c.already_in_active_year"
-                        class="w-20 px-1.5 py-1 text-xs text-center font-medium border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-gray-100 disabled:text-gray-500"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+                </td>
+                <td class="px-2 py-1.5">
+                  <input
+                      type="number"
+                      min="1"
+                      max="999"
+                      v-model.number="sizes[c.id]"
+                      :disabled="c.already_in_active_year"
+                      class="w-20 px-2 py-1 text-xs text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary disabled:bg-transparent disabled:border-transparent disabled:text-gray-400"
+                  />
+                </td>
+                <td class="px-2 py-1.5 text-right">
+                  <span
+                      v-if="c.already_in_active_year"
+                      class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  >
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z" clip-rule="evenodd"/>
+                    </svg>
+                    Reconduite
+                  </span>
+                  <span
+                      v-else-if="selected.has(c.id)"
+                      class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-primary/10 text-primary border border-primary/20"
+                  >
+                    Sélectionnée
+                  </span>
+                  <span
+                      v-else
+                      class="text-[11px] text-gray-400"
+                  >
+                    —
+                  </span>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>

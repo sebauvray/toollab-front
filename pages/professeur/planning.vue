@@ -41,7 +41,7 @@ onMounted(() => fetchSchedules())
     <BreadCrumb :items="breadcrumbItems"/>
 
     <div class="mb-3">
-      <h1 class="text-xl font-bold text-gray-900">Mon planning</h1>
+      <h1 class="text-lg font-bold text-gray-900">Mon planning</h1>
       <p v-if="currentYear" class="text-xs text-gray-600">{{ currentYear.label }}</p>
     </div>
 

@@ -127,7 +127,7 @@ onMounted(async () => {
 <template>
   <div class="p-6">
     <div class="flex items-center justify-between mb-5">
-      <h1 class="text-xl font-bold text-default">Années scolaires</h1>
+      <h1 class="text-lg font-bold text-default">Années scolaires</h1>
       <div class="flex items-center gap-x-1.5">
         <button
             v-if="hasArchivedYears"

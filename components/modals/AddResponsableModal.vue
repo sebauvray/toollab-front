@@ -84,9 +84,9 @@ watch(isEleve, (newValue) => {
 
 <template>
     <div v-if="isOpen" class="fixed inset-0 font-nunito bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-2xl px-10 pt-5 pb-8 w-[50rem] max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-2xl px-6 pt-4 pb-5 w-[95vw] max-w-[50rem] max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-3">
-                <h2 class="text-xl font-bold mx-auto">Ajouter un responsable</h2>
+                <h2 class="text-lg font-bold mx-auto">Ajouter un responsable</h2>
                 <button @click="$emit('close')"
                         class="text-gray-500 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-50">
                     <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,8 +108,8 @@ watch(isEleve, (newValue) => {
             </div>
 
             <div class="grid grid-cols-2 gap-5 mt-8">
-                <div class="text-base font-bold pl-1.5 text-default">Contact</div>
-                <div class="text-base font-bold pl-1.5 text-default">Adresse</div>
+                <div class="text-sm font-semibold pl-1 text-default">Contact</div>
+                <div class="text-sm font-semibold pl-1 text-default">Adresse</div>
 
 
                 <InputText v-model="formData.phone" placeholder="Numéro de téléphone"/>

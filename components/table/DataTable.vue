@@ -75,7 +75,7 @@ const isLastRow = (index) => {
 
 <template>
   <div class="w-full overflow-x-auto bg-white rounded-2xl border">
-    <div class="grid font-bold font-montserrat py-3 px-8 border-b border-[#E6EFF5]"
+    <div class="grid font-bold font-montserrat py-2 px-5 border-b border-[#E6EFF5]"
          :style="`grid-template-columns: repeat(${props.columns.reduce((sum, col) => sum + (parseInt(col.width) || 1), 0)}, minmax(0, 1fr))`">
       <div
           v-for="column in props.columns"
@@ -104,7 +104,7 @@ const isLastRow = (index) => {
           :isLastRow="isLastRow(index)"
       >
         <div
-            class="grid font-nunito py-3 px-8 hover:bg-gray-50 transition-colors cursor-pointer"
+            class="grid font-nunito py-2 px-5 hover:bg-gray-50 transition-colors cursor-pointer"
             :class="{ 'border-b border-[#E6EFF5]': !isLastRow(index) }"
             :style="`grid-template-columns: repeat(${props.columns.reduce((sum, col) => sum + (parseInt(col.width) || 1), 0)}, minmax(0, 1fr))`"
         >

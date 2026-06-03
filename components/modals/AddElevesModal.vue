@@ -70,7 +70,7 @@ const genderOptions = [
     <div v-if="isOpen" class="fixed inset-0 font-nunito bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white rounded-2xl px-6 pt-5 pb-8 w-[95vw] max-w-[70rem] max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-3">
-                <h2 class="text-xl font-bold mx-auto">Ajouter des élèves</h2>
+                <h2 class="text-lg font-bold mx-auto">Ajouter des élèves</h2>
                 <button
                     @click="$emit('close')"
                     class="text-gray-500 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-50"

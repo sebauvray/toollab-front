@@ -75,11 +75,11 @@ const isMobileView = computed(() => windowWidth.value < 520)
             <div v-if="!isMobileView" class="flex items-center">
                 <NuxtLink
                     to="/"
-                    class="text-placeholder font-semibold hover:opacity-80 text-xl"
+                    class="text-placeholder font-semibold hover:opacity-80"
                 >
                     <Home class="size-4 mr-1.5 fill-gray-600 cursor-pointer"/>
                 </NuxtLink>
-                <span class="text-placeholder font-semibold text-xl mx-1.5">
+                <span class="text-placeholder font-semibold mx-1.5">
                     <svg class="size-4 mr-1.5 text-placeholder -rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>

@@ -118,7 +118,7 @@ onMounted(() => fetchData())
     <template v-else>
       <div class="flex items-center justify-between gap-3 mb-5">
         <div class="min-w-0">
-          <h1 class="text-xl font-bold text-gray-900 truncate">{{ classroom?.name }}</h1>
+          <h1 class="text-lg font-bold text-gray-900 truncate">{{ classroom?.name }}</h1>
           <p class="text-xs text-gray-500">{{ students.length }} élève{{ students.length > 1 ? 's' : '' }}</p>
         </div>
         <button
