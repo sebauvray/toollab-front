@@ -1,23 +1,24 @@
 <template>
   <div v-if="isOpen" class="fixed inset-0 font-nunito bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-2xl px-6 pt-4 pb-5 w-[70rem] max-h-[95vh] overflow-y-auto">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-2xl font-bold mx-auto">Modifier la classe</h2>
-        <button
-            @click="$emit('close')"
-            class="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-50"
-            aria-label="Fermer"
-        >
-          <Cross class="size-6"/>
-        </button>
-      </div>
-      <div class="w-full h-px border rounded-xl bg-gray-200"></div>
-
-      <div v-if="error" class="bg-red-100 text-red-800 p-3 rounded mt-4 mb-2">
-        {{ error }}
+    <div class="bg-white rounded-2xl w-[70rem] h-[85vh] flex flex-col">
+      <div class="px-6 pt-4 shrink-0">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-2xl font-bold mx-auto">Modifier la classe</h2>
+          <button
+              @click="$emit('close')"
+              class="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-50"
+              aria-label="Fermer"
+          >
+            <Cross class="size-6"/>
+          </button>
+        </div>
+        <div class="w-full h-px border rounded-xl bg-gray-200"></div>
       </div>
 
-      <div class="mt-6">
+      <div class="flex-1 overflow-y-auto px-6 py-4">
+        <div v-if="error" class="bg-red-100 text-red-800 p-3 rounded mb-4">
+          {{ error }}
+        </div>
         <h3 class="text-lg font-semibold mb-2">Informations sur la classe</h3>
 
         <div class="grid grid-cols-2 gap-4 mb-4">
@@ -104,41 +105,96 @@
           </div>
         </div>
 
-        <div v-if="editClass.schedules.length > 0" class="space-y-2 mb-6 mt-6">
-          <div
-              v-for="(schedule, index) in editClass.schedules"
-              :key="index"
-              class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-          >
-            <div class="flex items-center space-x-4">
-              <span class="font-medium">{{ schedule.day }}</span>
-              <span>{{ schedule.start_time }} - {{ schedule.end_time }}</span>
-              <span class="text-gray-600">{{ getScheduleTeacherLabel(schedule) }}</span>
-            </div>
-            <button
-                @click="removeSchedule(index)"
-                class="text-red-500 hover:text-red-700 p-1"
+        <div v-if="editClass.schedules.length > 0" class="space-y-2 mt-6">
+          <h4 class="text-sm font-semibold text-gray-700">Créneaux existants</h4>
+          <template v-for="(schedule, index) in editClass.schedules" :key="index">
+            <div
+                v-if="editingScheduleIndex === index"
+                class="grid grid-cols-5 gap-4 items-end p-3 bg-gray-50 rounded-lg"
             >
-              <Trash class="size-5"/>
-            </button>
-          </div>
+              <div>
+                <SelectDay v-model="schedule.day" placeholder="Jour"/>
+              </div>
+              <div>
+                <InputSelect v-model="schedule.teacher_id" :options="teacherOptions" placeholder="Professeur"/>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Heure de début</label>
+                <input
+                    v-model="schedule.start_time"
+                    type="time"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-default bg-white"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Heure de fin</label>
+                <input
+                    v-model="schedule.end_time"
+                    type="time"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-default bg-white"
+                />
+              </div>
+              <div class="flex justify-end gap-x-2">
+                <button
+                    @click="cancelEditSchedule"
+                    class="px-3 py-2 border border-gray-300 text-gray-600 rounded-md hover:bg-gray-50 text-sm"
+                    title="Annuler"
+                >
+                  Annuler
+                </button>
+                <button
+                    @click="validateEditSchedule"
+                    class="px-3 py-2 bg-default text-white rounded-md hover:opacity-90 text-sm"
+                    title="Valider"
+                >
+                  Valider
+                </button>
+              </div>
+            </div>
+            <div
+                v-else
+                class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+            >
+              <div class="flex items-center space-x-4">
+                <span class="font-medium">{{ schedule.day }}</span>
+                <span>{{ schedule.start_time }} - {{ schedule.end_time }}</span>
+                <span class="text-gray-600">{{ getScheduleTeacherLabel(schedule) }}</span>
+              </div>
+              <div class="flex items-center gap-x-1">
+                <button
+                    @click="startEditSchedule(index)"
+                    class="text-gray-500 hover:text-blue-600 transition-colors p-1.5"
+                    title="Modifier ce créneau"
+                >
+                  <Edit class="size-4"/>
+                </button>
+                <button
+                    @click="removeSchedule(index)"
+                    class="text-red-500 hover:text-red-700 p-1.5"
+                    title="Supprimer ce créneau"
+                >
+                  <Trash class="size-4"/>
+                </button>
+              </div>
+            </div>
+          </template>
         </div>
+      </div>
 
-        <div class="flex justify-end space-x-4 mt-32">
-          <button
-              @click="$emit('close')"
-              class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-          >
-            Annuler
-          </button>
-          <button
-              @click="handleUpdate"
-              :disabled="isSubmitting"
-              class="px-6 py-2 bg-default text-white rounded-lg hover:opacity-90 disabled:opacity-50"
-          >
-            {{ isSubmitting ? 'Modification...' : 'Modifier la classe' }}
-          </button>
-        </div>
+      <div class="shrink-0 border-t border-gray-200 px-6 py-4 flex justify-end space-x-4">
+        <button
+            @click="$emit('close')"
+            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+        >
+          Annuler
+        </button>
+        <button
+            @click="handleUpdate"
+            :disabled="isSubmitting"
+            class="px-6 py-2 bg-default text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+        >
+          {{ isSubmitting ? 'Modification...' : 'Modifier la classe' }}
+        </button>
       </div>
     </div>
   </div>
@@ -147,6 +203,7 @@
 <script setup>
 import {ref, computed, watch} from 'vue'
 import Cross from '~/components/Icons/Cross.vue'
+import Edit from '~/components/Icons/Edit.vue'
 import Trash from '~/components/Icons/Trash.vue'
 import InputText from '~/components/form/InputText.vue'
 import InputSelect from '~/components/form/InputSelect.vue'
@@ -270,7 +327,42 @@ const addSchedule = () => {
 }
 
 const removeSchedule = (index) => {
+  if (editingScheduleIndex.value === index) {
+    editingScheduleIndex.value = -1
+    editScheduleBackup.value = null
+  }
   editClass.value.schedules.splice(index, 1)
+}
+
+const editingScheduleIndex = ref(-1)
+const editScheduleBackup = ref(null)
+
+const startEditSchedule = (index) => {
+  if (editingScheduleIndex.value === index) return
+  if (editingScheduleIndex.value !== -1) {
+    cancelEditSchedule()
+  }
+  editingScheduleIndex.value = index
+  editScheduleBackup.value = {...editClass.value.schedules[index]}
+}
+
+const validateEditSchedule = () => {
+  const s = editClass.value.schedules[editingScheduleIndex.value]
+  if (!s || !s.day || !s.start_time || !s.end_time) {
+    error.value = 'Jour, heure de début et heure de fin sont requis'
+    return
+  }
+  editingScheduleIndex.value = -1
+  editScheduleBackup.value = null
+  error.value = ''
+}
+
+const cancelEditSchedule = () => {
+  if (editScheduleBackup.value !== null && editingScheduleIndex.value !== -1) {
+    Object.assign(editClass.value.schedules[editingScheduleIndex.value], editScheduleBackup.value)
+  }
+  editingScheduleIndex.value = -1
+  editScheduleBackup.value = null
 }
 
 const getScheduleTeacherLabel = (schedule) => {

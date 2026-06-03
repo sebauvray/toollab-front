@@ -170,14 +170,13 @@ onMounted(() => fetchData())
               {{ s.first_name }} {{ s.last_name }}
             </td>
             <td class="px-4 py-3">
-              <div class="flex flex-wrap gap-2">
+              <div v-if="canEdit" class="flex flex-wrap gap-2">
                 <label
                     v-for="opt in outcomeOptions"
                     :key="opt.value"
                     :class="[
                       'inline-flex items-center gap-1.5 px-2.5 py-1 rounded border text-xs font-medium cursor-pointer transition-colors',
-                      s.outcome === opt.value ? opt.selectedClass : opt.idleClass,
-                      !canEdit ? 'opacity-60 cursor-not-allowed' : ''
+                      s.outcome === opt.value ? opt.selectedClass : opt.idleClass
                     ]"
                 >
                   <input
@@ -185,21 +184,31 @@ onMounted(() => fetchData())
                       :name="`outcome-${s.student_id}`"
                       :value="opt.value"
                       v-model="s.outcome"
-                      :disabled="!canEdit"
                       class="hidden"
                   />
                   {{ opt.label }}
                 </label>
               </div>
+              <span
+                  v-else-if="s.outcome"
+                  :class="[
+                    'inline-flex items-center px-2.5 py-1 rounded border text-xs font-medium',
+                    outcomeOptions.find(o => o.value === s.outcome)?.selectedClass
+                  ]"
+              >
+                {{ outcomeOptions.find(o => o.value === s.outcome)?.label }}
+              </span>
+              <span v-else class="text-xs text-gray-400">Aucune décision</span>
             </td>
             <td class="px-4 py-3">
               <input
+                  v-if="canEdit"
                   v-model="s.commentaire"
                   type="text"
-                  :disabled="!canEdit"
                   placeholder="Optionnel"
-                  class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-primary disabled:bg-gray-50 disabled:text-gray-500"
+                  class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-primary"
               />
+              <span v-else class="text-sm text-gray-600">{{ s.commentaire || '—' }}</span>
             </td>
           </tr>
           <tr v-if="students.length === 0">

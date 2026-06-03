@@ -164,24 +164,25 @@ const handleSave = () => {
 
 <template>
   <div v-if="isOpen" class="fixed inset-0 font-nunito bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-2xl px-6 pt-4 pb-5 w-[70rem] max-h-[95vh] overflow-y-auto">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-2xl font-bold mx-auto">Ajouter une classe</h2>
-        <button
-            @click="$emit('close')"
-            class="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-50"
-            aria-label="Fermer"
-        >
-          <Cross class="size-6"/>
-        </button>
-      </div>
-      <div class="w-full h-px border rounded-xl bg-gray-200"></div>
-
-      <div v-if="error" class="bg-red-100 text-red-800 p-3 rounded mt-4 mb-2">
-        {{ error }}
+    <div class="bg-white rounded-2xl w-[70rem] h-[85vh] flex flex-col">
+      <div class="px-6 pt-4 shrink-0">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-2xl font-bold mx-auto">Ajouter une classe</h2>
+          <button
+              @click="$emit('close')"
+              class="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-50"
+              aria-label="Fermer"
+          >
+            <Cross class="size-6"/>
+          </button>
+        </div>
+        <div class="w-full h-px border rounded-xl bg-gray-200"></div>
       </div>
 
-      <div class="mt-6">
+      <div class="flex-1 overflow-y-auto px-6 py-4">
+        <div v-if="error" class="bg-red-100 text-red-800 p-3 rounded mb-4">
+          {{ error }}
+        </div>
         <h3 class="text-lg font-semibold mb-2">Informations sur la classe</h3>
 
         <div class="grid grid-cols-2 gap-4 mb-4">
@@ -268,7 +269,7 @@ const handleSave = () => {
           </div>
         </div>
 
-        <div v-if="newClass.schedules.length > 0" class="space-y-2 mb-6 mt-6">
+        <div v-if="newClass.schedules.length > 0" class="space-y-2 mt-6">
           <div
               v-for="(schedule, index) in newClass.schedules"
               :key="index"
@@ -287,22 +288,22 @@ const handleSave = () => {
             </button>
           </div>
         </div>
+      </div>
 
-        <div class="flex justify-end space-x-4 mt-32">
-          <button
-              @click="$emit('close')"
-              class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-          >
-            Annuler
-          </button>
-          <button
-              @click="handleSave"
-              :disabled="isSubmitting"
-              class="px-6 py-2 bg-default text-white rounded-lg hover:opacity-90 disabled:opacity-50"
-          >
-            {{ isSubmitting ? 'Création...' : 'Créer la classe' }}
-          </button>
-        </div>
+      <div class="shrink-0 border-t border-gray-200 px-6 py-4 flex justify-end space-x-4">
+        <button
+            @click="$emit('close')"
+            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+        >
+          Annuler
+        </button>
+        <button
+            @click="handleSave"
+            :disabled="isSubmitting"
+            class="px-6 py-2 bg-default text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+        >
+          {{ isSubmitting ? 'Création...' : 'Créer la classe' }}
+        </button>
       </div>
     </div>
   </div>

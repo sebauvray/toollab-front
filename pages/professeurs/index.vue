@@ -174,6 +174,7 @@ const onFilterChange = async () => {
   await fetchSchedules()
 }
 
+
 onMounted(() => {
   fetchTeachers()
 })
