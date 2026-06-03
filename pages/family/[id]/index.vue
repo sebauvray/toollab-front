@@ -651,7 +651,7 @@ definePageMeta({
                         </div>
                     </div>
 
-                    <form @submit.prevent="handleCommentSubmit" class="flex gap-x-2 items-center">
+                    <form v-if="!isReadOnly" @submit.prevent="handleCommentSubmit" class="flex gap-x-2 items-center">
                     <textarea
                         v-model="newComment"
                         placeholder="Écrivez votre commentaire..."
