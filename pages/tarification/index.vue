@@ -538,24 +538,24 @@ onMounted(() => {
 
 <template>
 
-    <div class="min-h-screen bg-gray-50 p-6">
+    <div class="min-h-screen bg-gray-50 p-5">
         <div class="max-w-7xl mx-auto">
             <BreadCrumb :custom-items="breadcrumbItems"/>
 
-            <div class="flex flex-col lg:flex-row gap-6">
+            <div class="flex flex-col lg:flex-row gap-5">
                 <div class="lg:w-1/4">
                     <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                        <div class="p-4 border-b border-gray-200">
-                            <h2 class="text-lg font-semibold">Cursus disponibles</h2>
+                        <div class="p-3 border-b border-gray-200">
+                            <h2 class="text-base font-semibold">Cursus disponibles</h2>
                         </div>
-                        <div class="p-4">
-                            <div class="space-y-2">
+                        <div class="p-3">
+                            <div class="space-y-1.5">
                                 <button
                                     v-for="cursus in cursuses"
                                     :key="cursus.id"
                                     @click="selectCursus(cursus)"
                                     :class="[
-                      'w-full text-left px-3 py-2 rounded-md transition-colors',
+                      'w-full text-left px-2 py-1.5 rounded-md transition-colors',
                       selectedCursus?.id === cursus.id
                         ? 'bg-black text-white'
                         : 'hover:bg-gray-100'
@@ -569,125 +569,125 @@ onMounted(() => {
                 </div>
 
                 <div class="lg:w-3/4">
-                    <div v-if="selectedCursus" class="space-y-6">
-                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                            <h2 class="text-xl font-semibold mb-4">Tarif de base - {{ selectedCursus.name }}</h2>
-                            <div class="flex items-center gap-4">
+                    <div v-if="selectedCursus" class="space-y-5">
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+                            <h2 class="text-lg font-semibold mb-3">Tarif de base - {{ selectedCursus.name }}</h2>
+                            <div class="flex items-center gap-3">
                                 <div class="flex-1">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Prix (€)</label>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Prix (€)</label>
                                     <input
                                         v-model="tarifForm.prix"
                                         type="number"
                                         step="1"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500"
+                                        class="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500"
                                     />
                                 </div>
                                 <button
                                     @click="updateTarif"
                                     :disabled="isSaving || isReadOnly"
                                     :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
-                                    class="mt-6 px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    class="mt-5 px-3 py-1.5 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Enregistrer
                                 </button>
                             </div>
                         </div>
 
-                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                            <div class="flex justify-between items-center mb-4">
-                                <h2 class="text-xl font-semibold">Réductions familiales</h2>
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+                            <div class="flex justify-between items-center mb-3">
+                                <h2 class="text-lg font-semibold">Réductions familiales</h2>
                                 <button
                                     @click="showAddFamiliale = true; editingFamiliale = null; resetFamilialeForm()"
                                     :disabled="isReadOnly"
                                     :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
-                                    class="flex items-center gap-2 px-3 py-1.5 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    class="flex items-center gap-1.5 px-2 py-1 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
-                                    <Plus class="w-4 h-4"/>
+                                    <Plus class="w-3.5 h-3.5"/>
                                     Ajouter
                                 </button>
                             </div>
 
-                            <div v-if="reductionsFamiliales.length > 0" class="space-y-3">
+                            <div v-if="reductionsFamiliales.length > 0" class="space-y-2">
                                 <div
                                     v-for="(reduction, index) in reductionsFamiliales"
                                     :key="reduction.id || `temp-${index}`"
-                                    class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                    class="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
                                 >
                                     <div>
                                         <p class="font-medium">À partir de {{ reduction.nombre_eleves_min }} élèves</p>
-                                        <p class="text-sm text-gray-600">Réduction : {{
+                                        <p class="text-xs text-gray-600">Réduction : {{
                                                 reduction.pourcentage_reduction
                                             }}%</p>
-                                        <p class="text-sm text-gray-600">
+                                        <p class="text-xs text-gray-600">
                                             Tarif après réduction :
                                             {{ formatPrice(getTarifPrecedent(reduction.nombre_eleves_min)) }}
                                         </p>
                                     </div>
-                                    <div class="flex items-center gap-2" v-if="!isReadOnly">
+                                    <div class="flex items-center gap-1.5" v-if="!isReadOnly">
                                         <button
                                             @click="editReductionFamiliale(reduction)"
-                                            class="p-1.5 text-gray-600 hover:text-gray-900"
+                                            class="p-1 text-gray-600 hover:text-gray-900"
                                         >
-                                            <EditIcon class="w-4 h-4"/>
+                                            <EditIcon class="w-3.5 h-3.5"/>
                                         </button>
                                         <button
                                             @click="confirmDeleteReductionFamiliale(reduction.id)"
-                                            class="p-1.5 text-gray-600 hover:text-red-600"
+                                            class="p-1 text-gray-600 hover:text-red-600"
                                         >
-                                            <Trash class="w-4 h-4"/>
+                                            <Trash class="w-3.5 h-3.5"/>
                                         </button>
                                     </div>
                                 </div>
                             </div>
-                            <div v-else class="text-center py-8 text-gray-500">
+                            <div v-else class="text-center py-6 text-gray-500">
                                 Aucune réduction familiale configurée
                             </div>
                         </div>
 
-                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                            <div class="flex justify-between items-center mb-4">
-                                <h2 class="text-xl font-semibold">Réductions multi-cursus</h2>
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+                            <div class="flex justify-between items-center mb-3">
+                                <h2 class="text-lg font-semibold">Réductions multi-cursus</h2>
                                 <button
                                     @click="showAddMultiCursus = true; editingMultiCursus = null; resetMultiCursusForm()"
                                     :disabled="availableCursusesForMultiCursus.length === 0 || isReadOnly"
                                     :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
-                                    class="flex items-center gap-2 px-3 py-1.5 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    class="flex items-center gap-1.5 px-2 py-1 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <Plus class="w-4 h-4"/>
+                                    <Plus class="w-3.5 h-3.5"/>
                                     Ajouter
                                 </button>
                             </div>
 
-                            <div v-if="selectedCursus.reductions_multi_cursus?.length > 0" class="space-y-3">
+                            <div v-if="selectedCursus.reductions_multi_cursus?.length > 0" class="space-y-2">
                                 <div
                                     v-for="(reduction, index) in selectedCursus.reductions_multi_cursus"
                                     :key="reduction.id || `temp-multi-${index}`"
-                                    class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                    class="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
                                 >
                                     <div>
                                         <p class="font-medium">Si inscrit à :
                                             {{ getCursusRequiredName(reduction.cursus_requis_id) }}</p>
-                                        <p class="text-sm text-gray-600">Réduction : {{
+                                        <p class="text-xs text-gray-600">Réduction : {{
                                                 reduction.pourcentage_reduction
                                             }}%</p>
                                     </div>
-                                    <div class="flex items-center gap-2" v-if="!isReadOnly">
+                                    <div class="flex items-center gap-1.5" v-if="!isReadOnly">
                                         <button
                                             @click="editReductionMultiCursus(reduction)"
-                                            class="p-1.5 text-gray-600 hover:text-gray-900"
+                                            class="p-1 text-gray-600 hover:text-gray-900"
                                         >
-                                            <EditIcon class="w-4 h-4"/>
+                                            <EditIcon class="w-3.5 h-3.5"/>
                                         </button>
                                         <button
                                             @click="deleteReductionMultiCursus(reduction.id)"
-                                            class="p-1.5 text-gray-600 hover:text-red-600"
+                                            class="p-1 text-gray-600 hover:text-red-600"
                                         >
-                                            <Trash class="w-4 h-4"/>
+                                            <Trash class="w-3.5 h-3.5"/>
                                         </button>
                                     </div>
                                 </div>
                             </div>
-                            <div v-else class="text-center py-8 text-gray-500">
+                            <div v-else class="text-center py-6 text-gray-500">
                                 Aucune réduction multi-cursus configurée
                             </div>
                         </div>
@@ -697,31 +697,31 @@ onMounted(() => {
         </div>
 
         <div v-if="showAddFamiliale" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg p-6 w-full max-w-md">
-                <h3 class="text-lg font-semibold mb-4">
+            <div class="bg-white rounded-lg p-5 w-full max-w-md">
+                <h3 class="text-base font-semibold mb-3">
                     {{ editingFamiliale ? 'Modifier' : 'Ajouter' }} une réduction familiale
                 </h3>
 
-                <div class="space-y-4">
+                <div class="space-y-3">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre d'élèves minimum</label>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Nombre d'élèves minimum</label>
                         <input
                             v-model="familialeForm.nombre_eleves_min"
                             type="number"
                             min="2"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500"
+                            class="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500"
                         />
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Mode de calcul</label>
-                        <div class="flex gap-4">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Mode de calcul</label>
+                        <div class="flex gap-3">
                             <label class="flex items-center">
                                 <input
                                     v-model="familialeForm.mode"
                                     type="radio"
                                     value="montant"
-                                    class="mr-2"
+                                    class="mr-1.5"
                                 />
                                 Montant
                             </label>
@@ -730,7 +730,7 @@ onMounted(() => {
                                     v-model="familialeForm.mode"
                                     type="radio"
                                     value="pourcentage"
-                                    class="mr-2"
+                                    class="mr-1.5"
                                 />
                                 Pourcentage
                             </label>
@@ -738,18 +738,18 @@ onMounted(() => {
                     </div>
 
                     <div v-if="familialeForm.mode === 'montant'">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Montant après reduction (€)</label>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Montant après reduction (€)</label>
                         <input
                             v-model="familialeForm.montant_cible"
                             @input="calculerPourcentageReduction"
                             type="number"
                             step="1"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500"
+                            class="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500"
                         />
                     </div>
 
                     <div v-if="familialeForm.mode === 'pourcentage'">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Pourcentage de réduction (%)</label>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Pourcentage de réduction (%)</label>
                         <input
                             v-model="familialeForm.pourcentage_reduction"
                             @input="calculerMontantCible"
@@ -757,31 +757,31 @@ onMounted(() => {
                             step="1"
                             min="0"
                             max="100"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500"
+                            class="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500"
                         />
                     </div>
 
-                    <div v-if="familialeForm.pourcentage_reduction" class="bg-gray-50 p-3 rounded-md">
-                        <p class="text-sm text-gray-600">
+                    <div v-if="familialeForm.pourcentage_reduction" class="bg-gray-50 p-2 rounded-md">
+                        <p class="text-xs text-gray-600">
                             Réduction : {{ familialeForm.pourcentage_reduction }}%
                         </p>
-                        <p class="text-sm text-gray-600">
+                        <p class="text-xs text-gray-600">
                             Tarif après réduction : {{ formatPrice(calculatedTarifApresReduction) }}
                         </p>
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-3 mt-6">
+                <div class="flex justify-end gap-2 mt-5">
                     <button
                         @click="showAddFamiliale = false; editingFamiliale = null; resetFamilialeForm()"
-                        class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                        class="px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50"
                     >
                         Annuler
                     </button>
                     <button
                         @click="editingFamiliale ? updateReductionFamiliale() : addReductionFamiliale()"
                         :disabled="isSaving || !familialeForm.nombre_eleves_min || !familialeForm.pourcentage_reduction"
-                        class="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="px-3 py-1.5 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {{ editingFamiliale ? 'Modifier' : 'Ajouter' }}
                     </button>
@@ -791,18 +791,18 @@ onMounted(() => {
 
         <div v-if="showAddMultiCursus"
              class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg p-6 w-full max-w-md">
-                <h3 class="text-lg font-semibold mb-4">
+            <div class="bg-white rounded-lg p-5 w-full max-w-md">
+                <h3 class="text-base font-semibold mb-3">
                     {{ editingMultiCursus ? 'Modifier' : 'Ajouter' }} une réduction multi-cursus
                 </h3>
 
-                <div class="space-y-4">
+                <div class="space-y-3">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Si l'élève est inscrit à</label>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Si l'élève est inscrit à</label>
                         <select
                             v-model="multiCursusForm.cursus_requis_id"
                             :disabled="editingMultiCursus !== null"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500"
+                            class="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500"
                         >
                             <option value="">Sélectionnez un cursus</option>
                             <option
@@ -816,29 +816,29 @@ onMounted(() => {
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Pourcentage de réduction (%)</label>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Pourcentage de réduction (%)</label>
                         <input
                             v-model="multiCursusForm.pourcentage_reduction"
                             type="number"
                             step="1"
                             min="0"
                             max="100"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500"
+                            class="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500"
                         />
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-3 mt-6">
+                <div class="flex justify-end gap-2 mt-5">
                     <button
                         @click="showAddMultiCursus = false; editingMultiCursus = null; resetMultiCursusForm()"
-                        class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                        class="px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50"
                     >
                         Annuler
                     </button>
                     <button
                         @click="editingMultiCursus ? updateReductionMultiCursus() : addReductionMultiCursus()"
                         :disabled="isSaving || !multiCursusForm.cursus_requis_id || !multiCursusForm.pourcentage_reduction"
-                        class="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="px-3 py-1.5 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {{ editingMultiCursus ? 'Modifier' : 'Ajouter' }}
                     </button>

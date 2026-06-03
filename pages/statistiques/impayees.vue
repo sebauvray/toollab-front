@@ -4,15 +4,15 @@
       <ClientOnly>
         <BreadCrumb />
       </ClientOnly>
-      <h1 class="text-2xl font-bold text-gray-900 mb-6">Familles avec paiements en attente</h1>
+      <h1 class="text-xl font-bold text-gray-900 mb-5">Familles avec paiements en attente</h1>
 
-      <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <div class="flex gap-4">
+      <div class="bg-white rounded-lg shadow-sm p-5 mb-5">
+        <div class="flex gap-3">
           <input
             v-model="searchTerm"
             type="text"
             placeholder="Rechercher par nom, téléphone..."
-            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900"
+            class="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900"
             @input="handleSearch"
           />
           <div class="relative" ref="filterDropdownRef">
@@ -21,10 +21,10 @@
               type="text"
               readonly
               placeholder="Filtrer par statut"
-              class="px-4 py-2 border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:border-gray-900 pr-10"
+              class="px-3 py-1.5 border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:border-gray-900 pr-8"
               @click="showFilterDropdown = !showFilterDropdown"
             />
-            <svg class="absolute right-3 top-3 w-4 h-4 text-gray-600 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="absolute right-3 top-3 w-3.5 h-3.5 text-gray-600 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
             </svg>
             <div v-if="showFilterDropdown" class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
@@ -32,7 +32,7 @@
                 v-for="option in filterOptions" 
                 :key="option.value"
                 @click="selectFilter(option)"
-                class="px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                class="px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
                 :class="{ 'bg-gray-50': filterType === option.value }"
               >
                 {{ option.label }}
@@ -51,7 +51,7 @@
       >
         <template #default="{ item, isLastRow }">
           <div 
-            class="grid py-1.5 px-4 hover:bg-gray-50 transition-colors font-nunito"
+            class="grid py-1 px-3 hover:bg-gray-50 transition-colors font-nunito"
             :class="{ 'border-b border-[#E6EFF5]': !isLastRow }"
             :style="`grid-template-columns: repeat(12, minmax(0, 1fr))`"
           >
@@ -60,7 +60,7 @@
                 {{ responsible.name }}
               </div>
             </div>
-            <div class="col-span-2 text-sm text-gray-600">
+            <div class="col-span-2 text-xs text-gray-600">
               {{ item.responsibles[0]?.phone || '-' }}
             </div>
             <div class="col-span-1 text-center">

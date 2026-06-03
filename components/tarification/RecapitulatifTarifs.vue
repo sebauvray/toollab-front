@@ -55,33 +55,33 @@ onMounted(() => {
 
 <template>
   <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-    <div class="p-6 border-b border-gray-200">
-      <h3 class="text-lg font-semibold">Récapitulatif des tarifs</h3>
+    <div class="p-5 border-b border-gray-200">
+      <h3 class="text-base font-semibold">Récapitulatif des tarifs</h3>
     </div>
 
-    <div v-if="isLoading" class="p-6 text-center">
+    <div v-if="isLoading" class="p-5 text-center">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-      <p class="mt-2 text-gray-500">Calcul des tarifs en cours...</p>
+      <p class="mt-1.5 text-gray-500">Calcul des tarifs en cours...</p>
     </div>
 
-    <div v-else-if="error" class="p-6">
-      <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+    <div v-else-if="error" class="p-5">
+      <div class="bg-red-50 border border-red-200 rounded-lg p-3">
         <p class="text-red-700">{{ error }}</p>
       </div>
     </div>
 
-    <div v-else-if="tarifDetails" class="p-6 space-y-6">
-      <div v-for="eleve in tarifDetails.details_par_eleve" :key="eleve.student_id" class="border-b border-gray-100 pb-4 last:border-0">
-        <h4 class="font-medium text-gray-900 mb-3">{{ eleve.student_name }}</h4>
+    <div v-else-if="tarifDetails" class="p-5 space-y-5">
+      <div v-for="eleve in tarifDetails.details_par_eleve" :key="eleve.student_id" class="border-b border-gray-100 pb-3 last:border-0">
+        <h4 class="font-medium text-gray-900 mb-2">{{ eleve.student_name }}</h4>
 
-        <div v-for="cursus in eleve.cursus" :key="cursus.cursus_id" class="ml-4 mb-3">
-          <div class="flex justify-between items-start mb-2">
+        <div v-for="cursus in eleve.cursus" :key="cursus.cursus_id" class="ml-3 mb-2">
+          <div class="flex justify-between items-start mb-1.5">
             <span class="text-gray-700">{{ cursus.cursus_name }}</span>
             <span class="text-gray-900 font-medium">{{ formatPrice(cursus.prix_base) }}</span>
           </div>
 
-          <div v-if="cursus.reductions.length > 0" class="ml-4 space-y-1">
-            <div v-for="(reduction, index) in cursus.reductions" :key="index" class="flex justify-between text-sm">
+          <div v-if="cursus.reductions.length > 0" class="ml-3 space-y-1">
+            <div v-for="(reduction, index) in cursus.reductions" :key="index" class="flex justify-between text-xs">
               <span class="text-gray-600">
                 <span v-if="reduction.type === 'familiale'">Réduction familiale</span>
                 <span v-else-if="reduction.type === 'multi_cursus'">Réduction multi-cursus</span>
@@ -91,17 +91,17 @@ onMounted(() => {
             </div>
           </div>
 
-          <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
-            <span class="text-sm text-gray-600">Sous-total {{ cursus.cursus_name }}</span>
+          <div class="flex justify-between items-center mt-1.5 pt-1.5 border-t border-gray-100">
+            <span class="text-xs text-gray-600">Sous-total {{ cursus.cursus_name }}</span>
             <span class="font-medium text-gray-900">{{ formatPrice(cursus.prix_final) }}</span>
           </div>
         </div>
       </div>
 
-      <div class="border-t-2 border-gray-200 pt-4">
+      <div class="border-t-2 border-gray-200 pt-3">
         <div class="flex justify-between items-center">
-          <span class="text-lg font-semibold">Total à payer</span>
-          <span class="text-2xl font-bold text-primary">{{ formatPrice(tarifDetails.total_famille) }}</span>
+          <span class="text-base font-semibold">Total à payer</span>
+          <span class="text-xl font-bold text-primary">{{ formatPrice(tarifDetails.total_famille) }}</span>
         </div>
       </div>
     </div>

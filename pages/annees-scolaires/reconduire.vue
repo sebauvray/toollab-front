@@ -125,61 +125,61 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="p-8">
-    <div class="mb-6">
-      <button @click="router.push('/annees-scolaires')" class="text-sm text-gray-500 hover:text-gray-700 mb-2">← Retour</button>
-      <h1 class="text-2xl font-bold text-default">Reconduire des classes</h1>
-      <p class="text-sm text-gray-600 mt-1">
+  <div class="p-6">
+    <div class="mb-5">
+      <button @click="router.push('/annees-scolaires')" class="text-xs text-gray-500 hover:text-gray-700 mb-1.5">← Retour</button>
+      <h1 class="text-xl font-bold text-default">Reconduire des classes</h1>
+      <p class="text-xs text-gray-600 mt-1">
         Crée des copies vides (sans élèves) des classes sélectionnées dans l'année active.
         Les classes déjà reconduites sont marquées et ne peuvent pas être sélectionnées.
       </p>
     </div>
 
-    <div class="bg-white border rounded-lg p-4 mb-6 flex flex-wrap items-end gap-x-6 gap-y-3">
+    <div class="bg-white border rounded-lg p-3 mb-5 flex flex-wrap items-end gap-x-5 gap-y-2">
       <div>
         <label class="block text-xs uppercase text-gray-500 mb-1">Année source</label>
-        <select v-model="sourceYearId" class="px-3 py-2 border rounded-md min-w-[220px]">
+        <select v-model="sourceYearId" class="px-2 py-1.5 border rounded-md min-w-[220px]">
           <option :value="null" disabled>— sélectionner —</option>
           <option v-for="y in archivedYears" :key="y.id" :value="y.id">{{ y.label }} (clôturée)</option>
           <option v-for="y in years.filter(y => y.is_active)" :key="y.id" :value="y.id">{{ y.label }} (active — pour copie interne)</option>
         </select>
       </div>
-      <div class="text-gray-400 text-2xl pb-1">→</div>
+      <div class="text-gray-400 text-xl pb-1">→</div>
       <div>
         <label class="block text-xs uppercase text-gray-500 mb-1">Année cible</label>
-        <div class="px-3 py-2 border rounded-md bg-gray-50 min-w-[220px]">
+        <div class="px-2 py-1.5 border rounded-md bg-gray-50 min-w-[220px]">
           <span v-if="activeYear" class="text-default font-medium">{{ activeYear.label }}</span>
-          <span v-else class="text-red-600 text-sm">Aucune année active</span>
+          <span v-else class="text-red-600 text-xs">Aucune année active</span>
         </div>
       </div>
       <div class="ml-auto">
         <button
             @click="submitReconduction"
             :disabled="!someSelected || !activeYear || reconducting"
-            class="px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+            class="px-3 py-1.5 bg-primary text-white rounded-lg hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-medium"
         >
           {{ reconducting ? 'Reconduction...' : `Reconduire ${selected.size} classe(s)` }}
         </button>
       </div>
     </div>
 
-    <div v-if="loading" class="text-center py-12 text-gray-500">Chargement...</div>
+    <div v-if="loading" class="text-center py-10 text-gray-500">Chargement...</div>
 
-    <div v-else-if="!sourceYearId" class="text-center py-12 text-gray-500">
+    <div v-else-if="!sourceYearId" class="text-center py-10 text-gray-500">
       Sélectionne une année source pour voir ses classes.
     </div>
 
-    <div v-else-if="classrooms.length === 0" class="text-center py-12 text-gray-500">
+    <div v-else-if="classrooms.length === 0" class="text-center py-10 text-gray-500">
       Aucune classe sur cette année.
     </div>
 
     <div v-else>
-      <div class="flex items-center justify-between flex-wrap gap-3 mb-4 text-sm">
-        <div class="flex items-center gap-x-3">
+      <div class="flex items-center justify-between flex-wrap gap-2 mb-3 text-xs">
+        <div class="flex items-center gap-x-2">
           <button
               @click="toggleAll"
               :disabled="selectableClassrooms.length === 0"
-              class="px-3 py-1 rounded border text-xs hover:bg-gray-50 disabled:opacity-40"
+              class="px-2 py-1 rounded border text-xs hover:bg-gray-50 disabled:opacity-40"
           >
             {{ allSelectableSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
           </button>
@@ -188,11 +188,11 @@ onMounted(async () => {
             {{ classrooms.length - selectableClassrooms.length }} déjà reconduite(s)
           </span>
         </div>
-        <div class="flex items-center gap-x-3 text-xs text-gray-600">
+        <div class="flex items-center gap-x-2 text-xs text-gray-600">
           <span
               v-for="g in genderLabels"
               :key="g"
-              class="inline-flex items-center gap-x-1.5"
+              class="inline-flex items-center gap-x-1"
           >
             <span class="inline-block w-3 h-3 rounded-full" :style="{ backgroundColor: genderColors[g] }"></span>
             {{ g }}
@@ -200,15 +200,15 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div v-for="group in groupedClassrooms" :key="group.cursus_id" class="mb-6">
-        <h2 class="text-lg font-semibold text-default mb-2 flex items-center gap-x-2">
-          <span class="text-xs uppercase bg-gray-700 text-white px-2 py-1 rounded">Cursus</span>
+      <div v-for="group in groupedClassrooms" :key="group.cursus_id" class="mb-5">
+        <h2 class="text-base font-semibold text-default mb-1.5 flex items-center gap-x-1.5">
+          <span class="text-xs uppercase bg-gray-700 text-white px-1.5 py-1 rounded">Cursus</span>
           {{ group.cursus_name }}
         </h2>
 
-        <div v-for="lvl in group.levels" :key="lvl.level_id" class="mb-4">
-          <h3 class="text-sm font-medium text-gray-600 mb-2 pl-2 border-l-4 border-primary">{{ lvl.level_name }}</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pl-3">
+        <div v-for="lvl in group.levels" :key="lvl.level_id" class="mb-3">
+          <h3 class="text-xs font-medium text-gray-600 mb-1.5 pl-1.5 border-l-4 border-primary">{{ lvl.level_name }}</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 pl-2">
             <div
                 v-for="c in lvl.classrooms"
                 :key="c.id"
@@ -223,7 +223,7 @@ onMounted(async () => {
             >
               <!-- header : checkbox + pastille + gender + badge déjà reconduite -->
               <div
-                  class="px-3 py-2 flex items-center gap-x-2 text-xs uppercase tracking-wide font-semibold text-default"
+                  class="px-2 py-1.5 flex items-center gap-x-1.5 text-xs uppercase tracking-wide font-semibold text-default"
                   :style="{ backgroundColor: (genderColors[c.gender] || '#E5E7EB') + '40' }"
               >
                 <input
@@ -231,7 +231,7 @@ onMounted(async () => {
                     :checked="selected.has(c.id)"
                     :disabled="c.already_in_active_year"
                     @change="toggle(c.id)"
-                    class="flex-shrink-0 w-4 h-4 cursor-pointer"
+                    class="flex-shrink-0 w-3.5 h-3.5 cursor-pointer"
                 />
                 <span
                     class="inline-block w-3 h-3 rounded-full flex-shrink-0"
@@ -250,7 +250,7 @@ onMounted(async () => {
               </div>
 
               <!-- corps : nom éditable + taille éditable -->
-              <div class="px-3 py-3 flex flex-col gap-y-3">
+              <div class="px-2 py-2 flex flex-col gap-y-2">
                 <div class="flex flex-col gap-y-1">
                   <label class="text-xs text-gray-500 uppercase tracking-wide">Nom de la classe</label>
                   <input
@@ -258,10 +258,10 @@ onMounted(async () => {
                       v-model="names[c.id]"
                       :disabled="c.already_in_active_year"
                       :placeholder="c.name"
-                      class="px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-gray-100 disabled:text-gray-500"
+                      class="px-1.5 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-gray-100 disabled:text-gray-500"
                   />
                 </div>
-                <div class="flex items-end justify-between gap-x-3">
+                <div class="flex items-end justify-between gap-x-2">
                   <div class="flex flex-col gap-y-1 flex-1">
                     <label class="text-xs text-gray-500 uppercase tracking-wide">Nombre max d'élèves</label>
                     <input
@@ -270,7 +270,7 @@ onMounted(async () => {
                         max="999"
                         v-model.number="sizes[c.id]"
                         :disabled="c.already_in_active_year"
-                        class="w-20 px-2 py-1.5 text-sm text-center font-medium border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-gray-100 disabled:text-gray-500"
+                        class="w-20 px-1.5 py-1 text-xs text-center font-medium border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-gray-100 disabled:text-gray-500"
                     />
                   </div>
                 </div>

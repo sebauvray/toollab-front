@@ -349,31 +349,31 @@ definePageMeta({
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-default"></div>
     </div>
 
-    <div v-else-if="error" class="p-6 bg-red-100 text-red-700 rounded-lg m-10">
+    <div v-else-if="error" class="p-5 bg-red-100 text-red-700 rounded-lg m-8">
         {{ error }}
     </div>
 
-    <div v-else class="grid grid-cols-4 mt-6 px-6 font-montserrat w-full gap-x-4">
+    <div v-else class="grid grid-cols-4 mt-5 px-5 font-montserrat w-full gap-x-3">
         <BreadCrumb :custom-items="breadcrumbItems" />
 
-        <section class="bg-white col-span-3 rounded-xl border px-6 py-2">
-            <div class="flex justify-between mt-2 mb-6">
-                <h2 class="font-bold text-2xl ">{{ selectedStudent?.first_name }} {{ selectedStudent?.last_name }}</h2>
+        <section class="bg-white col-span-3 rounded-xl border px-5 py-1.5">
+            <div class="flex justify-between mt-1.5 mb-5">
+                <h2 class="font-bold text-xl ">{{ selectedStudent?.first_name }} {{ selectedStudent?.last_name }}</h2>
             </div>
-            <div v-for="(classGroup, cursus) in groupedClasses" :key="cursus" class="mb-8">
-                <div class="h-px bg-gray-100 w-full mb-6"></div>
-                <h3 class="text-xl font-bold mb-3 flex items-center"><span class="text-xs uppercase bg-gray-700 text-white px-2 py-1 rounded-lg mr-2">Cursus</span> {{ cursus }}</h3>
-                <div class="inline-flex items-center gap-x-3">
+            <div v-for="(classGroup, cursus) in groupedClasses" :key="cursus" class="mb-6">
+                <div class="h-px bg-gray-100 w-full mb-5"></div>
+                <h3 class="text-lg font-bold mb-2 flex items-center"><span class="text-xs uppercase bg-gray-700 text-white px-1.5 py-1 rounded-lg mr-1.5">Cursus</span> {{ cursus }}</h3>
+                <div class="inline-flex items-center gap-x-2">
                     <span class="size-3 rounded-full bg-green-tlb"></span>
-                    <span class="font-semibold text-sm">Classes disponibles ({{ classGroup.filter(c => c.available_spots > 0 && shouldShowClass(c)).length }})</span>
+                    <span class="font-semibold text-xs">Classes disponibles ({{ classGroup.filter(c => c.available_spots > 0 && shouldShowClass(c)).length }})</span>
                 </div>
-                <div class="grid grid-cols-3 gap-4 mt-6 font-nunito">
+                <div class="grid grid-cols-3 gap-3 mt-5 font-nunito">
                     <div
                         v-for="(classe, index) in classGroup"
                         :key="classe.id"
                         @click="!isReadOnly && canClickClass(classe) && toggleClass(classes.findIndex(c => c.id === classe.id), classe)"
                         :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
-                        class="flex flex-col rounded-xl select-none bg-gray-50 p-4 transition-all duration-200 relative"
+                        class="flex flex-col rounded-xl select-none bg-gray-50 p-3 transition-all duration-200 relative"
                         :class="[
                           'border-4',
                           {
@@ -389,8 +389,8 @@ definePageMeta({
                             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                         </div>
 
-                        <div class="flex items-center gap-x-5">
-                            <div class="bg-[#A2A1A8]/5 p-2 rounded-lg">
+                        <div class="flex items-center gap-x-4">
+                            <div class="bg-[#A2A1A8]/5 p-1.5 rounded-lg">
                                 <NotebookTLB
                                     :class="{
                                   'text-[#93C5FD]': classe.gender === 'Hommes',
@@ -402,19 +402,19 @@ definePageMeta({
                             </div>
 
                             <div class="flex flex-col">
-                                <div class="font-black uppercase text-black text-lg">{{ classe.name }}</div>
-                                <div class="text-gray-tlb text-base">{{ classe.cursus }} - {{ classe.level?.name || 'Sans niveau' }}</div>
+                                <div class="font-black uppercase text-black text-base">{{ classe.name }}</div>
+                                <div class="text-gray-tlb text-sm">{{ classe.cursus }} - {{ classe.level?.name || 'Sans niveau' }}</div>
                             </div>
                         </div>
 
-                      <div v-if="classe.schedules && classe.schedules.length > 0" class="mt-4 space-y-2">
-                        <div v-for="(schedule, scheduleIndex) in classe.schedules" :key="scheduleIndex" class="flex flex-col pl-4 mb-1">
-                          <div class="inline-flex items-center gap-x-2 font-light text-sm">
+                      <div v-if="classe.schedules && classe.schedules.length > 0" class="mt-3 space-y-1.5">
+                        <div v-for="(schedule, scheduleIndex) in classe.schedules" :key="scheduleIndex" class="flex flex-col pl-3 mb-1">
+                          <div class="inline-flex items-center gap-x-1.5 font-light text-xs">
                             <ClockTLB class="size-4 text-gray-600" />
                             <div class="text-gray-700">{{ schedule.day }}</div>
                             <div class="text-gray-600">{{ schedule.formatted_time }}</div>
                           </div>
-                          <div v-if="schedule.teacher || schedule.teacher_name" class="inline-flex items-center gap-x-2 mt-1 font-light text-sm">
+                          <div v-if="schedule.teacher || schedule.teacher_name" class="inline-flex items-center gap-x-1.5 mt-1 font-light text-xs">
                             <StudentTLB class="size-4 text-gray-600" />
                             <div class="text-gray-600">
                               {{ schedule.teacher ? `${schedule.teacher.first_name} ${schedule.teacher.last_name}` : schedule.teacher_name }}
@@ -423,7 +423,7 @@ definePageMeta({
                         </div>
                       </div>
 
-                        <div class="font-black inline-flex items-center justify-center mt-auto mb-3"
+                        <div class="font-black inline-flex items-center justify-center mt-auto mb-2"
                              :class="getAvailableSpotsColor(classe.available_spots)">
                             {{ classe.available_spots }} places dispos
                         </div>
@@ -432,15 +432,15 @@ definePageMeta({
             </div>
         </section>
 
-        <section class="flex flex-col gap-y-6 w-full sticky top-6 h-fit">
-            <div class="bg-white rounded-lg w-full border p-4">
-                <h2 class="font-bold text-2xl mb-6">Liste d'élèves</h2>
-                <div class="flex flex-col gap-2">
+        <section class="flex flex-col gap-y-5 w-full sticky top-6 h-fit">
+            <div class="bg-white rounded-lg w-full border p-3">
+                <h2 class="font-bold text-xl mb-5">Liste d'élèves</h2>
+                <div class="flex flex-col gap-1.5">
                     <div
                         v-for="student in students"
                         :key="student.id"
                         @click="selectStudent(student)"
-                        class="p-2 border rounded-lg inline-flex items-center justify-between cursor-pointer hover:bg-gray-50"
+                        class="p-1.5 border rounded-lg inline-flex items-center justify-between cursor-pointer hover:bg-gray-50"
                         :class="selectedStudent?.id === student.id ? 'border-black' : 'border-transparent'"
                     >
                         <span>{{ student.first_name }} {{ student.last_name }}</span>
@@ -451,18 +451,18 @@ definePageMeta({
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg w-full border p-4 font-nunito h-full flex flex-col justify-between min-h-80">
+            <div class="bg-white rounded-lg w-full border p-3 font-nunito h-full flex flex-col justify-between min-h-80">
                 <div>
-                    <h2 class="font-bold text-2xl mb-6 font-montserrat">Récapitulatif</h2>
-                    <div class="flex flex-col gap-2">
+                    <h2 class="font-bold text-xl mb-5 font-montserrat">Récapitulatif</h2>
+                    <div class="flex flex-col gap-1.5">
                         <template v-for="student in students" :key="student.id">
                             <div
                                 v-for="classIndex in Array.from(studentClasses[student.id] || [])"
                                 :key="`${student.id}-${classIndex}`"
-                                class="pb-1.5 border-b border-gray-300 flex justify-between items-center"
+                                class="pb-1 border-b border-gray-300 flex justify-between items-center"
                             >
                                 <div>{{ student.first_name }} {{ student.last_name }}</div>
-                                <div class="text-sm">{{ classes[classIndex]?.name }} - {{ classes[classIndex].cursus }}</div>
+                                <div class="text-xs">{{ classes[classIndex]?.name }} - {{ classes[classIndex].cursus }}</div>
                             </div>
                         </template>
                     </div>
@@ -471,7 +471,7 @@ definePageMeta({
                 <div class="w-full inline-flex items-center justify-center">
                     <button
                         @click="handlePaymentNavigation"
-                        class="bg-yellow-tlb text-default py-3 w-full text-center rounded-lg hover:opacity-90 mx-auto font-bold text-lg mt-6"
+                        class="bg-yellow-tlb text-default py-2 w-full text-center rounded-lg hover:opacity-90 mx-auto font-bold text-base mt-5"
                         :disabled="isSaving"
                     >
                         Paiement

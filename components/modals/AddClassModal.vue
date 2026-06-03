@@ -164,28 +164,28 @@ const handleSave = () => {
 
 <template>
   <div v-if="isOpen" class="fixed inset-0 font-nunito bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-2xl w-[70rem] h-[85vh] flex flex-col">
-      <div class="px-6 pt-4 shrink-0">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-2xl font-bold mx-auto">Ajouter une classe</h2>
+    <div class="bg-white rounded-2xl w-[95vw] max-w-[70rem] h-[90dvh] sm:h-[85vh] flex flex-col">
+      <div class="px-5 pt-3 shrink-0">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-xl font-bold mx-auto">Ajouter une classe</h2>
           <button
               @click="$emit('close')"
-              class="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-50"
+              class="text-gray-500 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-50"
               aria-label="Fermer"
           >
-            <Cross class="size-6"/>
+            <Cross class="size-4"/>
           </button>
         </div>
         <div class="w-full h-px border rounded-xl bg-gray-200"></div>
       </div>
 
-      <div class="flex-1 overflow-y-auto px-6 py-4">
-        <div v-if="error" class="bg-red-100 text-red-800 p-3 rounded mb-4">
+      <div class="flex-1 overflow-y-auto px-5 py-3">
+        <div v-if="error" class="bg-red-100 text-red-800 p-2 rounded mb-3">
           {{ error }}
         </div>
-        <h3 class="text-lg font-semibold mb-2">Informations sur la classe</h3>
+        <h3 class="text-base font-semibold mb-1.5">Informations sur la classe</h3>
 
-        <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="grid grid-cols-2 gap-3 mb-3">
           <div>
             <InputText
                 v-model="newClass.name"
@@ -202,7 +202,7 @@ const handleSave = () => {
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="grid grid-cols-2 gap-3 mb-3">
           <div>
             <SelectGenre
                 v-model="newClass.gender"
@@ -220,16 +220,16 @@ const handleSave = () => {
           </div>
         </div>
 
-        <div class="mb-6">
+        <div class="mb-5">
           <InputText
               v-model="newClass.telegram_link"
               placeholder="Lien Telegram"
           />
         </div>
 
-        <h3 class="text-lg font-semibold mb-2">Ajouter un créneau</h3>
+        <h3 class="text-base font-semibold mb-1.5">Ajouter un créneau</h3>
 
-        <div class="grid grid-cols-5 gap-4 items-end">
+        <div class="grid grid-cols-5 gap-3 items-end">
           <div>
             <SelectDay
                 v-model="newSchedule.day"
@@ -244,38 +244,38 @@ const handleSave = () => {
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Heure de début</label>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Heure de début</label>
             <input
                 v-model="newSchedule.start_time"
                 type="time"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-default"
+                class="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:border-default"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Heure de fin</label>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Heure de fin</label>
             <input
                 v-model="newSchedule.end_time"
                 type="time"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-default"
+                class="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:border-default"
             />
           </div>
           <div>
             <button
                 @click="addSchedule"
-                class="w-full bg-default text-white px-4 py-2 rounded-md hover:opacity-90"
+                class="w-full bg-default text-white px-3 py-1.5 rounded-md hover:opacity-90"
             >
               Ajouter
             </button>
           </div>
         </div>
 
-        <div v-if="newClass.schedules.length > 0" class="space-y-2 mt-6">
+        <div v-if="newClass.schedules.length > 0" class="space-y-1.5 mt-5">
           <div
               v-for="(schedule, index) in newClass.schedules"
               :key="index"
-              class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              class="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
           >
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-3">
               <span class="font-medium">{{ schedule.day }}</span>
               <span>{{ schedule.start_time }} - {{ schedule.end_time }}</span>
               <span class="text-gray-600">{{ getScheduleTeacherLabel(schedule) }}</span>
@@ -284,23 +284,23 @@ const handleSave = () => {
                 @click="removeSchedule(index)"
                 class="text-red-500 hover:text-red-700 p-1"
             >
-              <Trash class="size-5"/>
+              <Trash class="size-4"/>
             </button>
           </div>
         </div>
       </div>
 
-      <div class="shrink-0 border-t border-gray-200 px-6 py-4 flex justify-end space-x-4">
+      <div class="shrink-0 border-t border-gray-200 px-5 py-3 flex justify-end space-x-3">
         <button
             @click="$emit('close')"
-            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+            class="px-5 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
         >
           Annuler
         </button>
         <button
             @click="handleSave"
             :disabled="isSubmitting"
-            class="px-6 py-2 bg-default text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+            class="px-5 py-1.5 bg-default text-white rounded-lg hover:opacity-90 disabled:opacity-50"
         >
           {{ isSubmitting ? 'Création...' : 'Créer la classe' }}
         </button>

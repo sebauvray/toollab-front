@@ -109,12 +109,12 @@ onMounted(() => {
             @click="showAddResponsableModal = true"
             :disabled="isReadOnly"
             :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
-            class="bg-default text-white px-5 py-2 w-fit rounded-lg hover:opacity-90 inline-flex items-center justify-between gap-x-2 ml-auto disabled:opacity-40 disabled:cursor-not-allowed">
+            class="bg-default text-white px-4 py-1.5 w-fit rounded-lg hover:opacity-90 inline-flex items-center justify-between gap-x-1.5 ml-auto disabled:opacity-40 disabled:cursor-not-allowed">
             <PlusLight class="size-4"/>
             <span>Créer une famille</span>
         </button>
 
-        <div v-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+        <div v-if="error" class="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded relative">
             {{ error }}
         </div>
 
@@ -128,11 +128,11 @@ onMounted(() => {
             <template #default="{ item, isLastRow }">
                 <NuxtLink
                     :to="`/family/${item.id}`"
-                    class="grid py-1.5 px-4 hover:bg-gray-50 transition-colors cursor-pointer font-nunito"
+                    class="grid py-1 px-3 hover:bg-gray-50 transition-colors cursor-pointer font-nunito"
                     :class="{ 'border-b border-[#E6EFF5]': !isLastRow }"
                     :style="`grid-template-columns: repeat(12, minmax(0, 1fr))`"
                 >
-                    <div class="col-span-7 inline-flex items-center justify-start gap-x-4 pl-1">
+                    <div class="col-span-7 inline-flex items-center justify-start gap-x-3 pl-1">
                         <ResponsableTLB />
                         <span>{{ item.nom }}</span>
                     </div>

@@ -1,5 +1,5 @@
 <script setup>
-const defaultClass = 'bg-default hover:opacity-80 text-white px-6 py-1.5 rounded-md font-sans'
+const defaultClass = 'bg-default hover:opacity-80 text-white px-5 py-1 rounded-md font-sans'
 
 defineProps({
   class: {

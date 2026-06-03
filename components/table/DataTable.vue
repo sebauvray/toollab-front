@@ -75,7 +75,7 @@ const isLastRow = (index) => {
 
 <template>
   <div class="w-full overflow-x-auto bg-white rounded-2xl border">
-    <div class="grid font-bold font-montserrat py-4 px-10 border-b border-[#E6EFF5]"
+    <div class="grid font-bold font-montserrat py-3 px-8 border-b border-[#E6EFF5]"
          :style="`grid-template-columns: repeat(${props.columns.reduce((sum, col) => sum + (parseInt(col.width) || 1), 0)}, minmax(0, 1fr))`">
       <div
           v-for="column in props.columns"
@@ -86,12 +86,12 @@ const isLastRow = (index) => {
       </div>
     </div>
 
-    <div v-if="loading" class="py-10 text-center">
+    <div v-if="loading" class="py-8 text-center">
       <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-default"></div>
-      <p class="mt-2 text-gray-500">Chargement...</p>
+      <p class="mt-1.5 text-gray-500">Chargement...</p>
     </div>
 
-    <div v-else-if="items.length === 0" class="py-10 text-center text-gray-500">
+    <div v-else-if="items.length === 0" class="py-8 text-center text-gray-500">
       Aucune donnée disponible
     </div>
 
@@ -104,7 +104,7 @@ const isLastRow = (index) => {
           :isLastRow="isLastRow(index)"
       >
         <div
-            class="grid font-nunito py-4 px-10 hover:bg-gray-50 transition-colors cursor-pointer"
+            class="grid font-nunito py-3 px-8 hover:bg-gray-50 transition-colors cursor-pointer"
             :class="{ 'border-b border-[#E6EFF5]': !isLastRow(index) }"
             :style="`grid-template-columns: repeat(${props.columns.reduce((sum, col) => sum + (parseInt(col.width) || 1), 0)}, minmax(0, 1fr))`"
         >
@@ -116,14 +116,14 @@ const isLastRow = (index) => {
         </div>
       </slot>
     </template>
-    <div class="flex justify-between items-center py-4 px-6 border-t border-[#E6EFF5]">
+    <div class="flex justify-between items-center py-3 px-5 border-t border-[#E6EFF5]">
       <div class="w-36"></div>
 
       <div class="flex items-center space-x-1 justify-center">
         <button
             @click="handlePageChange(pagination.currentPage - 1)"
             :disabled="pagination.currentPage === 1"
-            class="px-3 py-1 rounded-md border"
+            class="px-2 py-1 rounded-md border"
             :class="pagination.currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-gray-100'"
         >
           <span class="sr-only">Page précédente</span>
@@ -134,25 +134,25 @@ const isLastRow = (index) => {
           <button
               v-if="page !== '...'"
               @click="handlePageChange(page)"
-              class="px-3 py-1 rounded-md"
+              class="px-2 py-1 rounded-md"
               :class="page === pagination.currentPage ? 'bg-default text-white' : 'hover:bg-gray-100'"
           >
             {{ page }}
           </button>
-          <span v-else class="px-2 py-1 text-gray-500">...</span>
+          <span v-else class="px-1.5 py-1 text-gray-500">...</span>
         </template>
 
         <button
             @click="handlePageChange(pagination.currentPage + 1)"
             :disabled="pagination.currentPage === pagination.totalPages"
-            class="px-3 py-1 rounded-md border"
+            class="px-2 py-1 rounded-md border"
             :class="pagination.currentPage === pagination.totalPages ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-gray-100'"
         >
           <span class="sr-only">Page suivante</span>
           &raquo;
         </button>
       </div>
-      <div class="text-sm text-black w-36 text-right">
+      <div class="text-xs text-black w-36 text-right">
         <span class="font-bold">{{ pagination.total }}</span> élément{{ pagination.total > 1 ? 's' : '' }}
       </div>
     </div>

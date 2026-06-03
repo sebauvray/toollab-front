@@ -47,23 +47,23 @@ onBeforeUnmount(() => {
   <div class="relative" ref="dropdownRef">
     <button
         @click="toggleDropdown"
-        class="inline-flex items-center justify-center rounded-full text-center bg-white border p-2.5 uppercase text-primary hover:bg-gray-100 transition-colors"
+        class="inline-flex items-center justify-center rounded-full bg-white border w-9 h-9 text-xs font-semibold uppercase text-primary hover:bg-gray-100 transition-colors"
     >
-      <span class="size-6">{{ initials }}</span>
+      {{ initials }}
     </button>
 
     <div
         v-if="isOpen"
-        class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-50"
+        class="absolute right-0 mt-1.5 w-48 bg-white rounded-md shadow-lg border z-50"
         style="margin-top: 0.5rem;"
     >
       <div class="py-1">
-          <NuxtLink to="/settings" class="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 transition-colors" @click="isOpen = !isOpen">
+          <NuxtLink to="/settings" class="block w-full text-left px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-100 transition-colors" @click="isOpen = !isOpen">
               Paramètre
           </NuxtLink>
         <button
             @click="handleLogout"
-            class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 transition-colors"
+            class="block w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-gray-100 transition-colors"
         >
           Déconnexion
         </button>

@@ -184,12 +184,12 @@ onMounted(() => {
   <PageContainer>
     <BreadCrumb :items="breadcrumbItems"/>
 
-    <div class="flex gap-2 border-b border-gray-200 mb-6">
+    <div class="flex gap-1.5 border-b border-gray-200 mb-5">
       <button
           type="button"
           @click="onTabChange('list')"
           :class="[
-            'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+            'px-3 py-1.5 text-xs font-medium border-b-2 transition-colors',
             activeTab === 'list'
               ? 'border-primary text-primary'
               : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -201,7 +201,7 @@ onMounted(() => {
           type="button"
           @click="onTabChange('planning')"
           :class="[
-            'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+            'px-3 py-1.5 text-xs font-medium border-b-2 transition-colors',
             activeTab === 'planning'
               ? 'border-primary text-primary'
               : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -212,17 +212,17 @@ onMounted(() => {
     </div>
 
     <section v-if="activeTab === 'list'">
-      <div v-if="!isReadOnly" class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-        <h2 class="text-lg font-semibold mb-2">Inviter un professeur</h2>
-        <p class="text-sm text-gray-600 mb-4">
+      <div v-if="!isReadOnly" class="bg-white rounded-lg border border-gray-200 p-5 mb-5">
+        <h2 class="text-base font-semibold mb-1.5">Inviter un professeur</h2>
+        <p class="text-xs text-gray-600 mb-3">
           Un email d'invitation sera envoyé pour définir un mot de passe.
         </p>
 
-        <div v-if="inviteError" class="bg-red-50 text-red-700 px-3 py-2 rounded mb-3 text-sm">
+        <div v-if="inviteError" class="bg-red-50 text-red-700 px-2 py-1.5 rounded mb-2 text-xs">
           {{ inviteError }}
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
           <InputText v-model="inviteForm.first_name" placeholder="Prénom"/>
           <InputText v-model="inviteForm.last_name" placeholder="Nom"/>
           <InputText v-model="inviteForm.email" placeholder="Email"/>
@@ -230,7 +230,7 @@ onMounted(() => {
               type="button"
               @click="handleInvite"
               :disabled="isSubmitting"
-              class="px-4 py-2 bg-default text-white rounded-md hover:opacity-90 disabled:opacity-50"
+              class="px-3 py-1.5 text-sm bg-default text-white rounded-md hover:opacity-90 disabled:opacity-50"
           >
             {{ isSubmitting ? 'Envoi…' : 'Inviter' }}
           </button>
@@ -238,32 +238,32 @@ onMounted(() => {
       </div>
 
       <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-          <h2 class="text-lg font-semibold">Professeurs ({{ teachers.length }})</h2>
+        <div class="px-5 py-3 border-b border-gray-200">
+          <h2 class="text-base font-semibold">Professeurs ({{ teachers.length }})</h2>
         </div>
 
-        <div v-if="isLoadingTeachers" class="py-8 text-center text-gray-500 text-sm">
+        <div v-if="isLoadingTeachers" class="py-6 text-center text-gray-500 text-xs">
           Chargement…
         </div>
-        <div v-else-if="teachers.length === 0" class="py-8 text-center text-gray-500 text-sm">
+        <div v-else-if="teachers.length === 0" class="py-6 text-center text-gray-500 text-xs">
           Aucun professeur. Invite ton premier prof avec le formulaire ci-dessus.
         </div>
         <table v-else class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nom</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-            <th class="px-6 py-3 w-12"></th>
+            <th class="px-5 py-2 text-left text-xs font-medium text-gray-500 uppercase">Nom</th>
+            <th class="px-5 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+            <th class="px-5 py-2 w-12"></th>
           </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
           <tr v-for="t in teachers" :key="t.id">
-            <td class="px-6 py-3 text-sm text-gray-900 font-medium">
+            <td class="px-5 py-2 text-xs text-gray-900 font-medium">
               {{ t.first_name }} {{ t.last_name }}
             </td>
-            <td class="px-6 py-3 text-sm text-gray-600">{{ t.email }}</td>
-            <td class="px-6 py-3 text-right">
-              <div class="inline-flex items-center gap-3">
+            <td class="px-5 py-2 text-xs text-gray-600">{{ t.email }}</td>
+            <td class="px-5 py-2 text-right">
+              <div class="inline-flex items-center gap-2">
                 <button
                     v-if="!isReadOnly"
                     type="button"
@@ -277,7 +277,7 @@ onMounted(() => {
                     v-if="!isReadOnly"
                     type="button"
                     @click="openRemoveModal(t)"
-                    class="text-gray-400 hover:text-red-600 transition-colors"
+                    class="text-red-500 hover:text-red-700 transition-colors"
                     title="Retirer ce professeur"
                 >
                   <Trash class="size-4"/>
@@ -291,18 +291,18 @@ onMounted(() => {
     </section>
 
     <section v-else-if="activeTab === 'planning'">
-      <div class="flex items-end justify-between mb-4 gap-4 flex-wrap">
+      <div class="flex items-end justify-between mb-3 gap-3 flex-wrap">
         <div>
-          <h2 class="text-lg font-semibold">Planning</h2>
-          <p v-if="currentYear" class="text-sm text-gray-600">{{ currentYear.label }}</p>
+          <h2 class="text-base font-semibold">Planning</h2>
+          <p v-if="currentYear" class="text-xs text-gray-600">{{ currentYear.label }}</p>
         </div>
-        <div class="flex items-end gap-3">
+        <div class="flex items-end gap-2">
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Filtrer par professeur</label>
             <select
                 v-model="selectedTeacherFilter"
                 @change="onFilterChange"
-                class="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+                class="px-2 py-1.5 border border-gray-300 rounded-md text-xs bg-white"
             >
               <option value="">Tous les professeurs</option>
               <option v-for="t in teachers" :key="t.id" :value="t.id">
@@ -313,7 +313,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-if="isLoadingSchedules" class="py-12 text-center text-gray-500 text-sm">
+      <div v-if="isLoadingSchedules" class="py-10 text-center text-gray-500 text-xs">
         Chargement du planning…
       </div>
       <ScheduleGrid v-else :schedules="schedules"/>

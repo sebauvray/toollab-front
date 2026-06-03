@@ -4,15 +4,15 @@
       <ClientOnly>
         <BreadCrumb />
       </ClientOnly>
-      <h1 class="text-2xl font-bold text-gray-900 mb-6">Recherche de chèques</h1>
+      <h1 class="text-xl font-bold text-gray-900 mb-5">Recherche de chèques</h1>
 
-      <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <div class="flex gap-4">
+      <div class="bg-white rounded-lg shadow-sm p-5 mb-5">
+        <div class="flex gap-3">
           <input
             v-model="searchTerm"
             type="text"
             placeholder="Rechercher par numéro de chèque..."
-            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900"
+            class="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900"
             @input="handleSearch"
           />
           <div class="relative" ref="bankDropdownRef">
@@ -21,18 +21,18 @@
               type="text"
               readonly
               placeholder="Filtrer par banque"
-              class="px-4 py-2 border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:border-gray-900 pr-10 min-w-[200px]"
+              class="px-3 py-1.5 border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:border-gray-900 pr-8 min-w-[200px]"
               @click="showBankDropdown = !showBankDropdown"
             />
-            <svg class="absolute right-3 top-3 w-4 h-4 text-gray-600 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="absolute right-3 top-3 w-3.5 h-3.5 text-gray-600 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
             </svg>
             <div v-if="showBankDropdown" class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto">
               <div 
                 @click="selectAllBanks"
-                class="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-200"
+                class="px-3 py-1.5 hover:bg-gray-50 cursor-pointer border-b border-gray-200"
               >
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5">
                   <input 
                     type="checkbox" 
                     :checked="selectedBanks.length === availableBanks.length"
@@ -45,9 +45,9 @@
                 v-for="bank in availableBanks" 
                 :key="bank"
                 @click="toggleBank(bank)"
-                class="px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                class="px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
               >
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5">
                   <input 
                     type="checkbox" 
                     :checked="selectedBanks.includes(bank)"
@@ -70,7 +70,7 @@
       >
         <template #default="{ item, isLastRow }">
           <div 
-            class="grid py-1.5 px-4 hover:bg-gray-50 transition-colors font-nunito"
+            class="grid py-1 px-3 hover:bg-gray-50 transition-colors font-nunito"
             :class="{ 'border-b border-[#E6EFF5]': !isLastRow }"
             :style="`grid-template-columns: repeat(12, minmax(0, 1fr))`"
           >
@@ -89,14 +89,14 @@
               </div>
               <div v-else class="text-gray-400">-</div>
             </div>
-            <div class="col-span-2 text-sm text-gray-600">
+            <div class="col-span-2 text-xs text-gray-600">
               {{ (item.family?.responsibles && item.family.responsibles.length > 0 && item.family.responsibles[0].phone) || '-' }}
             </div>
             <div class="col-span-1">
               <NuxtLink 
                 v-if="item.family?.id"
                 :to="`/family/${item.family.id}/paiement`"
-                class="text-gray-900 hover:text-gray-700 underline text-sm"
+                class="text-gray-900 hover:text-gray-700 underline text-xs"
               >
                 Voir
               </NuxtLink>

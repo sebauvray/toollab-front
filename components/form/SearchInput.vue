@@ -73,7 +73,7 @@ onUnmounted(() => {
 <template>
   <div class="relative min-w-fit font-nunito">
     <Search
-        class="absolute left-5 top-1/2 transform -translate-y-1/2 size-6 text-placeholder"
+        class="absolute left-5 top-1/2 transform -translate-y-1/2 size-4 text-placeholder"
     />
 
     <input
@@ -83,14 +83,14 @@ onUnmounted(() => {
         @input="handleInput"
         @focus="handleFocus"
         @blur="hideSuggestions"
-        class="w-full placeholder:text-placeholder border focus:ring-1 focus:ring-primary focus:outline-none border-input-stroke bg-white rounded-10 pl-14 py-3"
+        class="w-full placeholder:text-placeholder border focus:ring-1 focus:ring-primary focus:outline-none border-input-stroke bg-white rounded-10 pl-12 py-2"
     />
 
     <div
         v-if="isLoading"
         class="absolute right-4 top-1/2 transform -translate-y-1/2"
     >
-      <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
     </div>
 
     <div
@@ -101,7 +101,7 @@ onUnmounted(() => {
           v-for="student in suggestions"
           :key="student.id"
           @click="selectStudent(student)"
-          class="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+          class="px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
       >
         <div class="font-medium font-nunito text-gray-900">
           {{ student.display_text }}
@@ -110,7 +110,7 @@ onUnmounted(() => {
 
       <div
           v-if="!isLoading && suggestions.length === 0"
-          class="px-4 py-3 text-gray-500 text-center"
+          class="px-3 py-2 text-gray-500 text-center"
       >
         Aucun résultat
       </div>

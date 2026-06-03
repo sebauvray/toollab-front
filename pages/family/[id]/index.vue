@@ -326,24 +326,24 @@ definePageMeta({
 </script>
 
 <template>
-    <div v-if="loading" class="flex justify-center items-center py-16">
-        <div class="w-10 h-10 rounded-full border-b-2 animate-spin border-default"></div>
+    <div v-if="loading" class="flex justify-center items-center py-12">
+        <div class="w-8 h-8 rounded-full border-b-2 animate-spin border-default"></div>
     </div>
 
-    <div v-else-if="error" class="p-4 m-8 text-red-700 bg-red-100 rounded-lg">
+    <div v-else-if="error" class="p-3 m-6 text-red-700 bg-red-100 rounded-lg">
         {{ error }}
     </div>
 
-    <div v-else class="flex flex-col px-8 pt-2 w-full font-montserrat">
+    <div v-else class="flex flex-col px-6 pt-1.5 w-full font-montserrat">
         <BreadCrumb :custom-items="breadcrumbItems" />
 
-        <div class="flex justify-end my-2">
+        <div class="flex justify-end my-1.5">
             <div class="flex">
                 <button
                     @click="showAddNewResponsableModal = true"
                     :disabled="isReadOnly"
                     :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
-                    class="mx-1 inline-flex gap-x-2 justify-between items-center px-4 py-2 text-white text-sm rounded-lg bg-default w-fit hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed">
+                    class="mx-1 inline-flex gap-x-1.5 justify-between items-center px-3 py-1.5 text-white text-xs rounded-lg bg-default w-fit hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed">
                     Ajouter un responsable
                 </button>
             </div>
@@ -352,7 +352,7 @@ definePageMeta({
                     @click="showAddStudentsModal = true"
                     :disabled="isReadOnly"
                     :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
-                    class="mx-1 inline-flex gap-x-2 justify-between items-center px-4 py-2 text-white text-sm rounded-lg bg-default w-fit hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed">
+                    class="mx-1 inline-flex gap-x-1.5 justify-between items-center px-3 py-1.5 text-white text-xs rounded-lg bg-default w-fit hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed">
                     Ajouter des élèves
                 </button>
             </div>
@@ -362,19 +362,19 @@ definePageMeta({
               name: 'family-id-classes',
               params: { id: $route.params.id }
             }"
-                class="mx-1 inline-flex gap-x-2 justify-between items-center px-4 py-2 rounded-lg bg-yellow-tlb text-default font-semibold text-sm w-fit hover:opacity-90">
+                class="mx-1 inline-flex gap-x-1.5 justify-between items-center px-3 py-1.5 rounded-lg bg-yellow-tlb text-default font-semibold text-xs w-fit hover:opacity-90">
                 <span>Choix des classes</span>
             </NuxtLink>
         </div>
-        <div class="grid gap-y-4">
-            <div class="grid grid-cols-3 gap-x-8 mt-1 w-full">
-                <div class="flex relative flex-col col-span-1 gap-y-4 px-6 py-3 bg-white rounded-2xl border">
+        <div class="grid gap-y-3">
+            <div class="grid grid-cols-3 gap-x-6 mt-1 w-full">
+                <div class="flex relative flex-col col-span-1 gap-y-3 px-5 py-2 bg-white rounded-2xl border">
                     <div
-                        class="flex items-center px-12 py-1.5 mx-auto text-lg font-bold text-center rounded-lg bg-gray-light font-montserrat"
+                        class="flex items-center px-10 py-1 mx-auto text-base font-bold text-center rounded-lg bg-gray-light font-montserrat"
                         :class="{ 'hover:cursor-pointer': family.responsibles.length > 1 }"
                         @click="family.responsibles.length > 1 ? isDropdownOpen = !isDropdownOpen : null"
                     >
-                        <div class="mr-3">
+                        <div class="mr-2">
                             {{ contactInfo.name }}
                         </div>
                         <svg
@@ -389,14 +389,14 @@ definePageMeta({
                     </div>
                     <div
                         v-if="isDropdownOpen"
-                        class="absolute z-10 mt-12 ml-6 w-52 bg-white border rounded-lg shadow-lg"
+                        class="absolute z-10 mt-10 ml-5 w-52 bg-white border rounded-lg shadow-lg"
                     >
                         <ul>
                             <li
                                 v-for="responsible in family.responsibles"
                                 :key="responsible.id"
                                 @click="selectResponsible(responsible); isDropdownOpen = false"
-                                class="px-3 py-1.5 hover:bg-gray-100 cursor-pointer text-sm"
+                                class="px-2 py-1 hover:bg-gray-100 cursor-pointer text-xs"
                             >
                                 {{ responsible.first_name }} {{ responsible.last_name }}
                             </li>
@@ -411,8 +411,8 @@ definePageMeta({
                                 Modifier
                             </button>
                         </div>
-                        <div class="mb-0.5 text-sm font-bold">Contact</div>
-                        <div class="inline-flex gap-x-1.5 items-center mb-0.5 text-xs font-medium">
+                        <div class="mb-0.5 text-xs font-bold">Contact</div>
+                        <div class="inline-flex gap-x-1 items-center mb-0.5 text-xs font-medium">
                             <PhoneTLB/>
                             <template v-if="!isEditing">
                                 <span>{{ contactInfo.phone }}</span>
@@ -424,11 +424,11 @@ definePageMeta({
                                 class="px-1 py-0.5 w-full text-xs rounded border focus:border-default focus:ring-0 focus:outline-none"
                             >
                         </div>
-                        <div class="inline-flex gap-x-1.5 items-center text-xs font-medium">
+                        <div class="inline-flex gap-x-1 items-center text-xs font-medium">
                             <MailTLB/>
                             <template v-if="!isEditing">
                                 <span>{{ contactInfo.email }}</span>
-                                <span v-if="contactInfo.email.endsWith('@corriger.com')" class="ml-auto font-nunito bg-red-600 text-white font-bold rounded-lg px-2 py-1">Email à corriger</span>
+                                <span v-if="contactInfo.email.endsWith('@corriger.com')" class="ml-auto font-nunito bg-red-600 text-white font-bold rounded-lg px-1.5 py-1">Email à corriger</span>
                             </template>
                             <input
                                 v-else
@@ -442,22 +442,22 @@ definePageMeta({
 
                     <div class="w-full border rounded-lg bg-[#d9d9D9]"></div>
                     <div class="flex flex-col gap-y-0.5 justify-center">
-                        <div class="mb-0.5 text-sm font-bold">Adresse</div>
+                        <div class="mb-0.5 text-xs font-bold">Adresse</div>
 
                         <template v-if="!isEditing">
                             <div
-                                class="inline-flex gap-x-1.5 items-center text-xs font-medium font-montserrat text-default">
+                                class="inline-flex gap-x-1 items-center text-xs font-medium font-montserrat text-default">
                                 <HomeTLB/>
                                 <span>{{ contactInfo.street }}</span>
                             </div>
-                            <div class="pl-4 text-xs font-medium font-montserrat text-default">
+                            <div class="pl-3 text-xs font-medium font-montserrat text-default">
                                 {{ contactInfo.zipcode }} {{ contactInfo.city }}
                             </div>
                         </template>
 
                         <template v-else>
                             <div
-                                class="inline-flex gap-x-1.5 items-center mb-1.5 text-xs font-medium font-montserrat text-default">
+                                class="inline-flex gap-x-1 items-center mb-1 text-xs font-medium font-montserrat text-default">
                                 <HomeTLB/>
                                 <input
                                     v-model="editForm.street"
@@ -466,7 +466,7 @@ definePageMeta({
                                     class="px-1 py-0.5 w-full text-xs rounded border focus:border-default focus:ring-0 focus:outline-none"
                                 >
                             </div>
-                            <div class="grid grid-cols-2 gap-x-1.5 pl-4">
+                            <div class="grid grid-cols-2 gap-x-1 pl-3">
                                 <input
                                     v-model="editForm.zipcode"
                                     type="text"
@@ -491,9 +491,9 @@ definePageMeta({
                         </SaveButton>
                     </div>
                 </div>
-                <div class="w-full py-1.5 px-6 col-span-2 bg-white rounded-xl border">
-                    <div class="grid grid-cols-12 gap-x-2 py-1.5 font-bold text-sm font-montserrat border-b border-[#E6EFF5]">
-                        <div class="inline-flex col-span-4 justify-start items-center pl-6">Élève</div>
+                <div class="w-full py-1 px-5 col-span-2 bg-white rounded-xl border">
+                    <div class="grid grid-cols-12 gap-x-1.5 py-1 font-bold text-xs font-montserrat border-b border-[#E6EFF5]">
+                        <div class="inline-flex col-span-4 justify-start items-center pl-5">Élève</div>
                         <div class="inline-flex col-span-3 justify-start items-center">Classe</div>
                         <div class="inline-flex col-span-3 justify-start items-center">Date de naissance</div>
                         <div class="inline-flex col-span-2 justify-start items-center">-</div>
@@ -501,9 +501,9 @@ definePageMeta({
 
                     <template v-if="family.students && family.students.length > 0">
                         <div v-for="(student) in family.students" :key="student.id"
-                             class="grid grid-cols-12 gap-x-2 py-1.5 text-sm font-nunito border-b border-[#E6EFF5] last:border-b-0">
-                            <div class="inline-flex col-span-4 gap-x-1.5 justify-start items-center pl-0.5">
-                                <div class="inline-flex gap-x-2 items-center">
+                             class="grid grid-cols-12 gap-x-1.5 py-1 text-xs font-nunito border-b border-[#E6EFF5] last:border-b-0">
+                            <div class="inline-flex col-span-4 gap-x-1 justify-start items-center pl-0.5">
+                                <div class="inline-flex gap-x-1.5 items-center">
                                     <ResponsableTLB v-if="student.is_responsible"/>
                                     <UserFemaleTLB v-if="student.gender === 'F'"/>
                                     <UserMaleTLB v-else/>
@@ -512,68 +512,68 @@ definePageMeta({
                             </div>
                             <div class="col-span-3 flex">
                                 <div
-                                    class="inline-flex justify-start font-bold text-gray-700 items-center rounded-lg text-sm"
+                                    class="inline-flex justify-start font-bold text-gray-700 items-center rounded-lg text-xs"
                                     v-for="(classroom, index) in student.classrooms">
                                     {{ classroom ? classroom.name : '-' }}
                                     <span v-if="student.classrooms.length !== index+1" class="mx-0.5"> - </span>
                                 </div>
                             </div>
-                            <div class="inline-flex col-span-3 justify-start items-center text-sm">
+                            <div class="inline-flex col-span-3 justify-start items-center text-xs">
                                 {{ formatShortDateFr(student.birthdate) }}
                             </div>
-                            <div class="inline-flex col-span-2 gap-x-1.5 justify-start items-center pl-0.5" v-if="!isReadOnly">
+                            <div class="inline-flex col-span-2 gap-x-1 justify-start items-center pl-0.5" v-if="!isReadOnly">
                                 <button
                                     @click="selectedStudent = student; showEditStudentsModal = true"
-                                    class="py-1.5 pr-1.5 text-gray-600 hover:text-gray-900"
+                                    class="py-1 pr-1 text-gray-600 hover:text-gray-900"
                                 >
-                                    <EditIcon class="w-4 h-4"/>
+                                    <EditIcon class="w-3.5 h-3.5"/>
                                 </button>
                                 <button v-if="!student.is_responsible"
                                         @click="deletedStudent = student; showDeleteStudentsModal = true"
-                                        class="p-1.5 text-gray-600 hover:text-red-600"
+                                        class="p-1 text-gray-600 hover:text-red-600"
                                 >
-                                    <Trash class="w-4 h-4"/>
+                                    <Trash class="w-3.5 h-3.5"/>
                                 </button>
                             </div>
                         </div>
                     </template>
-                    <div v-else class="py-24 text-center text-gray-500 text-sm">
+                    <div v-else class="py-20 text-center text-gray-500 text-xs">
                         Aucun élève enregistré pour cette famille.
                     </div>
                 </div>
             </div>
-            <div class="grid grid-cols-2 gap-x-8 w-full h-80 mt-1">
-                <div class="flex flex-col col-span-1 gap-y-4 py-3 bg-white rounded-2xl border">
-                    <div class="px-6 text-xl font-bold font-montserrat">Paiements</div>
+            <div class="grid grid-cols-2 gap-x-6 w-full h-80 mt-1">
+                <div class="flex flex-col col-span-1 gap-y-3 py-2 bg-white rounded-2xl border">
+                    <div class="px-5 text-lg font-bold font-montserrat">Paiements</div>
 
-                    <div v-if="isPaiementLoading" class="flex justify-center py-8">
+                    <div v-if="isPaiementLoading" class="flex justify-center py-6">
                         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-default"></div>
                     </div>
 
                     <div v-else-if="paiementError"
-                         class="inline-flex flex-col gap-y-3 justify-center items-center w-full">
+                         class="inline-flex flex-col gap-y-2 justify-center items-center w-full">
                         <PaiementEmpty width="200" height="160"/>
-                        <div class="text-sm font-medium font-montserrat text-red-500">Erreur de chargement</div>
+                        <div class="text-xs font-medium font-montserrat text-red-500">Erreur de chargement</div>
                     </div>
 
                     <div
                         v-else-if="detailsPaiement && (detailsPaiement.montant_total > 0 || detailsPaiement.montant_paye > 0)"
-                        class="px-6 space-y-3">
-                        <div class="space-y-2">
-                            <div class="flex justify-between text-sm">
+                        class="px-5 space-y-2">
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between text-xs">
                                 <span class="text-gray-600">Total à payer</span>
                                 <span class="font-medium">{{ Math.round(detailsPaiement.montant_total) }}€</span>
                             </div>
 
-                            <div class="flex justify-between text-sm">
+                            <div class="flex justify-between text-xs">
                                 <span class="text-gray-600">Payé</span>
                                 <span class="font-medium text-green-600">{{
                                         Math.round(detailsPaiement.montant_paye)
                                     }}€</span>
                             </div>
 
-                            <div class="border-t border-gray-200 pt-2">
-                                <div class="flex justify-between text-base">
+                            <div class="border-t border-gray-200 pt-1.5">
+                                <div class="flex justify-between text-sm">
                                     <span class="font-semibold text-gray-800">Reste à payer</span>
                                     <span :class="[
                                         'font-bold',
@@ -587,24 +587,24 @@ definePageMeta({
                         </div>
 
                         <div v-if="detailsPaiement.details" class="space-y-1">
-                            <div v-if="detailsPaiement.details.espece > 0" class="flex justify-between text-sm">
+                            <div v-if="detailsPaiement.details.espece > 0" class="flex justify-between text-xs">
                                 <span class="text-gray-500">💵 Espèces</span>
                                 <span>{{ Math.round(detailsPaiement.details.espece) }}€</span>
                             </div>
 
-                            <div v-if="detailsPaiement.details.carte > 0" class="flex justify-between text-sm">
+                            <div v-if="detailsPaiement.details.carte > 0" class="flex justify-between text-xs">
                                 <span class="text-gray-500">💳 CB</span>
                                 <span>{{ Math.round(detailsPaiement.details.carte) }}€</span>
                             </div>
 
-                            <div v-if="detailsPaiement.details.cheque > 0" class="flex justify-between text-sm">
+                            <div v-if="detailsPaiement.details.cheque > 0" class="flex justify-between text-xs">
                                 <span class="text-gray-500">🧾 Chèques ({{
                                         detailsPaiement.details.cheques?.length || 0
                                     }})</span>
                                 <span>{{ Math.round(detailsPaiement.details.cheque) }}€</span>
                             </div>
 
-                            <div v-if="detailsPaiement.details.exoneration > 0" class="flex justify-between text-sm">
+                            <div v-if="detailsPaiement.details.exoneration > 0" class="flex justify-between text-xs">
                                 <span class="text-gray-500">✋ Exonération</span>
                                 <span>{{ Math.round(detailsPaiement.details.exoneration) }}€</span>
                             </div>
@@ -612,29 +612,29 @@ definePageMeta({
 
                         <NuxtLink
                             :to="`/family/${route.params.id}/paiement`"
-                            class="block text-center text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                            class="block text-center text-xs text-blue-600 hover:text-blue-800 hover:underline"
                         >
                             Voir détails
                         </NuxtLink>
                     </div>
 
-                    <div v-else class="inline-flex flex-col gap-y-3 justify-center items-center w-full">
+                    <div v-else class="inline-flex flex-col gap-y-2 justify-center items-center w-full">
                         <PaiementEmpty width="200" height="160"/>
-                        <div class="text-sm font-medium font-montserrat text-placeholder">Aucun paiement</div>
+                        <div class="text-xs font-medium font-montserrat text-placeholder">Aucun paiement</div>
                     </div>
                 </div>
-                <div class="flex flex-col col-span-1 bg-white py-3 px-6 rounded-2xl border text-default h-80">
-                    <div class="mb-4 text-xl font-bold font-montserrat">Commentaires</div>
-                    <div class="overflow-hidden flex-1 mb-3">
+                <div class="flex flex-col col-span-1 bg-white py-2 px-5 rounded-2xl border text-default h-80">
+                    <div class="mb-3 text-lg font-bold font-montserrat">Commentaires</div>
+                    <div class="overflow-hidden flex-1 mb-2">
                         <div
                             v-if="comments.length"
                             ref="commentsContainer"
-                            class="flex overflow-y-auto flex-col gap-y-4 pr-1 h-full"
+                            class="flex overflow-y-auto flex-col gap-y-3 pr-1 h-full"
                         >
                             <div
                                 v-for="comment in comments"
                                 :key="comment.id"
-                                class="flex flex-col gap-y-1.5 px-4 py-1.5 w-full rounded-lg shadow-sm bg-gray-light"
+                                class="flex flex-col gap-y-1 px-3 py-1 w-full rounded-lg shadow-sm bg-gray-light"
                             >
                                 <div class="flex justify-between items-center text-xs font-montserrat">
                                     <div class="font-bold">{{ comment.author }}</div>
@@ -643,24 +643,24 @@ definePageMeta({
                                 <div class="text-xs font-montserrat">{{ comment.content }}</div>
                             </div>
                         </div>
-                        <div v-else class="flex flex-col gap-y-3 justify-center items-center h-full">
+                        <div v-else class="flex flex-col gap-y-2 justify-center items-center h-full">
                             <CommentEmpty width="160" height="160"/>
-                            <div class="text-sm font-medium font-montserrat text-placeholder">
+                            <div class="text-xs font-medium font-montserrat text-placeholder">
                                 Aucun commentaire
                             </div>
                         </div>
                     </div>
 
-                    <form @submit.prevent="handleCommentSubmit" class="flex gap-x-3 items-center">
+                    <form @submit.prevent="handleCommentSubmit" class="flex gap-x-2 items-center">
                     <textarea
                         v-model="newComment"
                         placeholder="Écrivez votre commentaire..."
                         rows="2"
-                        class="flex-1 p-2 text-xs rounded-lg border resize-none font-montserrat focus:outline-none focus:ring-1 focus:ring-default"
+                        class="flex-1 p-1.5 text-xs rounded-lg border resize-none font-montserrat focus:outline-none focus:ring-1 focus:ring-default"
                     ></textarea>
                         <button
                             type="submit"
-                            class="px-4 py-1.5 text-xs text-white rounded-lg transition-opacity bg-default hover:opacity-90 font-nunito"
+                            class="px-3 py-1 text-xs text-white rounded-lg transition-opacity bg-default hover:opacity-90 font-nunito"
                         >
                             Ajouter
                         </button>

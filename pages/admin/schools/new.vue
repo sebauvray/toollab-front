@@ -58,16 +58,16 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="p-8 max-w-3xl">
-    <NuxtLink to="/admin/schools" class="text-sm text-gray-500 hover:text-default mb-4 inline-block">
+  <div class="p-6 max-w-3xl">
+    <NuxtLink to="/admin/schools" class="text-xs text-gray-500 hover:text-default mb-3 inline-block">
       ← Retour aux écoles
     </NuxtLink>
-    <h1 class="text-2xl font-bold mb-6">Créer une école</h1>
+    <h1 class="text-xl font-bold mb-5">Créer une école</h1>
 
-    <form @submit.prevent="handleSubmit" class="bg-white rounded-lg border p-6 space-y-6">
+    <form @submit.prevent="handleSubmit" class="bg-white rounded-lg border p-5 space-y-5">
       <div>
-        <h2 class="text-lg font-bold mb-4">Informations école</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <h2 class="text-base font-bold mb-3">Informations école</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <InputText v-model="form.name" placeholder="Nom de l'école" required />
             <p v-if="errors.name" class="text-xs text-red-500 mt-1">{{ errors.name[0] }}</p>
@@ -84,10 +84,10 @@ const handleSubmit = async () => {
         </div>
       </div>
 
-      <div class="border-t pt-6">
-        <h2 class="text-lg font-bold mb-1">Directeur·ice</h2>
-        <p class="text-sm text-gray-600 mb-4">Un email d'invitation lui sera envoyé pour qu'il/elle définisse son mot de passe.</p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="border-t pt-5">
+        <h2 class="text-base font-bold mb-1">Directeur·ice</h2>
+        <p class="text-xs text-gray-600 mb-3">Un email d'invitation lui sera envoyé pour qu'il/elle définisse son mot de passe.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <InputText v-model="form.director_last_name" placeholder="Nom" required />
             <p v-if="errors.director_last_name" class="text-xs text-red-500 mt-1">{{ errors.director_last_name[0] }}</p>
@@ -103,14 +103,14 @@ const handleSubmit = async () => {
         </div>
       </div>
 
-      <div class="flex justify-end gap-3 border-t pt-6">
-        <NuxtLink to="/admin/schools" class="px-4 py-2 border rounded-lg hover:bg-gray-50">
+      <div class="flex justify-end gap-2 border-t pt-5">
+        <NuxtLink to="/admin/schools" class="px-3 py-1.5 border rounded-lg hover:bg-gray-50">
           Annuler
         </NuxtLink>
         <button
           type="submit"
           :disabled="isSubmitting"
-          class="px-5 py-2 bg-default text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+          class="px-4 py-1.5 bg-default text-white rounded-lg hover:opacity-90 disabled:opacity-50"
         >
           {{ isSubmitting ? 'Création...' : 'Créer l\'école' }}
         </button>

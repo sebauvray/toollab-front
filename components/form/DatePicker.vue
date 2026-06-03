@@ -1,5 +1,5 @@
 <script setup>
-const defaultClass = 'w-full px-2 py-3 border rounded-md focus:border-default focus:ring-0 focus:outline-none text-sm'
+const defaultClass = 'w-full px-1.5 py-2 border rounded-md focus:border-default focus:ring-0 focus:outline-none text-xs'
 
 const props = defineProps({
   class: {

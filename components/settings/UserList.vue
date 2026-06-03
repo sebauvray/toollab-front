@@ -116,18 +116,18 @@ defineExpose({
     <div
         v-if="message.text"
         :class="[
-      'p-4 mb-6 rounded text-white',
+      'p-3 mb-5 rounded text-white',
       message.type === 'success' ? 'bg-green-500' : 'bg-red-500'
     ]"
     >
       {{ message.text }}
     </div>
 
-    <div v-if="isLoading" class="flex justify-center py-8">
+    <div v-if="isLoading" class="flex justify-center py-6">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
     </div>
 
-    <div v-else-if="users.length === 0" class="py-8 text-center text-gray-500">
+    <div v-else-if="users.length === 0" class="py-6 text-center text-gray-500">
       Aucun membre du personnel n'a été ajouté.
     </div>
 
@@ -135,35 +135,35 @@ defineExpose({
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
         <tr>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <th scope="col" class="px-5 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Nom
           </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <th scope="col" class="px-5 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Email
           </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <th scope="col" class="px-5 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Rôles
           </th>
         </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
         <tr v-for="user in users" :key="user.user.id">
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm font-medium text-gray-900">
+          <td class="px-5 py-3 whitespace-nowrap">
+            <div class="text-xs font-medium text-gray-900">
               {{ user.user.first_name }} {{ user.user.last_name }}
             </div>
           </td>
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-gray-500">
+          <td class="px-5 py-3 whitespace-nowrap">
+            <div class="text-xs text-gray-500">
               {{ user.user.email }}
             </div>
           </td>
-          <td class="px-6 py-4">
-            <div class="flex flex-wrap gap-2">
+          <td class="px-5 py-3">
+            <div class="flex flex-wrap gap-1.5">
               <div
                   v-for="role in user.roles"
                   :key="role"
-                  class="px-2 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full group"
+                  class="px-1.5 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full group"
                   :class="{
                   'bg-purple-100 text-purple-800': role === 'director',
                   'bg-blue-100 text-blue-800': role === 'admin',
@@ -174,9 +174,9 @@ defineExpose({
                 <button
                     v-if="role !== 'director'"
                     @click="openRemoveRoleModal(user.user.id, role)"
-                    class="ml-1.5 text-gray-400 hover:text-red-600 focus:outline-none transition-colors"
+                    class="ml-1 text-gray-400 hover:text-red-600 focus:outline-none transition-colors"
                     title="Supprimer ce rôle">
-                  <Trash class="size-3.5" />
+                  <Trash class="size-3" />
                 </button>
               </div>
             </div>

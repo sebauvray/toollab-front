@@ -6,7 +6,7 @@
         @click="showAddClassModal = true"
         :disabled="isReadOnly"
         :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
-        class="bg-default text-white px-5 py-2 w-fit rounded-lg hover:opacity-90 inline-flex items-center justify-between gap-x-2 ml-auto disabled:opacity-40 disabled:cursor-not-allowed">
+        class="bg-default text-white px-4 py-1.5 w-fit rounded-lg hover:opacity-90 inline-flex items-center justify-between gap-x-1.5 ml-auto disabled:opacity-40 disabled:cursor-not-allowed">
       <PlusLight class="size-4"/>
       <span>Ajouter une classe</span>
     </button>
@@ -38,11 +38,11 @@
         @cancel="showDeleteModal = false"
     />
 
-    <div v-if="isLoading" class="flex justify-center py-10">
+    <div v-if="isLoading" class="flex justify-center py-8">
       <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-default"></div>
     </div>
 
-    <div v-else-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+    <div v-else-if="error" class="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded relative">
       {{ error }}
     </div>
 
@@ -57,11 +57,11 @@
         <template #default="{ item, isLastRow }">
           <div
               :id="`class-${item.id}`"
-              class="grid py-1.5 px-4 hover:bg-gray-50 transition-colors scroll-mt-24"
+              class="grid py-1 px-3 hover:bg-gray-50 transition-colors scroll-mt-24"
               :class="{ 'border-b border-[#E6EFF5]': !isLastRow }"
               :style="`grid-template-columns: repeat(12, minmax(0, 1fr))`"
           >
-            <div class="col-span-3 inline-flex items-center justify-start gap-x-4 pl-1">
+            <div class="col-span-3 inline-flex items-center justify-start gap-x-3 pl-1">
               <div
                   class="w-3 h-3 rounded-full"
                   :style="{ backgroundColor: genderColors[item.gender] }"
@@ -73,7 +73,7 @@
             </div>
             <div class="col-span-2 inline-flex items-center justify-start">
               <span
-                  class="px-3 py-1 rounded-full text-xs font-medium w-20 text-center"
+                  class="px-2 py-1 rounded-full text-xs font-medium w-20 text-center"
                   :style="{ backgroundColor: genderColors[item.gender], color: '#000' }"
               >
                 {{ item.gender }}
@@ -90,20 +90,20 @@
                 </div>
               </div>
             </div>
-            <div class="col-span-2 inline-flex items-center justify-end gap-x-2 pr-4" v-if="!isReadOnly">
+            <div class="col-span-2 inline-flex items-center justify-end gap-x-1.5 pr-3" v-if="!isReadOnly">
               <button
                   @click="openUpdateModal(item)"
                   class="text-gray-500 hover:text-blue-600 transition-colors"
                   title="Modifier cette classe"
               >
-                <Edit class="size-5" />
+                <Edit class="size-4" />
               </button>
               <button
                   @click="openDeleteModal(item)"
                   class="text-red-500 hover:text-red-700 transition-colors"
                   title="Supprimer cette classe"
               >
-                <Trash class="size-5" />
+                <Trash class="size-4" />
               </button>
             </div>
           </div>

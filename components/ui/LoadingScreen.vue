@@ -20,7 +20,7 @@ const props = defineProps({
   >
     <div class="flex flex-col items-center">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-default"></div>
-      <p class="mt-4 text-default font-bold">{{ message }}</p>
+      <p class="mt-3 text-default font-bold">{{ message }}</p>
     </div>
   </div>
 </template>

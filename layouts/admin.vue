@@ -49,32 +49,32 @@ const goToSelectSchool = () => {
         <LogoText class="w-36" />
       </div>
 
-      <div class="px-4 py-3 bg-purple-50 border-b border-purple-200 flex items-center gap-2">
-        <span class="text-xl">🛡️</span>
-        <span class="text-sm font-bold text-purple-900">Administration</span>
+      <div class="px-3 py-2 bg-purple-50 border-b border-purple-200 flex items-center gap-1.5">
+        <span class="text-lg">🛡️</span>
+        <span class="text-xs font-bold text-purple-900">Administration</span>
       </div>
 
-      <nav class="flex flex-col gap-y-1 mt-2 flex-1 px-2">
+      <nav class="flex flex-col gap-y-1 mt-1.5 flex-1 px-1.5">
         <NuxtLink
           to="/admin"
-          class="px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors"
+          class="px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
           active-class="bg-gray-100 text-default font-bold"
         >
           Tableau de bord
         </NuxtLink>
         <NuxtLink
           to="/admin/schools"
-          class="px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors"
+          class="px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
           active-class="bg-gray-100 text-default font-bold"
         >
           Écoles
         </NuxtLink>
       </nav>
 
-      <div class="px-3 pb-4 border-t pt-3">
+      <div class="px-2 pb-3 border-t pt-2">
         <button
           @click="showSwitchMenu = !showSwitchMenu"
-          class="w-full px-3 py-2 text-sm rounded-lg hover:bg-gray-100 transition-colors text-left"
+          class="w-full px-2 py-1.5 text-xs rounded-lg hover:bg-gray-100 transition-colors text-left"
         >
           Basculer vers une école…
         </button>
@@ -83,13 +83,13 @@ const goToSelectSchool = () => {
             v-for="s in userSchools"
             :key="s.id"
             @click="switchToSchool(s)"
-            class="w-full px-3 py-2 text-sm text-left rounded hover:bg-gray-100"
+            class="w-full px-2 py-1.5 text-xs text-left rounded hover:bg-gray-100"
           >
             {{ s.name }}
           </button>
           <button
             @click="goToSelectSchool"
-            class="w-full px-3 py-2 text-xs text-left text-gray-500 underline"
+            class="w-full px-2 py-1.5 text-xs text-left text-gray-500 underline"
           >
             Voir toutes les écoles…
           </button>
@@ -98,7 +98,7 @@ const goToSelectSchool = () => {
     </aside>
 
     <div class="flex flex-col flex-1 overflow-hidden">
-      <div class="h-20 flex items-center justify-end pr-12 gap-x-10 flex-shrink-0 bg-white border-b">
+      <div class="h-20 flex items-center justify-end pr-10 gap-x-8 flex-shrink-0 bg-white border-b">
         <UserDropdown :user="user" :initials="initials" />
       </div>
       <div class="flex-1 overflow-auto">

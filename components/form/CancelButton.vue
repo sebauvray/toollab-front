@@ -1,5 +1,5 @@
 <script setup>
-const defaultClass = 'px-6 py-1.5 border rounded-md hover:bg-gray-50 font-sans'
+const defaultClass = 'px-5 py-1 border rounded-md hover:bg-gray-50 font-sans'
 
 defineProps({
   class: {

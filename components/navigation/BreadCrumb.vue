@@ -70,23 +70,23 @@ const isMobileView = computed(() => windowWidth.value < 520)
 </script>
 
 <template>
-    <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-4 absolute top-6 w-1/3 lg:w-1/2">
-        <ol class="flex items-center text-sm">
+    <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-3 absolute top-6 w-1/3 lg:w-1/2">
+        <ol class="flex items-center text-xs">
             <div v-if="!isMobileView" class="flex items-center">
                 <NuxtLink
                     to="/"
-                    class="text-placeholder font-semibold hover:opacity-80 text-2xl"
+                    class="text-placeholder font-semibold hover:opacity-80 text-xl"
                 >
-                    <Home class="size-5 mr-2 fill-gray-600 cursor-pointer"/>
+                    <Home class="size-4 mr-1.5 fill-gray-600 cursor-pointer"/>
                 </NuxtLink>
-                <span class="text-placeholder font-semibold text-2xl mx-2">
-                    <svg class="size-6 mr-2 text-placeholder -rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <span class="text-placeholder font-semibold text-xl mx-1.5">
+                    <svg class="size-4 mr-1.5 text-placeholder -rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
                 </span>
             </div>
             <template v-for="(crumb, index) in breadcrumbs" :key="index">
-                <li class="flex items-center text-xs sm:text-sm md:text-base lg:text-xl text">
+                <li class="flex items-center text-xs sm:text-xs md:text-sm lg:text-lg text">
                     <template v-if="index !== breadcrumbs.length - 1">
                         <div v-if="!shouldHideCrumb(crumb.name)" class="flex items-center">
                             <NuxtLink
@@ -95,8 +95,8 @@ const isMobileView = computed(() => windowWidth.value < 520)
                             >
                                 <span>{{ crumb.name }}</span>
                             </NuxtLink>
-                            <span class="text-placeholder font-semibold mx-1 lg:mx-2">
-                                <svg class="size-6 mr-1 lg:mr-2 text-placeholder -rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <span class="text-placeholder font-semibold mx-1 lg:mx-1.5">
+                                <svg class="size-4 mr-1 lg:mr-1.5 text-placeholder -rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </span>

@@ -282,7 +282,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="container mx-auto px-6 py-8">
+  <div class="container mx-auto px-5 py-6">
     <div v-if="isLoading" class="flex justify-center items-center h-64">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
     </div>
@@ -292,7 +292,7 @@ onMounted(async () => {
         <button
             @click="activeTab = 'profile'"
             :class="[
-            'px-6 py-3 font-medium text-sm focus:outline-none transition-colors whitespace-nowrap',
+            'px-5 py-2 font-medium text-xs focus:outline-none transition-colors whitespace-nowrap',
             activeTab === 'profile'
               ? 'border-b-2 border-black text-black font-semibold'
               : 'text-gray-500 hover:text-black'
@@ -304,7 +304,7 @@ onMounted(async () => {
         <button
             @click="activeTab = 'password'"
             :class="[
-            'px-6 py-3 font-medium text-sm focus:outline-none transition-colors whitespace-nowrap',
+            'px-5 py-2 font-medium text-xs focus:outline-none transition-colors whitespace-nowrap',
             activeTab === 'password'
               ? 'border-b-2 border-black text-black font-semibold'
               : 'text-gray-500 hover:text-black'
@@ -317,7 +317,7 @@ onMounted(async () => {
             v-if="isDirector"
             @click="activeTab = 'school'"
             :class="[
-            'px-6 py-3 font-medium text-sm focus:outline-none transition-colors whitespace-nowrap',
+            'px-5 py-2 font-medium text-xs focus:outline-none transition-colors whitespace-nowrap',
             activeTab === 'school'
               ? 'border-b-2 border-black text-black font-semibold'
               : 'text-gray-500 hover:text-black'
@@ -330,7 +330,7 @@ onMounted(async () => {
             v-if="isDirector"
             @click="activeTab = 'users'"
             :class="[
-            'px-6 py-3 font-medium text-sm focus:outline-none transition-colors whitespace-nowrap',
+            'px-5 py-2 font-medium text-xs focus:outline-none transition-colors whitespace-nowrap',
             activeTab === 'users'
               ? 'border-b-2 border-black text-black font-semibold'
               : 'text-gray-500 hover:text-black'
@@ -340,11 +340,11 @@ onMounted(async () => {
         </button>
       </div>
 
-      <div class="p-6">
+      <div class="p-5">
         <div
             v-if="message.text"
             :class="[
-            'p-4 mb-6 rounded text-white',
+            'p-3 mb-5 rounded text-white',
             message.type === 'success' ? 'bg-green-500' : 'bg-red-500'
           ]"
         >
@@ -352,9 +352,9 @@ onMounted(async () => {
         </div>
 
         <div v-if="activeTab === 'profile'">
-          <h2 class="text-lg font-semibold mb-6">Informations personnelles</h2>
+          <h2 class="text-base font-semibold mb-5">Informations personnelles</h2>
 
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
             <div>
               <InputText
                   v-model="userForm.first_name"
@@ -370,7 +370,7 @@ onMounted(async () => {
             </div>
           </div>
 
-          <div class="flex justify-end mt-6">
+          <div class="flex justify-end mt-5">
             <SaveButton @click="handleUpdateUser">
               Enregistrer
             </SaveButton>
@@ -378,9 +378,9 @@ onMounted(async () => {
         </div>
 
         <div v-if="activeTab === 'password'">
-          <h2 class="text-lg font-semibold mb-6">Changer de mot de passe</h2>
+          <h2 class="text-base font-semibold mb-5">Changer de mot de passe</h2>
 
-          <div class="grid grid-cols-1 gap-6">
+          <div class="grid grid-cols-1 gap-5">
             <div>
               <InputText
                   v-model="passwordForm.current_password"
@@ -406,7 +406,7 @@ onMounted(async () => {
             </div>
           </div>
 
-          <div class="flex justify-end mt-6">
+          <div class="flex justify-end mt-5">
             <SaveButton @click="handleUpdatePassword">
               Mettre à jour
             </SaveButton>
@@ -414,14 +414,14 @@ onMounted(async () => {
         </div>
 
         <div v-if="activeTab === 'school' && isDirector">
-          <h2 class="text-lg font-semibold mb-6">Informations de l'établissement</h2>
+          <h2 class="text-base font-semibold mb-5">Informations de l'établissement</h2>
 
-          <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
+          <div class="mb-5">
+            <label class="block text-xs font-medium text-gray-700 mb-1.5">
               Logo de l'établissement
             </label>
 
-            <div class="flex items-center space-x-6">
+            <div class="flex items-center space-x-5">
               <div
                   v-if="logoPreview"
                   class="w-24 h-24 rounded-full overflow-hidden border"
@@ -440,7 +440,7 @@ onMounted(async () => {
                 <span class="text-gray-400">Aucun logo</span>
               </div>
 
-              <label class="cursor-pointer bg-gray-50 px-4 py-2 border rounded hover:bg-gray-100 transition-colors">
+              <label class="cursor-pointer bg-gray-50 px-3 py-1.5 border rounded hover:bg-gray-100 transition-colors">
                 <span>{{ logoPreview ? 'Changer le logo' : 'Ajouter un logo' }}</span>
                 <input
                     type="file"
@@ -452,7 +452,7 @@ onMounted(async () => {
             </div>
           </div>
 
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
             <div>
               <InputText
                   v-model="schoolForm.name"
@@ -504,7 +504,7 @@ onMounted(async () => {
             </div>
           </div>
 
-          <div class="flex justify-end mt-6">
+          <div class="flex justify-end mt-5">
             <SaveButton @click="handleUpdateSchool">
               Enregistrer
             </SaveButton>
@@ -512,8 +512,8 @@ onMounted(async () => {
         </div>
 
         <div v-if="activeTab === 'users' && (isDirector) && school">
-          <div class="mb-8">
-            <h2 class="text-lg font-semibold mb-6">Liste des membres du personnel</h2>
+          <div class="mb-6">
+            <h2 class="text-base font-semibold mb-5">Liste des membres du personnel</h2>
             <UserList
                 :school-id="school.id"
                 ref="userListRef"
@@ -521,16 +521,16 @@ onMounted(async () => {
             />
           </div>
 
-          <div class="w-full border-t border-gray-200 my-8"></div>
+          <div class="w-full border-t border-gray-200 my-6"></div>
 
-          <h2 class="text-lg font-semibold mb-6">Ajouter un utilisateur</h2>
-          <p class="text-sm text-gray-600 mb-6">
+          <h2 class="text-base font-semibold mb-5">Ajouter un utilisateur</h2>
+          <p class="text-xs text-gray-600 mb-5">
             Créez un compte administrateur ou un responsable des inscriptions pour votre établissement.
             Un email d'invitation sera envoyé à l'utilisateur pour définir son mot de passe.
             Pour les professeurs, utilisez l'onglet dédié.
           </p>
 
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
+          <div class="grid grid-cols-1 gap-5 md:grid-cols-4">
 
             <InputText
                 v-model="newUserForm.last_name"
@@ -556,7 +556,7 @@ onMounted(async () => {
               <div class="relative">
                 <select
                     v-model="newUserForm.role"
-                    class="w-full px-3 py-3 border border-input-stroke rounded-lg transition-colors duration-200 focus:ring-0 focus:outline-none focus:border-default appearance-none bg-white"
+                    class="w-full px-2 py-2 border border-input-stroke rounded-lg transition-colors duration-200 focus:ring-0 focus:outline-none focus:border-default appearance-none bg-white"
                 >
                   <option v-for="role in roles" :key="role.value" :value="role.value">
                     {{ role.label }}
@@ -571,7 +571,7 @@ onMounted(async () => {
             </div>
           </div>
 
-          <div class="flex justify-end mt-6">
+          <div class="flex justify-end mt-5">
             <SaveButton @click="handleCreateUser">
               Ajouter l'utilisateur
             </SaveButton>

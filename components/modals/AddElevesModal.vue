@@ -68,24 +68,24 @@ const genderOptions = [
 
 <template>
     <div v-if="isOpen" class="fixed inset-0 font-nunito bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-2xl px-8 pt-6 pb-10 w-[70rem] max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold mx-auto">Ajouter des élèves</h2>
+        <div class="bg-white rounded-2xl px-6 pt-5 pb-8 w-[95vw] max-w-[70rem] max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-xl font-bold mx-auto">Ajouter des élèves</h2>
                 <button
                     @click="$emit('close')"
-                    class="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-50"
+                    class="text-gray-500 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-50"
                     aria-label="Fermer">
-                    <Cross class="size-6"/>
+                    <Cross class="size-4"/>
                 </button>
             </div>
             <div class="w-full h-px border rounded-xl bg-gray-200"></div>
 
-            <div v-if="error" class="bg-red-100 text-red-800 p-3 rounded mt-4 mb-2">
+            <div v-if="error" class="bg-red-100 text-red-800 p-2 rounded mt-3 mb-1.5">
                 {{ error }}
             </div>
 
-            <div v-for="(student, index) in students" :key="index" class="mt-8">
-                <div class="flex flex-wrap gap-4 items-center">
+            <div v-for="(student, index) in students" :key="index" class="mt-6">
+                <div class="flex flex-wrap gap-3 items-center">
                     <div class="flex-1">
                         <InputText
                             v-model="student.lastname"
@@ -107,8 +107,8 @@ const genderOptions = [
                             required
                             aria-label="Date de naissance"/>
                     </div>
-                    <div class="flex gap-4">
-                        <label v-for="option in genderOptions" :key="option.value" class="flex items-center gap-2">
+                    <div class="flex gap-3">
+                        <label v-for="option in genderOptions" :key="option.value" class="flex items-center gap-1.5">
                             <input
                                 type="radio"
                                 v-model="student.gender"
@@ -116,7 +116,7 @@ const genderOptions = [
                                 :name="'gender-' + index"
                                 class="accent-default border-gray-300 focus:ring-accent-default size-4"
                             >
-                            <span class="text-sm">{{ option.label }}</span>
+                            <span class="text-xs">{{ option.label }}</span>
                         </label>
                     </div>
                     <div class="w-10 flex items-center justify-center">
@@ -125,23 +125,23 @@ const genderOptions = [
                             @click="handleRemoveStudent(index)"
                             class="text-gray-600 hover:text-gray-800 transition-colors"
                             aria-label="Supprimer l'élève">
-                            <Trash class="size-5 hover:text-placeholder text-default"/>
+                            <Trash class="size-4 hover:text-placeholder text-default"/>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div class="flex justify-center mt-6">
+            <div class="flex justify-center mt-5">
                 <button
                     @click="handleAddStudent"
-                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
+                    class="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-1.5"
                     aria-label="Ajouter un nouvel élève">
-                    <PlusLight class="size-5"/>
+                    <PlusLight class="size-4"/>
                     Ajouter un élève
                 </button>
             </div>
 
-            <div class="flex justify-center gap-x-3 mt-10">
+            <div class="flex justify-center gap-x-2 mt-8">
                 <CancelButton @click="$emit('close')" :disabled="isLoading">Annuler</CancelButton>
                 <SaveButton @click="handleSave" :disabled="isLoading">
                     {{ isLoading ? 'Enregistrement...' : 'Enregistrer' }}

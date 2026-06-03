@@ -33,9 +33,9 @@ watch(flashMessage, (newMessage) => {
             : 'bg-white/90 border-red-200/50 shadow-red-500/20'
         ]"
       >
-        <div class="flex items-center gap-3 p-4">
+        <div class="flex items-center gap-2 p-3">
           <div
-              class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+              class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center"
               :class="[
               flashMessage.type === 'success'
                 ? 'bg-emerald-500 shadow-md shadow-emerald-500/30'
@@ -44,7 +44,7 @@ watch(flashMessage, (newMessage) => {
           >
             <svg
                 v-if="flashMessage.type === 'success'"
-                class="w-5 h-5 text-white"
+                class="w-4 h-4 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -53,7 +53,7 @@ watch(flashMessage, (newMessage) => {
             </svg>
             <svg
                 v-else
-                class="w-5 h-5 text-white"
+                class="w-4 h-4 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -64,7 +64,7 @@ watch(flashMessage, (newMessage) => {
 
           <div class="flex-1 min-w-0">
             <p
-                class="text-sm font-medium leading-5"
+                class="text-xs font-medium leading-5"
                 :class="[
                 flashMessage.type === 'success'
                   ? 'text-emerald-900'
@@ -84,7 +84,7 @@ watch(flashMessage, (newMessage) => {
                 : 'text-red-600 hover:text-red-800 focus:ring-red-500'
             ]"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>

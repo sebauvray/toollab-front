@@ -61,8 +61,8 @@ onBeforeUnmount(() => {
       <input
           type="text"
           :class="[
-          'w-full px-3 py-3 border border-input-stroke placeholder:text-placeholder rounded-lg transition-colors duration-200 focus:ring-0 focus:outline-none focus:border-default disabled:bg-gray-100 disabled:cursor-not-allowed cursor-pointer',
-          'pl-4',
+          'w-full px-2 py-1.5 text-sm border border-input-stroke placeholder:text-placeholder rounded-lg transition-colors duration-200 focus:ring-0 focus:outline-none focus:border-default disabled:bg-gray-100 disabled:cursor-not-allowed cursor-pointer',
+          'pl-3',
           isFocused ? 'border-default' : 'border-input-stroke'
         ]"
           :placeholder="isFloating ? '' : placeholder"
@@ -82,7 +82,7 @@ onBeforeUnmount(() => {
 
       <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
         <svg
-            class="size-5 text-placeholder"
+            class="size-4 text-placeholder"
             :class="{ 'rotate-180': isOpen }"
             viewBox="0 0 12 12"
             fill="currentColor"
@@ -99,7 +99,7 @@ onBeforeUnmount(() => {
       <div
           v-for="(option, index) in options"
           :key="index"
-          class="px-4 py-px hover:bg-gray-100 cursor-pointer text-default font-nunito"
+          class="px-3 py-px hover:bg-gray-100 cursor-pointer text-default font-nunito"
           @click="selectOption(option)"
       >
         {{ option.name }}

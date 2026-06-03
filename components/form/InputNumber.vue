@@ -49,7 +49,7 @@ watch(() => modelValue.value, (newVal) => {
         :min="min"
         :max="max"
         :required="required"
-        class="w-full px-3 py-3 border border-input-stroke placeholder:text-placeholder rounded-lg transition-colors duration-200 focus:ring-0 focus:outline-none focus:border-default disabled:bg-gray-100 disabled:cursor-not-allowed no-spinners"
+        class="w-full px-2 py-1.5 text-sm border border-input-stroke placeholder:text-placeholder rounded-lg transition-colors duration-200 focus:ring-0 focus:outline-none focus:border-default disabled:bg-gray-100 disabled:cursor-not-allowed no-spinners"
         :class="[error ? 'border-red-500' : '']"
     />
 

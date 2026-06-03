@@ -88,32 +88,32 @@ watch(isEleve, (newValue) => {
 
 <template>
     <div v-if="isOpen" class="fixed inset-0 font-nunito bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-2xl px-12 pt-6 pb-10 w-[50rem] max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold mx-auto">Ajouter un responsable</h2>
+        <div class="bg-white rounded-2xl px-10 pt-5 pb-8 w-[50rem] max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-xl font-bold mx-auto">Ajouter un responsable</h2>
                 <button @click="$emit('close')"
-                        class="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-50">
-                    <svg class="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="text-gray-500 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-50">
+                    <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
             <div class="w-full h-px border rounded-xl bg-gray-200"></div>
 
-            <div v-if="error" class="bg-red-100 text-red-800 p-3 rounded mt-4 mb-2">
+            <div v-if="error" class="bg-red-100 text-red-800 p-2 rounded mt-3 mb-1.5">
                 {{ error }}
             </div>
 
-            <div class="text-xl font-bold pl-2 text-default mt-10 mb-6">Responsable</div>
-            <div class="grid grid-cols-2 gap-6 ">
+            <div class="text-lg font-bold pl-1.5 text-default mt-8 mb-5">Responsable</div>
+            <div class="grid grid-cols-2 gap-5 ">
                 <InputText v-model="formData.lastname" placeholder="Nom"/>
                 <InputText v-model="formData.firstname" placeholder="Prénom"/>
 
             </div>
 
-            <div class="grid grid-cols-2 gap-6 mt-10">
-                <div class="text-lg font-bold pl-2 text-default">Contact</div>
-                <div class="text-lg font-bold pl-2 text-default">Adresse</div>
+            <div class="grid grid-cols-2 gap-5 mt-8">
+                <div class="text-base font-bold pl-1.5 text-default">Contact</div>
+                <div class="text-base font-bold pl-1.5 text-default">Adresse</div>
 
 
                 <InputText v-model="formData.phone" placeholder="Numéro de téléphone"/>
@@ -126,11 +126,11 @@ watch(isEleve, (newValue) => {
 
             </div>
 
-            <div class="grid grid-cols-2 gap-6 mt-10">
+            <div class="grid grid-cols-2 gap-5 mt-8">
 
-                <div class="flex items-center justify-start gap-x-4">
+                <div class="flex items-center justify-start gap-x-3">
                     <ToogleButton v-model="isEleve"/>
-                    <div class="text-sm text-default">Le responsable est aussi élève</div>
+                    <div class="text-xs text-default">Le responsable est aussi élève</div>
                 </div>
 
                 <div class="min-h-12">
@@ -140,21 +140,21 @@ watch(isEleve, (newValue) => {
                         placeholder="Date de naissance"
                     />
 
-                    <div v-show="isEleve" class="flex gap-4 mt-4">
-                        <label v-for="option in genderOptions" :key="option.value" class="flex items-center gap-2">
+                    <div v-show="isEleve" class="flex gap-3 mt-3">
+                        <label v-for="option in genderOptions" :key="option.value" class="flex items-center gap-1.5">
                             <input
                                 type="radio"
                                 v-model="formData.gender"
                                 :value="option.value"
                                 class="accent-default border-gray-300 focus:ring-accent-default size-4"
                             >
-                            <span class="text-sm">{{ option.label }}</span>
+                            <span class="text-xs">{{ option.label }}</span>
                         </label>
                     </div>
                 </div>
             </div>
 
-            <div class="flex justify-center gap-x-3 mt-10">
+            <div class="flex justify-center gap-x-2 mt-8">
                 <CancelButton @click="$emit('close')" :disabled="isSubmitting">Annuler</CancelButton>
                 <SaveButton @click="handleSave" :disabled="isSubmitting">
                     {{ isSubmitting ? 'Création en cours...' : 'Enregistrer' }}

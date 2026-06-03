@@ -151,7 +151,7 @@ const goToAdmin = () => {
 };
 
 const checkScreenSize = () => {
-  if (window.innerWidth < 1024) {
+  if (window.innerWidth < 1280) {
     isSidebarCollapsed.value = true;
   } else {
     isSidebarCollapsed.value = false;
@@ -196,12 +196,12 @@ onUnmounted(() => {
 <template>
   <div class="flex bg-gray-blue h-screen antialiased overflow-hidden">
     <aside class="flex flex-col bg-white h-screen border-r font-medium font-montserrat transition-all duration-300"
-           :class="isSidebarCollapsed ? 'w-20' : 'w-64'">
+           :class="isSidebarCollapsed ? 'w-16' : 'w-52'">
       <div class="w-full flex items-center justify-center h-16">
-        <Logo v-if="isSidebarCollapsed" class="w-8 h-8" />
+        <Logo v-if="isSidebarCollapsed" class="w-6 h-6" />
         <LogoText v-else class="w-36" />
       </div>
-      <nav class="inline-flex flex-col gap-y-2 mt-2 flex-1">
+      <nav class="inline-flex flex-col gap-y-1.5 mt-1.5 flex-1">
         <NavLink to="/" :icon="Home" text="Accueil" :collapsed="isSidebarCollapsed" />
         <NavLink v-if="!isTeacher" to="/family" :icon="FamilyTLB" text="Familles" :collapsed="isSidebarCollapsed" />
         <NavLink v-if="hasAdminAccess" to="/cursus" :icon="Cursus" text="Cursus" :collapsed="isSidebarCollapsed" />
@@ -213,34 +213,34 @@ onUnmounted(() => {
         <NavLink v-if="isTeacher" to="/professeur/planning" :icon="Cursus" text="Mon planning" :collapsed="isSidebarCollapsed" />
       </nav>
 
-      <div class="mb-4" :class="isSidebarCollapsed ? 'px-2' : 'px-4'">
-        <div v-if="schools.length <= 1 && !isSuperAdmin && currentSchoolName" class="flex items-center gap-x-2 py-2"
+      <div class="mb-3" :class="isSidebarCollapsed ? 'px-1.5' : 'px-3'">
+        <div v-if="schools.length <= 1 && !isSuperAdmin && currentSchoolName" class="flex items-center gap-x-1.5 py-1.5"
              :class="isSidebarCollapsed ? 'justify-center' : ''">
-          <div v-if="currentSchoolLogo" class="w-10 h-10 flex-shrink-0">
+          <div v-if="currentSchoolLogo" class="w-8 h-8 flex-shrink-0">
             <img :src="logoUrl" alt="Logo" class="w-full h-full object-contain rounded-full" />
           </div>
-          <div v-else class="w-10 h-10 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
-            <span class="text-white text-sm font-semibold">{{ currentSchoolInitial }}</span>
+          <div v-else class="w-8 h-8 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
+            <span class="text-white text-xs font-semibold">{{ currentSchoolInitial }}</span>
           </div>
-          <div v-if="!isSidebarCollapsed" class="text-base text-gray-800 truncate">{{ currentSchoolName }}</div>
+          <div v-if="!isSidebarCollapsed" class="text-sm text-gray-800 truncate">{{ currentSchoolName }}</div>
         </div>
 
         <div v-else-if="schools.length > 1 || isSuperAdmin" class="relative" ref="schoolDropdownRef">
           <button
               @click="showSchoolDropdown = !showSchoolDropdown"
-              class="w-full flex items-center gap-x-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-              :class="isSidebarCollapsed ? 'justify-center px-2' : ''"
+              class="w-full flex items-center gap-x-1.5 px-2 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+              :class="isSidebarCollapsed ? 'justify-center px-1.5' : ''"
           >
-            <div v-if="currentSchoolLogo" class="w-10 h-10 flex-shrink-0">
+            <div v-if="currentSchoolLogo" class="w-8 h-8 flex-shrink-0">
               <img :src="logoUrl" alt="Logo" class="w-full h-full object-contain rounded-full" />
             </div>
-            <div v-else class="w-10 h-10 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
-              <span class="text-white text-sm font-semibold">{{ currentSchoolInitial }}</span>
+            <div v-else class="w-8 h-8 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
+              <span class="text-white text-xs font-semibold">{{ currentSchoolInitial }}</span>
             </div>
             <div v-if="!isSidebarCollapsed" class="flex-1 min-w-0 text-left">
-              <div class="text-base text-gray-800 truncate">{{ currentSchoolName }}</div>
+              <div class="text-sm text-gray-800 truncate">{{ currentSchoolName }}</div>
             </div>
-            <svg v-if="!isSidebarCollapsed" class="w-4 h-4 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg v-if="!isSidebarCollapsed" class="w-3.5 h-3.5 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
             </svg>
           </button>
@@ -248,19 +248,19 @@ onUnmounted(() => {
           <div
               v-if="showSchoolDropdown"
               class="absolute bottom-full mb-1 bg-white border rounded-lg shadow-lg z-50 overflow-hidden"
-              :class="isSidebarCollapsed ? 'left-full ml-2 bottom-0 mb-0' : 'left-0 right-0'"
+              :class="isSidebarCollapsed ? 'left-full ml-1.5 bottom-0 mb-0' : 'left-0 right-0'"
           >
             <div class="max-h-64 overflow-y-auto" :class="isSidebarCollapsed ? 'w-64' : ''">
               <button
                   v-if="isSuperAdmin"
                   @click="goToAdmin"
-                  class="w-full flex items-center gap-x-2 px-3 py-2 hover:bg-purple-50 transition-colors border-b"
+                  class="w-full flex items-center gap-x-1.5 px-2 py-1.5 hover:bg-purple-50 transition-colors border-b"
               >
                 <div class="w-9 h-9 flex items-center justify-center rounded-full bg-purple-600 flex-shrink-0">
-                  <span class="text-white text-sm">🛡</span>
+                  <span class="text-white text-xs">🛡</span>
                 </div>
                 <div class="flex-1 min-w-0 text-left">
-                  <div class="text-sm font-bold text-purple-900 truncate">Administration Toollab</div>
+                  <div class="text-xs font-bold text-purple-900 truncate">Administration Toollab</div>
                   <div class="text-xs text-purple-700 truncate">Mode plateforme</div>
                 </div>
               </button>
@@ -268,7 +268,7 @@ onUnmounted(() => {
                   v-for="school in schools"
                   :key="school.id"
                   @click="selectSchool(school)"
-                  class="w-full flex items-center gap-x-2 px-3 py-2 hover:bg-gray-100 transition-colors"
+                  class="w-full flex items-center gap-x-1.5 px-2 py-1.5 hover:bg-gray-100 transition-colors"
                   :class="{ 'bg-gray-50': selectedSchool?.id === school.id }"
               >
                 <div v-if="school.logo" class="w-9 h-9 flex-shrink-0">
@@ -284,15 +284,15 @@ onUnmounted(() => {
                     }}</span>
                 </div>
                 <div class="flex-1 min-w-0 text-left">
-                  <div class="text-base text-gray-800 truncate">{{ school.name }}</div>
+                  <div class="text-sm text-gray-800 truncate">{{ school.name }}</div>
                   <div
-                      class="text-sm truncate"
+                      class="text-xs truncate"
                       :class="school.role === 'Super-admin' ? 'text-gray-400 italic' : 'text-gray-500'"
                   >{{ school.role || '—' }}</div>
                 </div>
                 <svg
                     v-if="selectedSchool?.id === school.id"
-                    class="w-4 h-4 text-primary flex-shrink-0"
+                    class="w-3.5 h-3.5 text-primary flex-shrink-0"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                 >
@@ -308,17 +308,17 @@ onUnmounted(() => {
       
     </aside>
     <div class="flex flex-col flex-1 overflow-hidden">
-      <div class="h-20 flex items-center justify-end pr-12 gap-x-10 flex-shrink-0">
-        <div class="flex items-center gap-x-4">
+      <div class="h-16 sm:h-20 flex items-center justify-end pr-3 sm:pr-8 gap-x-3 sm:gap-x-6 flex-shrink-0">
+        <div class="flex items-center gap-x-3">
           <div v-if="years.length > 0" class="relative" ref="yearDropdownRef">
             <button
                 @click="showYearDropdown = !showYearDropdown"
-                class="inline-flex items-center gap-x-2 px-3 py-2 rounded-lg border bg-white hover:bg-gray-100 transition-colors text-sm"
+                class="inline-flex items-center gap-x-1.5 px-2 py-1.5 rounded-lg border bg-white hover:bg-gray-100 transition-colors text-xs"
                 :class="isReadOnly ? 'border-amber-400 text-amber-700' : 'text-gray-700'"
             >
               <span class="font-medium">{{ currentYear?.label || 'Année' }}</span>
               <span v-if="isReadOnly" class="text-xs uppercase tracking-wide">archivée</span>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
               </svg>
             </button>
@@ -331,11 +331,11 @@ onUnmounted(() => {
                     v-for="year in years"
                     :key="year.id"
                     @click="selectYear(year.id)"
-                    class="w-full flex items-center justify-between gap-x-2 px-3 py-2 hover:bg-gray-100 transition-colors text-left"
+                    class="w-full flex items-center justify-between gap-x-1.5 px-2 py-1.5 hover:bg-gray-100 transition-colors text-left"
                     :class="{ 'bg-gray-50': currentYear?.id === year.id }"
                 >
                   <span class="flex flex-col">
-                    <span class="text-sm text-gray-800">{{ year.label }}</span>
+                    <span class="text-xs text-gray-800">{{ year.label }}</span>
                     <span class="text-xs text-gray-500">
                       <template v-if="year.is_active">Année active</template>
                       <template v-else-if="year.closed_at">Clôturée — lecture seule</template>
@@ -344,7 +344,7 @@ onUnmounted(() => {
                   </span>
                   <svg
                       v-if="currentYear?.id === year.id"
-                      class="w-4 h-4 text-primary flex-shrink-0"
+                      class="w-3.5 h-3.5 text-primary flex-shrink-0"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                   >
@@ -358,9 +358,9 @@ onUnmounted(() => {
                   v-if="hasAdminAccess"
                   to="/annees-scolaires"
                   @click="showYearDropdown = false"
-                  class="flex items-center gap-x-2 px-3 py-2 border-t bg-gray-50 hover:bg-gray-100 transition-colors text-sm text-gray-700"
+                  class="flex items-center gap-x-1.5 px-2 py-1.5 border-t bg-gray-50 hover:bg-gray-100 transition-colors text-xs text-gray-700"
               >
-                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
@@ -369,15 +369,15 @@ onUnmounted(() => {
             </div>
           </div>
           <NuxtLink to="/settings"
-                    class="inline-flex items-center justify-center rounded-full bg-white border p-2.5 hover:bg-gray-100 transition-colors duration-200">
-            <Setting class="size-6 text-primary cursor-pointer" />
+                    class="inline-flex items-center justify-center rounded-full bg-white border p-2 hover:bg-gray-100 transition-colors duration-200">
+            <Setting class="size-4 text-primary cursor-pointer" />
           </NuxtLink>
           <UserDropdown :user="user" :initials="initials" />
         </div>
       </div>
 
-      <div v-if="isReadOnly" class="bg-amber-50 border-y border-amber-200 text-amber-800 text-sm px-6 py-2 flex items-center gap-x-2">
-        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div v-if="isReadOnly" class="bg-amber-50 border-y border-amber-200 text-amber-800 text-xs px-5 py-1.5 flex items-center gap-x-1.5">
+        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
         <span>Vous consultez l'année <strong>{{ currentYear?.label }}</strong> en lecture seule. Toute modification est désactivée.</span>

@@ -19,18 +19,18 @@ const handleDelete = () => {
   >
     <input
         type="text"
-        class="w-full rounded-l-lg px-4 py-3 text-default placeholder:text-placeholder placeholder:font-semibold placeholder:text-lg focus:outline-none"
+        class="w-full rounded-l-lg px-3 py-2 text-default placeholder:text-placeholder placeholder:font-semibold placeholder:text-base focus:outline-none"
         placeholder="Nom du niveau"
         v-model="modelValue"
         @focus="isFocused = true"
         @blur="isFocused = false"
     />
     <button
-        class="h-full px-2 rounded-r-lg border-l bg-white transition-colors active:bg-gray-100"
+        class="h-full px-1.5 rounded-r-lg border-l bg-white transition-colors active:bg-gray-100"
         @click="handleDelete"
         type="button"
     >
-      <Cross class="size-6 text-placeholder" />
+      <Cross class="size-4 text-placeholder" />
     </button>
   </div>
 </template>

@@ -65,21 +65,21 @@ const handleSubmit = async () => {
         class="flex flex-col items-center justify-start bg-white rounded-3xl border w-[85%] sm:w-[70%] lg:w-[50%] 2xl:w-[35%] min-h-[50vh] shadow-xl">
       <form
           @submit.prevent="handleSubmit"
-          class="w-[90%] sm:w-5/6 flex flex-col items-center justify-between mt-6 sm:mt-10 md:mt-12 mb-16 sm:mb-20 md:mb-24">
-        <h2 class="text-default text-[32px] font-bold mb-4">Mot de passe oublié</h2>
-        <p class="text-default/60 text-center mb-10">
+          class="w-[90%] sm:w-5/6 flex flex-col items-center justify-between mt-5 sm:mt-8 md:mt-10 mb-12 sm:mb-16 md:mb-20">
+        <h2 class="text-default text-[32px] font-bold mb-3">Mot de passe oublié</h2>
+        <p class="text-default/60 text-center mb-8">
           Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
         </p>
 
         <div v-if="message.text"
              :class="[
-               'w-full p-4 mb-6 rounded text-white text-center',
+               'w-full p-3 mb-5 rounded text-white text-center',
                message.type === 'error' ? 'bg-red-500' : 'bg-green-500'
              ]">
           {{ message.text }}
         </div>
 
-        <div class="w-full mb-10">
+        <div class="w-full mb-8">
           <InputText
               placeholder="Adresse email"
               type="email"
@@ -92,11 +92,11 @@ const handleSubmit = async () => {
           <button
               type="submit"
               :disabled="isSubmitting"
-              class="bg-default hover:bg-default/90 text-white w-4/5 mx-auto py-3 font-bold text-center rounded-10 text-xl disabled:opacity-70 disabled:cursor-not-allowed">
+              class="bg-default hover:bg-default/90 text-white w-4/5 mx-auto py-2 font-bold text-center rounded-10 text-lg disabled:opacity-70 disabled:cursor-not-allowed">
             <span v-if="isSubmitting">Envoi en cours...</span>
             <span v-else>Envoyer le lien</span>
           </button>
-          <div class="inline-flex items-center justify-center w-full mt-4">
+          <div class="inline-flex items-center justify-center w-full mt-3">
             <NuxtLink
                 to="/login"
                 class="text-default hover:text-default/80"

@@ -1,41 +1,41 @@
 <template>
   <div>
-    <div class="px-4 sm:px-6 lg:px-8 pb-8 w-full max-w-9xl mx-auto">
+    <div class="px-3 sm:px-5 lg:px-6 pb-6 w-full max-w-9xl mx-auto">
       <!-- Loading state -->
-      <div v-if="isLoading" class="flex justify-center items-center py-12">
+      <div v-if="isLoading" class="flex justify-center items-center py-10">
         <div class="text-center">
           <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p class="mt-4 text-gray-600">Chargement des statistiques...</p>
+          <p class="mt-3 text-gray-600">Chargement des statistiques...</p>
         </div>
       </div>
       
       <!-- Error state -->
-      <div v-else-if="errorMessage" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+      <div v-else-if="errorMessage" class="bg-red-50 border border-red-200 rounded-lg p-3 mb-5">
         <p class="text-red-600">{{ errorMessage }}</p>
       </div>
       
       <!-- Content -->
-      <div v-else class="flex flex-col gap-3">
+      <div v-else class="flex flex-col gap-2">
         <!-- Cartes de statistiques principales -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1.5">
           <!-- Inscriptions -->
           <NuxtLink to="/classes" class="block relative">
-            <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-400 transition-all hover:shadow-md cursor-pointer">
+            <div class="bg-white rounded-lg border border-gray-200 p-3 hover:border-gray-400 transition-all hover:shadow-md cursor-pointer">
               <div class="absolute top-3 right-3">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                 </svg>
               </div>
-              <div class="flex items-start gap-3">
-                <div class="p-2 bg-blue-50 rounded">
-                  <IconUsers class="w-6 h-6 text-blue-600" />
+              <div class="flex items-start gap-2">
+                <div class="p-1.5 bg-blue-50 rounded">
+                  <IconUsers class="w-5 h-5 text-blue-600" />
                 </div>
                 <div class="flex-1">
-                  <p class="text-sm font-medium text-gray-500">Total des inscrits</p>
-                  <p class="text-xl font-bold text-gray-900 mt-1">{{ stats.enrollments?.total || 0 }}</p>
+                  <p class="text-xs font-medium text-gray-500">Total des inscrits</p>
+                  <p class="text-lg font-bold text-gray-900 mt-1">{{ stats.enrollments?.total || 0 }}</p>
                 </div>
               </div>
-            <div class="mt-2 space-y-0.5">
+            <div class="mt-1.5 space-y-0.5">
               <div class="flex justify-between text-xs">
                 <span class="text-gray-600">Hommes</span>
                 <span class="font-medium">{{ stats.enrollments?.men || 0 }}</span>
@@ -54,22 +54,22 @@
 
           <!-- Reste à payer -->
           <NuxtLink to="/statistiques/impayees" class="block relative">
-            <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-400 transition-all hover:shadow-md cursor-pointer">
+            <div class="bg-white rounded-lg border border-gray-200 p-3 hover:border-gray-400 transition-all hover:shadow-md cursor-pointer">
               <div class="absolute top-3 right-3">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                 </svg>
               </div>
-              <div class="flex items-start gap-3">
-                <div class="p-2 bg-red-50 rounded">
-                  <IconNotification class="w-6 h-6 text-red-600" />
+              <div class="flex items-start gap-2">
+                <div class="p-1.5 bg-red-50 rounded">
+                  <IconNotification class="w-5 h-5 text-red-600" />
                 </div>
                 <div class="flex-1">
-                  <p class="text-sm font-medium text-gray-500">Reste à payer</p>
-                  <p class="text-xl font-bold text-gray-900 mt-1">{{ formatCurrency(stats.payments?.remaining || 0) }}</p>
+                  <p class="text-xs font-medium text-gray-500">Reste à payer</p>
+                  <p class="text-lg font-bold text-gray-900 mt-1">{{ formatCurrency(stats.payments?.remaining || 0) }}</p>
                 </div>
               </div>
-              <div class="mt-2 space-y-0.5">
+              <div class="mt-1.5 space-y-0.5">
                 <div class="flex justify-between text-xs">
                   <span class="text-gray-600">Montant attendu</span>
                   <span class="font-medium">{{ formatCurrency(stats.payments?.expected || 0) }}</span>
@@ -88,22 +88,22 @@
 
           <!-- Classes -->
           <NuxtLink to="/cursus" class="block relative">
-            <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-400 transition-all hover:shadow-md cursor-pointer">
+            <div class="bg-white rounded-lg border border-gray-200 p-3 hover:border-gray-400 transition-all hover:shadow-md cursor-pointer">
               <div class="absolute top-3 right-3">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                 </svg>
               </div>
-              <div class="flex items-start gap-3">
-                <div class="p-2 bg-purple-50 rounded">
-                  <IconClassroom class="w-6 h-6 text-purple-600" />
+              <div class="flex items-start gap-2">
+                <div class="p-1.5 bg-purple-50 rounded">
+                  <IconClassroom class="w-5 h-5 text-purple-600" />
                 </div>
                 <div class="flex-1">
-                  <p class="text-sm font-medium text-gray-500">Total des classes</p>
-                  <p class="text-xl font-bold text-gray-900 mt-1">{{ stats.classes?.total || 0 }}</p>
+                  <p class="text-xs font-medium text-gray-500">Total des classes</p>
+                  <p class="text-lg font-bold text-gray-900 mt-1">{{ stats.classes?.total || 0 }}</p>
                 </div>
               </div>
-            <div class="mt-2 space-y-0.5">
+            <div class="mt-1.5 space-y-0.5">
               <div class="flex justify-between text-xs">
                 <span class="text-gray-600">Complètes</span>
                 <span class="font-medium text-green-600">{{ stats.classes?.complete || 0 }}</span>
@@ -122,22 +122,22 @@
 
           <!-- Familles -->
           <NuxtLink to="/family" class="block relative">
-            <div class="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-400 transition-all hover:shadow-md cursor-pointer">
+            <div class="bg-white rounded-lg border border-gray-200 p-3 hover:border-gray-400 transition-all hover:shadow-md cursor-pointer">
               <div class="absolute top-3 right-3">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                 </svg>
               </div>
-              <div class="flex items-start gap-3">
-                <div class="p-2 bg-amber-50 rounded">
-                  <IconFamily class="w-6 h-6 text-amber-600" />
+              <div class="flex items-start gap-2">
+                <div class="p-1.5 bg-amber-50 rounded">
+                  <IconFamily class="w-5 h-5 text-amber-600" />
                 </div>
                 <div class="flex-1">
-                  <p class="text-sm font-medium text-gray-500">Total des familles</p>
-                  <p class="text-xl font-bold text-gray-900 mt-1">{{ stats.families?.total || 0 }}</p>
+                  <p class="text-xs font-medium text-gray-500">Total des familles</p>
+                  <p class="text-lg font-bold text-gray-900 mt-1">{{ stats.families?.total || 0 }}</p>
                 </div>
               </div>
-            <div class="mt-2 space-y-0.5">
+            <div class="mt-1.5 space-y-0.5">
               <div class="flex justify-between text-xs">
                 <span class="text-gray-600">Payées</span>
                 <span class="font-medium text-green-600">{{ stats.families?.paid_count || 0 }}</span>
@@ -156,64 +156,64 @@
         </div>
 
         <!-- Détails des paiements -->
-        <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200">
-          <h2 class="text-base font-semibold text-gray-900 mb-2">Répartition des paiements</h2>
+        <div class="bg-white rounded-lg shadow-sm p-2 border border-gray-200">
+          <h2 class="text-sm font-semibold text-gray-900 mb-1.5">Répartition des paiements</h2>
           
           <!-- Montant total payé -->
-          <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 mb-4 border border-green-200">
+          <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-3 mb-3 border border-green-200">
             <div class="flex items-center justify-between">
-              <div class="flex items-center gap-4">
-                <div class="p-3 bg-green-600 rounded-lg shadow-md">
-                  <IconCash class="w-8 h-8 text-white" />
+              <div class="flex items-center gap-3">
+                <div class="p-2 bg-green-600 rounded-lg shadow-md">
+                  <IconCash class="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p class="text-sm font-medium text-gray-600">Montant total payé</p>
-                  <p class="text-3xl font-bold text-gray-900">{{ formatCurrency(stats.payments?.total_amount || 0) }}</p>
+                  <p class="text-xs font-medium text-gray-600">Montant total payé</p>
+                  <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(stats.payments?.total_amount || 0) }}</p>
                 </div>
               </div>
               <div class="text-right">
-                <p class="text-2xl font-bold text-green-600">{{ stats.payments?.payment_rate || 0 }}%</p>
-                <p class="text-sm text-gray-600">Taux de recouvrement</p>
+                <p class="text-xl font-bold text-green-600">{{ stats.payments?.payment_rate || 0 }}%</p>
+                <p class="text-xs text-gray-600">Taux de recouvrement</p>
               </div>
             </div>
           </div>
           
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-1.5">
             <NuxtLink to="/statistiques/cheques" class="block relative">
-              <div class="text-center p-3 bg-blue-50 rounded hover:bg-blue-100 transition-colors cursor-pointer">
+              <div class="text-center p-2 bg-blue-50 rounded hover:bg-blue-100 transition-colors cursor-pointer">
                 <div class="absolute top-2 right-2">
-                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                   </svg>
                 </div>
-                <IconCheck class="w-6 h-6 text-blue-600 mx-auto mb-1" />
+                <IconCheck class="w-5 h-5 text-blue-600 mx-auto mb-1" />
                 <p class="text-xs text-gray-600">Chèques</p>
-                <p class="text-lg font-bold text-gray-900">{{ formatCurrency(stats.payments?.by_type?.cheque?.amount || 0) }}</p>
+                <p class="text-base font-bold text-gray-900">{{ formatCurrency(stats.payments?.by_type?.cheque?.amount || 0) }}</p>
                 <p class="text-xs text-gray-500">{{ stats.payments?.by_type?.cheque?.count || 0 }} chèques</p>
               </div>
             </NuxtLink>
-            <div class="text-center p-3 bg-yellow-50 rounded">
-              <IconCash class="w-6 h-6 text-yellow-600 mx-auto mb-1" />
+            <div class="text-center p-2 bg-yellow-50 rounded">
+              <IconCash class="w-5 h-5 text-yellow-600 mx-auto mb-1" />
               <p class="text-xs text-gray-600">Espèces</p>
-              <p class="text-lg font-bold text-gray-900">{{ formatCurrency(stats.payments?.by_type?.espece?.amount || 0) }}</p>
+              <p class="text-base font-bold text-gray-900">{{ formatCurrency(stats.payments?.by_type?.espece?.amount || 0) }}</p>
               <p class="text-xs text-gray-500">{{ stats.payments?.by_type?.espece?.count || 0 }} paiements</p>
             </div>
-            <div class="text-center p-3 bg-purple-50 rounded">
-              <IconCard class="w-6 h-6 text-purple-600 mx-auto mb-1" />
+            <div class="text-center p-2 bg-purple-50 rounded">
+              <IconCard class="w-5 h-5 text-purple-600 mx-auto mb-1" />
               <p class="text-xs text-gray-600">Cartes</p>
-              <p class="text-lg font-bold text-gray-900">{{ formatCurrency(stats.payments?.by_type?.carte?.amount || 0) }}</p>
+              <p class="text-base font-bold text-gray-900">{{ formatCurrency(stats.payments?.by_type?.carte?.amount || 0) }}</p>
               <p class="text-xs text-gray-500">{{ stats.payments?.by_type?.carte?.count || 0 }} paiements</p>
             </div>
             <NuxtLink to="/statistiques/exonerations" class="block relative">
-              <div class="text-center p-3 bg-orange-50 rounded hover:bg-orange-100 transition-colors cursor-pointer">
+              <div class="text-center p-2 bg-orange-50 rounded hover:bg-orange-100 transition-colors cursor-pointer">
                 <div class="absolute top-2 right-2">
-                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                   </svg>
                 </div>
-                <IconGift class="w-6 h-6 text-orange-600 mx-auto mb-1" />
+                <IconGift class="w-5 h-5 text-orange-600 mx-auto mb-1" />
                 <p class="text-xs text-gray-600">Exonérations</p>
-                <p class="text-lg font-bold text-gray-900">{{ formatCurrency(stats.payments?.by_type?.exoneration?.amount || 0) }}</p>
+                <p class="text-base font-bold text-gray-900">{{ formatCurrency(stats.payments?.by_type?.exoneration?.amount || 0) }}</p>
                 <p class="text-xs text-gray-500">{{ stats.payments?.by_type?.exoneration?.count || 0 }} exonérations</p>
               </div>
             </NuxtLink>
@@ -221,18 +221,18 @@
         </div>
 
         <!-- Graphiques -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 ">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 ">
           <!-- Graphique répartition par genre -->
-          <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200">
-            <h2 class="text-base font-semibold text-gray-900 mb-2">Répartition par genre</h2>
+          <div class="bg-white rounded-lg shadow-sm p-2 border border-gray-200">
+            <h2 class="text-sm font-semibold text-gray-900 mb-1.5">Répartition par genre</h2>
             <div style="position: relative; height: 250px;">
               <canvas ref="genderChart"></canvas>
             </div>
           </div>
 
           <!-- Graphique taux de remplissage -->
-          <div class="bg-white rounded-lg shadow-sm p-3 border border-gray-200">
-            <h2 class="text-base font-semibold text-gray-900 mb-2">Taux de remplissage par cursus</h2>
+          <div class="bg-white rounded-lg shadow-sm p-2 border border-gray-200">
+            <h2 class="text-sm font-semibold text-gray-900 mb-1.5">Taux de remplissage par cursus</h2>
             <div style="position: relative; height: 250px;">
               <canvas ref="fillRateChart"></canvas>
             </div>

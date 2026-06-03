@@ -135,21 +135,21 @@ const tooltipFor = (s) => {
 
 <template>
   <div class="bg-white rounded-lg border border-gray-200 overflow-x-auto overflow-y-clip">
-    <div class="flex items-center gap-4 px-4 py-3 text-xs border-b border-gray-200">
-      <div class="flex items-center gap-1.5">
-        <span class="inline-block w-4 h-4 rounded-sm" :style="{backgroundColor: GENDER_COLORS.Femmes}"></span>
+    <div class="flex items-center gap-3 px-3 py-2 text-xs border-b border-gray-200">
+      <div class="flex items-center gap-1">
+        <span class="inline-block w-3.5 h-3.5 rounded-sm" :style="{backgroundColor: GENDER_COLORS.Femmes}"></span>
         <span class="font-medium text-gray-700">FEMMES</span>
       </div>
-      <div class="flex items-center gap-1.5">
-        <span class="inline-block w-4 h-4 rounded-sm" :style="{backgroundColor: GENDER_COLORS.Enfants}"></span>
+      <div class="flex items-center gap-1">
+        <span class="inline-block w-3.5 h-3.5 rounded-sm" :style="{backgroundColor: GENDER_COLORS.Enfants}"></span>
         <span class="font-medium text-gray-700">ENFANTS</span>
       </div>
-      <div class="flex items-center gap-1.5">
-        <span class="inline-block w-4 h-4 rounded-sm" :style="{backgroundColor: GENDER_COLORS.Hommes}"></span>
+      <div class="flex items-center gap-1">
+        <span class="inline-block w-3.5 h-3.5 rounded-sm" :style="{backgroundColor: GENDER_COLORS.Hommes}"></span>
         <span class="font-medium text-gray-700">HOMMES</span>
       </div>
-      <div class="flex items-center gap-1.5">
-        <span class="inline-block w-4 h-4 rounded-sm" :style="{backgroundColor: GENDER_COLORS.Mixte}"></span>
+      <div class="flex items-center gap-1">
+        <span class="inline-block w-3.5 h-3.5 rounded-sm" :style="{backgroundColor: GENDER_COLORS.Mixte}"></span>
         <span class="font-medium text-gray-700">MIXTE</span>
       </div>
     </div>
@@ -161,7 +161,7 @@ const tooltipFor = (s) => {
           <div
               v-for="h in hours"
               :key="h"
-              class="absolute left-0 right-0 text-[10px] font-medium text-gray-600 px-2"
+              class="absolute left-0 right-0 text-[10px] font-medium text-gray-600 px-1.5"
               :style="{top: ((h - START_HOUR) * 4 * QUARTER_PX) + 'px'}"
           >
             {{ String(h).padStart(2, '0') }}:00
@@ -197,7 +197,7 @@ const tooltipFor = (s) => {
               v-for="s in schedulesByDay[day]"
               :key="s.id"
               :title="tooltipFor(s)"
-              class="absolute rounded-md px-1.5 py-1 text-[11px] leading-tight shadow-sm overflow-hidden cursor-default"
+              class="absolute rounded-md px-1 py-1 text-[11px] leading-tight shadow-sm overflow-hidden cursor-default"
               :style="{
                 top: s.top + 'px',
                 height: s.height + 'px',

@@ -40,15 +40,15 @@ onMounted(() => fetchSchedules())
   <PageContainer>
     <BreadCrumb :items="breadcrumbItems"/>
 
-    <div class="mb-4">
-      <h1 class="text-2xl font-bold text-gray-900">Mon planning</h1>
-      <p v-if="currentYear" class="text-sm text-gray-600">{{ currentYear.label }}</p>
+    <div class="mb-3">
+      <h1 class="text-xl font-bold text-gray-900">Mon planning</h1>
+      <p v-if="currentYear" class="text-xs text-gray-600">{{ currentYear.label }}</p>
     </div>
 
-    <div v-if="isLoading" class="py-12 text-center text-gray-500 text-sm">
+    <div v-if="isLoading" class="py-10 text-center text-gray-500 text-xs">
       Chargement…
     </div>
-    <div v-else-if="schedules.length === 0" class="py-12 text-center text-gray-500 text-sm">
+    <div v-else-if="schedules.length === 0" class="py-10 text-center text-gray-500 text-xs">
       Aucun créneau ne vous est attribué pour cette année.
     </div>
     <ScheduleGrid v-else :schedules="schedules"/>

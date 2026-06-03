@@ -128,31 +128,31 @@ onMounted(() => {
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
     </div>
 
-    <div v-else-if="error" class="text-center py-12">
+    <div v-else-if="error" class="text-center py-10">
       <p class="text-red-600">{{ error }}</p>
     </div>
 
-    <div v-else-if="classes.length === 0" class="text-center py-12">
+    <div v-else-if="classes.length === 0" class="text-center py-10">
       <p class="text-gray-500">Aucune classe trouvée</p>
     </div>
 
-    <div v-else class="space-y-6 pb-8">
-      <div v-for="group in groupedClasses" :key="`${group.cursus}_${group.level}`" class="space-y-3">
+    <div v-else class="space-y-5 pb-6">
+      <div v-for="group in groupedClasses" :key="`${group.cursus}_${group.level}`" class="space-y-2">
         <NuxtLink
             :to="`/cursus/${group.cursus_id}`"
-            class="inline-block text-lg font-semibold text-gray-800 hover:text-primary hover:underline underline-offset-4 decoration-2 transition-colors"
+            class="inline-block text-base font-semibold text-gray-800 hover:text-primary hover:underline underline-offset-4 decoration-2 transition-colors"
         >
           {{ group.cursus }} - {{ group.level }}
         </NuxtLink>
 
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
           <div
               v-for="classroom in group.classrooms"
               :key="classroom.id"
               class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
           >
             <div
-                class="px-3 py-2 text-white font-medium text-sm"
+                class="px-2 py-1.5 text-white font-medium text-xs"
                 :style="{ backgroundColor: genderColors[classroom.gender] || '#6B7280' }"
             >
               <NuxtLink
@@ -163,21 +163,21 @@ onMounted(() => {
               </NuxtLink>
             </div>
 
-            <div class="p-3">
-              <div class="flex justify-between items-center mb-2">
+            <div class="p-2">
+              <div class="flex justify-between items-center mb-1.5">
                 <span class="text-xs text-gray-600 font-nunito">Élèves</span>
-                <span class="font-medium text-sm">{{ classroom.student_count }}/{{ classroom.size }}</span>
+                <span class="font-medium text-xs">{{ classroom.student_count }}/{{ classroom.size }}</span>
               </div>
 
               <div class="space-y-1">
                 <div
                     v-for="student in classroom.students"
                     :key="student.id"
-                    class="flex justify-between items-center py-1.5 px-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors group/row font-nunito"
+                    class="flex justify-between items-center py-1 px-1.5 bg-gray-50 rounded hover:bg-gray-100 transition-colors group/row font-nunito"
                 >
                   <NuxtLink
                       :to="`/family/${student.family_id}`"
-                      class="text-xs text-gray-700 hover:text-primary hover:underline underline-offset-2 truncate flex-1 mr-2 transition-colors"
+                      class="text-xs text-gray-700 hover:text-primary hover:underline underline-offset-2 truncate flex-1 mr-1.5 transition-colors"
                   >
                     {{ student.full_name }}
                   </NuxtLink>
@@ -191,7 +191,7 @@ onMounted(() => {
                   </button>
                 </div>
 
-                <div v-if="classroom.students.length === 0" class="text-center py-3 text-gray-400 text-xs">
+                <div v-if="classroom.students.length === 0" class="text-center py-2 text-gray-400 text-xs">
                   Aucun élève inscrit
                 </div>
               </div>
