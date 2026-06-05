@@ -4,7 +4,10 @@ services:
       context: .
       dockerfile: ./docker/Dockerfile
       target: prod
-    ports: []
+    # Garantit le mode prod même si le .env serveur indique autre chose
+    environment:
+      - NODE_ENV=production
+    ports: !reset []
     volumes: !reset []
     labels:
       - "traefik.enable=true"

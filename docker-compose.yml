@@ -3,7 +3,8 @@ services:
     container_name: nuxt_toollab
     env_file: .env
     build:
-      context: ./docker
+      context: .
+      dockerfile: ./docker/Dockerfile
       target: dev
     ports:
       - "3000:3000"
@@ -11,7 +12,13 @@ services:
       - web
     volumes:
       - .:/app
+      # node_modules dans un volume nommé : persiste entre les démarrages
+      # (npm install incrémental) et n'est pas masqué par le bind mount.
+      - node_modules:/app/node_modules
 
 networks:
   web:
     driver: bridge
+
+volumes:
+  node_modules:
