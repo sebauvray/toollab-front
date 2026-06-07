@@ -148,7 +148,7 @@
               </div>
               <div class="flex justify-between text-xs">
                 <span class="text-gray-600">Non payées</span>
-                <span class="font-medium text-red-600">{{ stats.families?.unpaid_count || 0 }}</span>
+                <span class="font-medium text-red-600">{{ stats.families?.fully_unpaid_count || 0 }}</span>
               </div>
             </div>
             </div>

@@ -223,17 +223,15 @@ const loadExonerations = async (page = 1) => {
       return
     }
     
-    // Si tous les types sont sélectionnés, pas besoin de filtre
-    // Si seulement certains types, on filtre côté client
-    if (selectedTypes.value.length < availableTypes.length) {
-      params.filter_types = selectedTypes.value.join(',')
+    if (selectedTypes.value.length === 1) {
+      params.exoneration_type = selectedTypes.value[0]
     }
-    
+
     const response = await statisticsService.searchPaymentsPaginated(schoolId, params)
-    
+
     if (response.status === 'success') {
-      let filteredItems = response.data.items.map(item => {
-        const isComplete = item.amount >= item.total_expected
+      exonerations.value = response.data.items.map(item => {
+        const isComplete = item.total_expected > 0 ? item.amount >= item.total_expected : true
         return {
           ...item,
           exoneration_type: isComplete ? 'complete' : 'partial',
@@ -243,14 +241,7 @@ const loadExonerations = async (page = 1) => {
           showFullComment: expandedComments.value.has(item.id)
         }
       })
-      
-      // Filtrer côté client si nécessaire
-      if (selectedTypes.value.length < availableTypes.length) {
-        filteredItems = filteredItems.filter(item => selectedTypes.value.includes(item.exoneration_type))
-      }
-      
-      exonerations.value = filteredItems
-      
+
       pagination.value = {
         currentPage: response.data.pagination.current_page,
         totalPages: response.data.pagination.total_pages,
