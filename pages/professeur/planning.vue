@@ -4,7 +4,6 @@ import PageContainer from '~/components/layout/PageContainer.vue'
 import BreadCrumb from '~/components/navigation/BreadCrumb.vue'
 import ScheduleGrid from '~/components/schedule/ScheduleGrid.vue'
 import {usePageTitle} from '~/composables/usePageTitle.js'
-import {useSchoolYear} from '~/composables/useSchoolYear'
 import teacherService from '~/services/teacher'
 
 definePageMeta({
@@ -16,7 +15,6 @@ usePageTitle('Mon planning')
 
 const breadcrumbItems = [{name: 'Mon planning', path: '/professeur/planning'}]
 
-const {currentYear} = useSchoolYear()
 const schedules = ref([])
 const isLoading = ref(true)
 
@@ -39,11 +37,6 @@ onMounted(() => fetchSchedules())
 <template>
   <PageContainer>
     <BreadCrumb :custom-items="breadcrumbItems"/>
-
-    <div class="mb-3">
-      <h1 class="text-lg font-bold text-gray-900">Mon planning</h1>
-      <p v-if="currentYear" class="text-xs text-gray-600">{{ currentYear.label }}</p>
-    </div>
 
     <div v-if="isLoading" class="py-10 text-center text-gray-500 text-xs">
       Chargement…

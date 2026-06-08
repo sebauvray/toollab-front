@@ -16,6 +16,16 @@ export default {
         return response.data
     },
 
+    async classroomAttendance(classroomId, date) {
+        const response = await apiClient.get(`/api/teacher/classrooms/${classroomId}/attendance`, {params: {date}})
+        return response.data
+    },
+
+    async saveAttendance(classroomId, date, records) {
+        const response = await apiClient.post(`/api/teacher/classrooms/${classroomId}/attendance`, {date, records})
+        return response.data
+    },
+
     async mySchedules() {
         const response = await apiClient.get('/api/teacher/schedules')
         return response.data

@@ -558,7 +558,7 @@ onMounted(() => {
                             :class="[
                                 'w-full text-left px-2 py-1.5 text-sm rounded-md transition-colors',
                                 selectedCursus?.id === cursus.id
-                                    ? 'bg-primary text-white'
+                                    ? 'bg-default text-white'
                                     : 'text-gray-700 hover:bg-gray-100'
                             ]"
                         >
@@ -585,7 +585,7 @@ onMounted(() => {
                             <button
                                 @click="updateTarif"
                                 :disabled="isSaving"
-                                class="px-4 py-1.5 text-sm bg-primary text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                                class="px-4 py-1.5 text-sm bg-default text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                             >
                                 Enregistrer
                             </button>
@@ -601,7 +601,7 @@ onMounted(() => {
                             <button
                                 v-if="!isReadOnly"
                                 @click="showAddFamiliale = true; editingFamiliale = null; resetFamilialeForm()"
-                                class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-primary text-white rounded-md hover:opacity-90 transition-opacity"
+                                class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-default text-white rounded-md hover:opacity-90 transition-opacity"
                             >
                                 <Plus class="size-3"/>
                                 Ajouter
@@ -627,7 +627,7 @@ onMounted(() => {
                                 <div class="flex items-center gap-1 shrink-0" v-if="!isReadOnly">
                                     <button
                                         @click="editReductionFamiliale(reduction)"
-                                        class="p-1.5 text-gray-500 hover:text-primary transition-colors"
+                                        class="p-1.5 text-gray-500 hover:text-default transition-colors"
                                         title="Modifier"
                                     >
                                         <EditIcon class="size-4"/>
@@ -654,7 +654,7 @@ onMounted(() => {
                                 v-if="!isReadOnly"
                                 @click="showAddMultiCursus = true; editingMultiCursus = null; resetMultiCursusForm()"
                                 :disabled="availableCursusesForMultiCursus.length === 0"
-                                class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-primary text-white rounded-md hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+                                class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-default text-white rounded-md hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
                             >
                                 <Plus class="size-3"/>
                                 Ajouter
@@ -678,7 +678,7 @@ onMounted(() => {
                                 <div class="flex items-center gap-1 shrink-0" v-if="!isReadOnly">
                                     <button
                                         @click="editReductionMultiCursus(reduction)"
-                                        class="p-1.5 text-gray-500 hover:text-primary transition-colors"
+                                        class="p-1.5 text-gray-500 hover:text-default transition-colors"
                                         title="Modifier"
                                     >
                                         <EditIcon class="size-4"/>
@@ -735,7 +735,7 @@ onMounted(() => {
                                 :class="[
                                     'flex-1 px-3 py-1.5 text-xs rounded-md border transition-colors',
                                     familialeForm.mode === 'montant'
-                                        ? 'bg-primary text-white border-primary'
+                                        ? 'bg-default text-white border-default'
                                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                 ]"
                             >
@@ -747,7 +747,7 @@ onMounted(() => {
                                 :class="[
                                     'flex-1 px-3 py-1.5 text-xs rounded-md border transition-colors',
                                     familialeForm.mode === 'pourcentage'
-                                        ? 'bg-primary text-white border-primary'
+                                        ? 'bg-default text-white border-default'
                                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                 ]"
                             >
@@ -792,7 +792,7 @@ onMounted(() => {
                         <button
                             @click="editingFamiliale ? updateReductionFamiliale() : addReductionFamiliale()"
                             :disabled="isSaving || !familialeForm.nombre_eleves_min || !familialeForm.pourcentage_reduction"
-                            class="px-4 py-1.5 text-sm bg-primary text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                            class="px-4 py-1.5 text-sm bg-default text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                         >
                             {{ editingFamiliale ? 'Modifier' : 'Ajouter' }}
                         </button>
@@ -843,7 +843,7 @@ onMounted(() => {
                         <button
                             @click="editingMultiCursus ? updateReductionMultiCursus() : addReductionMultiCursus()"
                             :disabled="isSaving || !multiCursusForm.cursus_requis_id || !multiCursusForm.pourcentage_reduction"
-                            class="px-4 py-1.5 text-sm bg-primary text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                            class="px-4 py-1.5 text-sm bg-default text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                         >
                             {{ editingMultiCursus ? 'Modifier' : 'Ajouter' }}
                         </button>

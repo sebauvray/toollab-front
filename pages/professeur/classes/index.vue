@@ -54,7 +54,7 @@ onMounted(() => fetchClasses())
     <div v-else-if="classrooms.length === 0" class="py-10 text-center text-gray-500 text-xs">
       Aucune classe ne vous est attribuée pour cette année.
     </div>
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pb-6">
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pb-6">
       <NuxtLink
           v-for="c in classrooms"
           :key="c.id"

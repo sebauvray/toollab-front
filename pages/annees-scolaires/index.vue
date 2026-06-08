@@ -207,10 +207,10 @@ onMounted(async () => {
         <div class="col-span-2 text-right">État</div>
       </div>
       <div v-for="year in sortedYears" :key="year.id"
-           class="grid grid-cols-12 px-3 py-2 border-t items-center hover:bg-gray-50">
+           class="grid grid-cols-12 px-3 py-2 border-t items-center hover:bg-gray-50 text-xs">
         <div class="col-span-4">
           <button @click="switchTo(year.id)" class="text-left">
-            <span class="font-medium" :class="currentYear?.id === year.id ? 'text-primary' : 'text-default'">{{ year.label }}</span>
+            <span class="text-sm font-medium" :class="currentYear?.id === year.id ? 'text-primary' : 'text-default'">{{ year.label }}</span>
             <span v-if="currentYear?.id === year.id" class="ml-1.5 text-xs text-primary">(vue actuelle)</span>
           </button>
         </div>
