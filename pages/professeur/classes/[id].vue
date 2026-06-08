@@ -188,6 +188,19 @@ const commitMotif = () => {
   if (motif.value) { autosaveDate(motif.value.d); closeMotif() }
 }
 
+const hoverTip = ref(null)
+const onCellEnter = (s, d, ev) => {
+  if (motif.value) return
+  const c = s.cells[d]
+  if (c && c.status === 'absent_justifie' && c.justification) {
+    const r = ev.currentTarget.getBoundingClientRect()
+    hoverTip.value = {text: c.justification, top: r.bottom + 4, left: Math.min(r.left, window.innerWidth - 220)}
+  } else {
+    hoverTip.value = null
+  }
+}
+const onCellLeave = () => { hoverTip.value = null }
+
 const cycleCell = (s, d, ev) => {
   if (!attendanceEditable.value) return
   const cur = s.cells[d]?.status || ''
@@ -317,6 +330,8 @@ onMounted(() => fetchData())
                     <button
                         type="button"
                         @click="cycleCell(s, d, $event)"
+                        @mouseenter="onCellEnter(s, d, $event)"
+                        @mouseleave="onCellLeave"
                         :disabled="!attendanceEditable"
                         :title="cellTitle(s, d)"
                         :class="[
@@ -409,6 +424,14 @@ onMounted(() => fetchData())
           placeholder="Motif (optionnel)"
           class="w-full border border-amber-200 rounded px-2 py-1 text-xs focus:outline-none focus:border-amber-400"
       />
+    </div>
+
+    <div
+        v-if="hoverTip"
+        class="fixed z-40 bg-white border border-amber-200 rounded-lg shadow-md px-2.5 py-1.5 text-[11px] text-amber-800 max-w-[14rem] font-nunito pointer-events-none"
+        :style="{top: hoverTip.top + 'px', left: hoverTip.left + 'px'}"
+    >
+      <span class="font-semibold">Motif :</span> {{ hoverTip.text }}
     </div>
   </PageContainer>
 </template>
