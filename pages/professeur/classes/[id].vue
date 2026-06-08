@@ -1,5 +1,5 @@
 <script setup>
-import {ref, computed, onMounted} from 'vue'
+import {ref, computed, onMounted, nextTick} from 'vue'
 import {useRoute} from '#imports'
 import PageContainer from '~/components/layout/PageContainer.vue'
 import BreadCrumb from '~/components/navigation/BreadCrumb.vue'
@@ -35,29 +35,25 @@ const outcomeOptions = [
 const canEditOutcomes = computed(() => outcomesOpen.value && !yearClosed.value)
 const decisionsCount = computed(() => students.value.filter(s => s.outcome).length)
 
-const DAY_TO_WEEKDAY = {Dimanche: 0, Lundi: 1, Mardi: 2, Mercredi: 3, Jeudi: 4, Vendredi: 5, Samedi: 6}
-const schedules = ref([])
-const selectedScheduleId = ref(null)
-const attendanceDate = ref('')
-const attendance = ref([])
-const attendanceLoaded = ref(false)
-const isLoadingAttendance = ref(false)
-const isSavingAttendance = ref(false)
+const monthNames = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.']
+const CYCLE = ['', 'present', 'absent_justifie', 'absent_non_justifie']
+const attMeta = {
+  present: {glyph: '✓', cls: 'bg-green-100 text-green-700 border-green-300', label: 'Présent'},
+  absent_justifie: {glyph: 'J', cls: 'bg-amber-100 text-amber-700 border-amber-300', label: 'Absent justifié'},
+  absent_non_justifie: {glyph: '✗', cls: 'bg-red-100 text-red-700 border-red-300', label: 'Absent non justifié'}
+}
+
+const matDates = ref([])
+const mat = ref([])
+const matLoaded = ref(false)
+const isLoadingMatrix = ref(false)
+const savingCount = ref(0)
+const sessionDateInput = ref(null)
+const motif = ref(null)
+const motifInput = ref(null)
 const attendanceEditable = computed(() => !yearClosed.value)
-const allPresent = computed(() => attendance.value.length > 0 && attendance.value.every(r => r.status === 'present'))
-const attendanceStatuses = [
-  {value: 'present', btn: 'Présent', label: 'Présent', active: 'bg-green-600 border-green-600 text-white', ring: 'ring-green-500/60', text: 'text-green-600'},
-  {value: 'absent_justifie', btn: 'Justifié', label: 'Absent justifié', active: 'bg-amber-500 border-amber-500 text-white', ring: 'ring-amber-500/60', text: 'text-amber-600'},
-  {value: 'absent_non_justifie', btn: 'Non justifié', label: 'Absent non justifié', active: 'bg-red-600 border-red-600 text-white', ring: 'ring-red-500/60', text: 'text-red-600'}
-]
-const statusOf = (v) => attendanceStatuses.find(s => s.value === v)
-const initialsOf = (r) => ((r.first_name?.[0] || '') + (r.last_name?.[0] || '')).toUpperCase()
-const attendanceSummary = computed(() => {
-  const s = {present: 0, absent_justifie: 0, absent_non_justifie: 0, unmarked: 0}
-  attendance.value.forEach(r => r.status ? s[r.status]++ : s.unmarked++)
-  return s
-})
-const selectedSchedule = computed(() => schedules.value.find(s => s.id === selectedScheduleId.value) || null)
+
+let saveTimers = {}
 
 const tabs = computed(() => {
   const t = [
@@ -73,41 +69,42 @@ const breadcrumbItems = computed(() => [
   {name: classroom.value?.name || 'Classe', path: route.path}
 ])
 
-const toDateStr = (d) => {
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${d.getFullYear()}-${m}-${day}`
-}
+const toDateStr = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
-const parseDate = (str) => {
-  const [y, m, d] = str.split('-').map(Number)
-  return new Date(y, m - 1, d)
-}
-
-const nearestSessionDate = (weekday) => {
-  const d = new Date()
-  d.setHours(0, 0, 0, 0)
-  const diff = (d.getDay() - weekday + 7) % 7
-  d.setDate(d.getDate() - diff)
-  return toDateStr(d)
-}
-
-const sessionLabel = computed(() => {
-  if (!attendanceDate.value) return ''
-  const s = parseDate(attendanceDate.value).toLocaleDateString('fr-FR', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'})
-  return s.charAt(0).toUpperCase() + s.slice(1)
+const monthGroups = computed(() => {
+  const groups = []
+  let cur = null
+  for (const d of matDates.value) {
+    const ym = d.slice(0, 7)
+    if (!cur || cur.ym !== ym) {
+      cur = {ym, label: `${monthNames[parseInt(d.slice(5, 7), 10) - 1]} ${d.slice(0, 4)}`, dates: []}
+      groups.push(cur)
+    }
+    cur.dates.push(d)
+  }
+  return groups
 })
 
-const canGoNextSession = computed(() => {
-  if (!attendanceDate.value) return false
-  const next = parseDate(attendanceDate.value)
-  next.setDate(next.getDate() + 7)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  return next <= today
+const ratesMap = computed(() => {
+  const m = {}
+  for (const s of mat.value) {
+    let marked = 0, present = 0
+    for (const d of matDates.value) {
+      const c = s.cells[d]
+      if (c && c.status) { marked++; if (c.status === 'present') present++ }
+    }
+    m[s.student_id] = marked ? Math.round((present / marked) * 100) : null
+  }
+  return m
 })
 
-const ringOf = (status) => statusOf(status)?.ring || 'ring-transparent'
+const cellTitle = (s, d) => {
+  const c = s.cells[d]
+  if (!c || !c.status) return attendanceEditable.value ? 'Cliquer pour pointer' : 'Non pointé'
+  let t = attMeta[c.status]?.label
+  if (c.status === 'absent_justifie' && c.justification) t += ` — ${c.justification}`
+  return t
+}
 
 const fetchData = async () => {
   try {
@@ -115,18 +112,9 @@ const fetchData = async () => {
     const response = await teacherService.classroomStudents(route.params.id)
     if (response.status === 'success') {
       classroom.value = response.data.classroom
-      students.value = response.data.students.map(s => ({
-        ...s,
-        outcome: s.outcome || '',
-        commentaire: s.commentaire || ''
-      }))
+      students.value = response.data.students.map(s => ({...s, outcome: s.outcome || '', commentaire: s.commentaire || ''}))
       outcomesOpen.value = response.data.outcomes_open
       yearClosed.value = response.data.year_closed
-      schedules.value = response.data.schedules || []
-      if (schedules.value.length > 0) {
-        selectedScheduleId.value = schedules.value[0].id
-        attendanceDate.value = nearestSessionDate(DAY_TO_WEEKDAY[schedules.value[0].day] ?? 1)
-      }
     }
   } catch (e) {
     console.error('Erreur récupération élèves:', e)
@@ -136,108 +124,103 @@ const fetchData = async () => {
   }
 }
 
-const loadAttendance = async () => {
-  if (!attendanceDate.value) return
+const loadMatrix = async () => {
   try {
-    isLoadingAttendance.value = true
-    const res = await teacherService.classroomAttendance(route.params.id, attendanceDate.value)
+    isLoadingMatrix.value = true
+    const res = await teacherService.classroomAttendanceMatrix(route.params.id)
     if (res.status === 'success') {
       yearClosed.value = res.data.year_closed
-      attendance.value = res.data.students.map(s => ({
-        student_id: s.student_id,
-        first_name: s.first_name,
-        last_name: s.last_name,
-        status: s.status || '',
-        justification: s.justification || ''
-      }))
-      attendanceLoaded.value = true
+      matDates.value = res.data.dates || []
+      mat.value = (res.data.students || []).map(s => {
+        const cells = {}
+        for (const d in (s.attendance || {})) {
+          cells[d] = {status: s.attendance[d].status || '', justification: s.attendance[d].justification || ''}
+        }
+        return {student_id: s.student_id, first_name: s.first_name, last_name: s.last_name, cells}
+      })
+      matLoaded.value = true
     }
   } catch (e) {
-    console.error('Erreur émargement:', e)
+    console.error('Erreur matrice émargement:', e)
     setFlashMessage({type: 'error', message: 'Impossible de charger l\'émargement'})
   } finally {
-    isLoadingAttendance.value = false
+    isLoadingMatrix.value = false
   }
 }
 
 const selectTab = (key) => {
   activeTab.value = key
-  if (key === 'attendance' && !attendanceLoaded.value && schedules.value.length > 0) loadAttendance()
+  if (key === 'attendance' && !matLoaded.value) loadMatrix()
 }
 
-const selectCourse = (id) => {
-  selectedScheduleId.value = id
-  const sched = schedules.value.find(s => s.id === id)
-  if (sched) {
-    attendanceDate.value = nearestSessionDate(DAY_TO_WEEKDAY[sched.day] ?? 1)
-    loadAttendance()
-  }
-}
+const recordsFor = (d) => mat.value
+    .filter(s => s.cells[d] && s.cells[d].status)
+    .map(s => ({
+      student_id: s.student_id,
+      status: s.cells[d].status,
+      justification: s.cells[d].status === 'absent_justifie' ? (s.cells[d].justification || null) : null
+    }))
 
-const changeSession = (delta) => {
-  const d = parseDate(attendanceDate.value)
-  d.setDate(d.getDate() + delta * 7)
-  attendanceDate.value = toDateStr(d)
-  loadAttendance()
-}
-
-const setStatus = (row, status) => {
+const doSaveDate = async (d) => {
   if (!attendanceEditable.value) return
-  row.status = status
-  if (status !== 'absent_justifie') row.justification = ''
-}
-
-const toggleAllPresent = () => {
-  if (!attendanceEditable.value) return
-  const target = allPresent.value ? '' : 'present'
-  attendance.value.forEach(r => {
-    r.status = target
-    r.justification = ''
-  })
-}
-
-const saveAttendance = async () => {
-  if (!attendanceEditable.value) return
-  const records = attendance.value
-      .filter(r => r.status)
-      .map(r => ({
-        student_id: r.student_id,
-        status: r.status,
-        justification: r.status === 'absent_justifie' ? (r.justification || null) : null
-      }))
-
-  if (records.length === 0) {
-    setFlashMessage({type: 'error', message: 'Aucune présence saisie'})
-    return
-  }
-
+  savingCount.value++
   try {
-    isSavingAttendance.value = true
-    await teacherService.saveAttendance(route.params.id, attendanceDate.value, records)
-    setFlashMessage({type: 'success', message: 'Émargement enregistré'})
+    await teacherService.saveAttendance(route.params.id, d, recordsFor(d))
   } catch (e) {
-    setFlashMessage({type: 'error', message: e.response?.data?.message || 'Erreur lors de l\'enregistrement'})
+    setFlashMessage({type: 'error', message: e.response?.data?.message || 'Erreur d\'enregistrement'})
   } finally {
-    isSavingAttendance.value = false
+    savingCount.value--
   }
+}
+
+const autosaveDate = (d) => {
+  clearTimeout(saveTimers[d])
+  saveTimers[d] = setTimeout(() => doSaveDate(d), 450)
+}
+
+const openMotif = (s, d, ev) => {
+  const r = ev.currentTarget.getBoundingClientRect()
+  motif.value = {s, d, top: r.bottom + 4, left: Math.min(r.left, window.innerWidth - 240)}
+  nextTick(() => motifInput.value?.focus())
+}
+const closeMotif = () => { motif.value = null }
+const commitMotif = () => {
+  if (motif.value) { autosaveDate(motif.value.d); closeMotif() }
+}
+
+const cycleCell = (s, d, ev) => {
+  if (!attendanceEditable.value) return
+  const cur = s.cells[d]?.status || ''
+  const next = CYCLE[(CYCLE.indexOf(cur) + 1) % CYCLE.length]
+  if (!s.cells[d]) s.cells[d] = {status: '', justification: ''}
+  s.cells[d].status = next
+  if (next === 'absent_justifie') openMotif(s, d, ev)
+  else closeMotif()
+  autosaveDate(d)
+}
+
+const pickSession = () => {
+  if (sessionDateInput.value) {
+    sessionDateInput.value.value = toDateStr(new Date())
+    sessionDateInput.value.showPicker ? sessionDateInput.value.showPicker() : sessionDateInput.value.focus()
+  }
+}
+const onAddSession = (ev) => {
+  const d = ev.target.value
+  if (!d || matDates.value.includes(d)) return
+  matDates.value = [...matDates.value, d].sort()
+  mat.value.forEach(s => { s.cells[d] = {status: '', justification: ''} })
 }
 
 const handleSaveOutcomes = async () => {
   if (!canEditOutcomes.value) return
-
   const decisions = students.value
       .filter(s => s.outcome)
-      .map(s => ({
-        student_id: s.student_id,
-        outcome: s.outcome,
-        commentaire: s.commentaire || null
-      }))
-
+      .map(s => ({student_id: s.student_id, outcome: s.outcome, commentaire: s.commentaire || null}))
   if (decisions.length === 0) {
     setFlashMessage({type: 'error', message: 'Aucune décision à enregistrer'})
     return
   }
-
   try {
     isSavingOutcomes.value = true
     await teacherService.saveOutcomes(route.params.id, decisions)
@@ -267,10 +250,7 @@ onMounted(() => fetchData())
             :key="t.key"
             type="button"
             @click="selectTab(t.key)"
-            :class="[
-              'px-3 py-2 text-xs font-medium -mb-px border-b-2 transition-colors',
-              activeTab === t.key ? 'border-default text-default' : 'border-transparent text-placeholder hover:text-default'
-            ]"
+            :class="['px-3 py-2 text-xs font-medium -mb-px border-b-2 transition-colors', activeTab === t.key ? 'border-default text-default' : 'border-transparent text-placeholder hover:text-default']"
         >
           {{ t.label }}
         </button>
@@ -283,138 +263,77 @@ onMounted(() => fetchData())
             <span class="w-5 text-gray-400 tabular-nums">{{ i + 1 }}</span>
             <span class="font-medium text-gray-900 truncate">{{ s.last_name }} {{ s.first_name }}</span>
           </li>
-          <li v-if="students.length === 0" class="px-3 py-6 text-center text-xs text-gray-500">
-            Aucun élève inscrit dans cette classe.
-          </li>
+          <li v-if="students.length === 0" class="px-3 py-6 text-center text-xs text-gray-500">Aucun élève inscrit dans cette classe.</li>
         </ul>
       </div>
 
       <div v-else-if="activeTab === 'attendance'">
-        <div v-if="schedules.length === 0" class="bg-white rounded-2xl border py-10 text-center text-xs text-placeholder">
-          Aucun créneau n'est défini pour cette classe.
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+            <span class="text-placeholder">Clique une case pour pointer (présent → justifié → absent → vide) :</span>
+            <span v-for="(m, k) in attMeta" :key="k" class="inline-flex items-center gap-1.5">
+              <span :class="['inline-flex items-center justify-center w-5 h-5 rounded border text-[11px] font-bold', m.cls]">{{ m.glyph }}</span>
+              {{ m.label }}
+            </span>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span v-if="savingCount > 0" class="text-[11px] text-placeholder">Enregistrement…</span>
+            <button
+                v-if="attendanceEditable"
+                type="button"
+                @click="pickSession"
+                class="px-3 py-1.5 rounded-lg bg-default text-white text-xs font-medium hover:opacity-90 inline-flex items-center gap-1"
+            >
+              <span class="text-sm leading-none">+</span> Séance
+            </button>
+            <input ref="sessionDateInput" type="date" class="sr-only" @change="onAddSession" />
+          </div>
         </div>
 
-        <div v-else class="bg-white rounded-2xl border font-nunito overflow-hidden">
-          <div class="border-b border-[#E6EFF5] px-4 py-3 font-montserrat">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-              <div class="flex items-stretch gap-2.5 min-w-0">
-                <span class="w-1 bg-primary rounded-r shrink-0"></span>
-                <div class="min-w-0">
-                  <div v-if="schedules.length > 1" class="flex flex-wrap gap-1 mb-1">
+        <div v-if="isLoadingMatrix" class="bg-white rounded-2xl border py-10 text-center text-xs text-placeholder">Chargement…</div>
+        <div v-else-if="mat.length === 0" class="bg-white rounded-2xl border py-10 text-center text-xs text-placeholder">Aucun élève inscrit dans cette classe.</div>
+        <div v-else-if="matDates.length === 0" class="bg-white rounded-2xl border py-10 text-center text-xs text-placeholder">
+          Aucune séance émargée. Clique sur <strong>« + Séance »</strong> pour faire l'appel d'aujourd'hui.
+        </div>
+        <div v-else class="bg-white rounded-2xl border overflow-x-auto font-nunito">
+          <table class="text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-[#E6EFF5]">
+                <th rowspan="2" class="sticky left-0 z-10 bg-white text-left font-semibold text-gray-700 px-3 py-2 min-w-[11rem] border-r border-[#E6EFF5] font-montserrat align-bottom">Élève</th>
+                <th v-for="g in monthGroups" :key="g.ym" :colspan="g.dates.length" class="px-2 py-1 text-center text-[10px] uppercase tracking-wide text-placeholder border-l border-[#E6EFF5]">{{ g.label }}</th>
+                <th rowspan="2" class="px-2 py-2 text-center font-semibold text-gray-700 border-l border-[#E6EFF5] align-bottom">Taux</th>
+              </tr>
+              <tr class="border-b border-[#E6EFF5]">
+                <template v-for="g in monthGroups" :key="g.ym">
+                  <th v-for="(d, i) in g.dates" :key="d" :title="d" :class="['px-2 py-1.5 text-center font-medium text-gray-500 whitespace-nowrap', i === 0 ? 'border-l border-[#E6EFF5]' : '']">{{ d.slice(8, 10) }}/{{ d.slice(5, 7) }}</th>
+                </template>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="s in mat" :key="s.student_id" class="border-b border-[#E6EFF5] last:border-b-0 hover:bg-gray-50">
+                <td class="sticky left-0 z-10 bg-white px-3 py-1.5 font-medium text-gray-900 border-r border-[#E6EFF5] whitespace-nowrap font-montserrat">{{ s.last_name }} {{ s.first_name }}</td>
+                <template v-for="g in monthGroups" :key="g.ym">
+                  <td v-for="(d, i) in g.dates" :key="d" :class="['px-1.5 py-1.5 text-center', i === 0 ? 'border-l border-[#E6EFF5]' : '']">
                     <button
-                        v-for="sc in schedules"
-                        :key="sc.id"
                         type="button"
-                        @click="selectCourse(sc.id)"
+                        @click="cycleCell(s, d, $event)"
+                        :disabled="!attendanceEditable"
+                        :title="cellTitle(s, d)"
                         :class="[
-                          'px-2 py-0.5 rounded text-xs transition-colors',
-                          selectedScheduleId === sc.id ? 'bg-primary/10 text-primary font-semibold' : 'text-placeholder hover:text-default'
+                          'inline-flex items-center justify-center w-6 h-6 rounded border text-[11px] font-bold transition-colors relative',
+                          s.cells[d] && s.cells[d].status ? attMeta[s.cells[d].status].cls : 'border-dashed border-gray-200 text-gray-300',
+                          attendanceEditable ? 'cursor-pointer hover:border-gray-400' : 'cursor-default'
                         ]"
                     >
-                      {{ sc.day }} {{ sc.start_time }}–{{ sc.end_time }}
+                      {{ s.cells[d] && s.cells[d].status ? attMeta[s.cells[d].status].glyph : '–' }}
+                      <span v-if="s.cells[d] && s.cells[d].status === 'absent_justifie' && s.cells[d].justification" class="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                     </button>
-                  </div>
-                  <p v-else-if="selectedSchedule" class="text-xs text-placeholder mb-0.5">
-                    {{ selectedSchedule.day }} · {{ selectedSchedule.start_time }}–{{ selectedSchedule.end_time }}
-                  </p>
-                  <div class="flex items-center gap-2">
-                    <button type="button" @click="changeSession(-1)" class="text-base leading-none text-placeholder hover:text-default" aria-label="Séance précédente">‹</button>
-                    <span class="text-sm font-semibold text-default">{{ sessionLabel }}</span>
-                    <button type="button" @click="changeSession(1)" :disabled="!canGoNextSession" class="text-base leading-none text-placeholder hover:text-default disabled:opacity-30 disabled:cursor-not-allowed" aria-label="Séance suivante">›</button>
-                  </div>
-                </div>
-              </div>
-              <div v-if="attendanceEditable" class="flex items-center gap-2 shrink-0">
-                <button
-                    type="button"
-                    @click="toggleAllPresent"
-                    :aria-pressed="allPresent"
-                    :class="[
-                      'px-3 py-1.5 rounded-lg border text-xs font-medium transition-all duration-150 active:scale-95 inline-flex items-center gap-1.5',
-                      allPresent ? 'bg-green-600 border-green-600 text-white' : 'border-default text-default hover:bg-gray-50'
-                    ]"
-                >
-                  <svg v-if="allPresent" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                  Tout présent
-                </button>
-                <button
-                    type="button"
-                    @click="saveAttendance"
-                    :disabled="isSavingAttendance"
-                    class="px-4 py-1.5 rounded-lg bg-default text-white text-xs font-medium hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
-                >
-                  {{ isSavingAttendance ? 'Enregistrement…' : 'Enregistrer' }}
-                </button>
-              </div>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2.5 text-xs">
-              <span class="inline-flex items-center gap-1.5 text-green-600"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>{{ attendanceSummary.present }} présent{{ attendanceSummary.present > 1 ? 's' : '' }}</span>
-              <span class="inline-flex items-center gap-1.5 text-amber-600"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>{{ attendanceSummary.absent_justifie }} justifié{{ attendanceSummary.absent_justifie > 1 ? 's' : '' }}</span>
-              <span class="inline-flex items-center gap-1.5 text-red-600"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>{{ attendanceSummary.absent_non_justifie }} non justifié{{ attendanceSummary.absent_non_justifie > 1 ? 's' : '' }}</span>
-              <span v-if="attendanceSummary.unmarked" class="inline-flex items-center gap-1.5 text-placeholder"><span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>{{ attendanceSummary.unmarked }} non pointé{{ attendanceSummary.unmarked > 1 ? 's' : '' }}</span>
-            </div>
-          </div>
-
-          <div v-if="!attendanceEditable" class="bg-amber-50 border-b border-amber-200 text-amber-800 px-4 py-2 text-xs flex items-center gap-1.5">
-            <svg class="size-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            Année clôturée — émargement en lecture seule.
-          </div>
-
-          <div v-if="isLoadingAttendance" class="py-10 text-center text-xs text-placeholder">Chargement…</div>
-
-          <template v-else>
-            <div
-                v-for="(r, i) in attendance"
-                :key="r.student_id"
-                :class="i < attendance.length - 1 ? 'border-b border-[#E6EFF5]' : ''"
-            >
-              <div class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
-                <div
-                    class="size-8 rounded-full bg-primary text-white text-[11px] font-semibold inline-flex items-center justify-center shrink-0 ring-2 ring-offset-1"
-                    :class="r.status ? ringOf(r.status) : 'ring-transparent'"
-                >
-                  {{ initialsOf(r) }}
-                </div>
-                <div class="min-w-0 flex-1">
-                  <div class="text-sm font-semibold text-gray-900 truncate font-montserrat">{{ r.last_name }} {{ r.first_name }}</div>
-                  <div class="text-xs" :class="r.status ? statusOf(r.status).text : 'text-placeholder'">
-                    {{ r.status ? statusOf(r.status).label : 'Non pointé' }}
-                  </div>
-                </div>
-                <div class="flex items-center gap-1.5 shrink-0">
-                  <button
-                      v-for="st in attendanceStatuses"
-                      :key="st.value"
-                      type="button"
-                      @click="setStatus(r, st.value)"
-                      :disabled="!attendanceEditable"
-                      :aria-pressed="r.status === st.value"
-                      :title="st.label"
-                      :class="[
-                        'px-2.5 py-1 rounded-lg border text-xs font-medium transition-all duration-150 active:scale-95',
-                        r.status === st.value ? st.active : 'border-input-stroke text-gray-500 hover:border-gray-400 hover:text-default',
-                        !attendanceEditable ? 'cursor-not-allowed opacity-60' : ''
-                      ]"
-                  >
-                    {{ st.btn }}
-                  </button>
-                </div>
-              </div>
-              <div v-if="r.status === 'absent_justifie'" class="pl-14 pr-4 pb-2">
-                <input
-                    v-model="r.justification"
-                    :disabled="!attendanceEditable"
-                    type="text"
-                    placeholder="Motif / justificatif (optionnel)"
-                    class="w-full border border-input-stroke rounded-lg px-2 py-1.5 text-sm focus:border-default focus:ring-0 focus:outline-none"
-                />
-              </div>
-            </div>
-            <div v-if="attendance.length === 0" class="px-4 py-8 text-center text-xs text-placeholder">
-              Aucun élève inscrit dans cette classe.
-            </div>
-          </template>
+                  </td>
+                </template>
+                <td class="px-2 py-1.5 text-center border-l border-[#E6EFF5] font-semibold" :class="ratesMap[s.student_id] === null ? 'text-gray-300' : ratesMap[s.student_id] < 70 ? 'text-amber-600' : 'text-gray-700'">{{ ratesMap[s.student_id] !== null ? ratesMap[s.student_id] + '%' : '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -426,19 +345,14 @@ onMounted(() => fetchData())
               type="button"
               @click="handleSaveOutcomes"
               :disabled="isSavingOutcomes || decisionsCount === 0"
-              :class="[
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0',
-                decisionsCount === 0 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-primary text-white hover:opacity-90 shadow-sm hover:shadow-md'
-              ]"
+              :class="['flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0', decisionsCount === 0 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-default text-white hover:opacity-90']"
           >
             <span v-if="decisionsCount > 0" class="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1 rounded-full bg-white/25 text-xs font-bold">{{ decisionsCount }}</span>
             {{ isSavingOutcomes ? 'Enregistrement…' : decisionsCount === 0 ? 'Aucune décision saisie' : `Enregistrer ${decisionsCount > 1 ? 'les décisions' : 'la décision'}` }}
           </button>
         </div>
 
-        <div v-if="yearClosed" class="mb-3 px-2 py-1.5 rounded-md bg-gray-100 text-gray-700 text-xs">
-          Année clôturée — lecture seule
-        </div>
+        <div v-if="yearClosed" class="mb-3 px-2 py-1.5 rounded-md bg-gray-100 text-gray-700 text-xs">Année clôturée — lecture seule</div>
 
         <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <table class="min-w-full">
@@ -457,31 +371,17 @@ onMounted(() => fetchData())
                   <label
                       v-for="opt in outcomeOptions"
                       :key="opt.value"
-                      :class="[
-                        'inline-flex items-center gap-1 px-2 py-1 rounded border text-xs font-medium cursor-pointer transition-colors',
-                        s.outcome === opt.value ? opt.selectedClass : opt.idleClass
-                      ]"
+                      :class="['inline-flex items-center gap-1 px-2 py-1 rounded border text-xs font-medium cursor-pointer transition-colors', s.outcome === opt.value ? opt.selectedClass : opt.idleClass]"
                   >
                     <input type="radio" :name="`outcome-${s.student_id}`" :value="opt.value" v-model="s.outcome" class="hidden" />
                     {{ opt.label }}
                   </label>
                 </div>
-                <span
-                    v-else-if="s.outcome"
-                    :class="['inline-flex items-center px-2 py-1 rounded border text-xs font-medium', outcomeOptions.find(o => o.value === s.outcome)?.selectedClass]"
-                >
-                  {{ outcomeOptions.find(o => o.value === s.outcome)?.label }}
-                </span>
+                <span v-else-if="s.outcome" :class="['inline-flex items-center px-2 py-1 rounded border text-xs font-medium', outcomeOptions.find(o => o.value === s.outcome)?.selectedClass]">{{ outcomeOptions.find(o => o.value === s.outcome)?.label }}</span>
                 <span v-else class="text-xs text-gray-400">Aucune décision</span>
               </td>
               <td class="px-3 py-1.5">
-                <input
-                    v-if="canEditOutcomes"
-                    v-model="s.commentaire"
-                    type="text"
-                    placeholder="Optionnel"
-                    class="w-full px-1.5 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:border-primary"
-                />
+                <input v-if="canEditOutcomes" v-model="s.commentaire" type="text" placeholder="Optionnel" class="w-full px-1.5 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:border-primary" />
                 <span v-else class="text-xs text-gray-600">{{ s.commentaire || '—' }}</span>
               </td>
             </tr>
@@ -493,5 +393,22 @@ onMounted(() => fetchData())
         </div>
       </div>
     </template>
+
+    <div
+        v-if="motif"
+        class="fixed z-50 bg-white border border-[#E6EFF5] rounded-lg shadow-lg p-2 w-56 font-nunito"
+        :style="{top: motif.top + 'px', left: motif.left + 'px'}"
+    >
+      <div class="text-[11px] text-placeholder mb-1">Motif · {{ motif.s.last_name }} {{ motif.s.first_name }} · {{ motif.d.slice(8, 10) }}/{{ motif.d.slice(5, 7) }}</div>
+      <input
+          ref="motifInput"
+          v-model="motif.s.cells[motif.d].justification"
+          @keydown.enter="commitMotif"
+          @blur="commitMotif"
+          type="text"
+          placeholder="Motif (optionnel)"
+          class="w-full border border-amber-200 rounded px-2 py-1 text-xs focus:outline-none focus:border-amber-400"
+      />
+    </div>
   </PageContainer>
 </template>

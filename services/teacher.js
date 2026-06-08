@@ -21,6 +21,11 @@ export default {
         return response.data
     },
 
+    async classroomAttendanceMatrix(classroomId) {
+        const response = await apiClient.get(`/api/teacher/classrooms/${classroomId}/attendance-matrix`)
+        return response.data
+    },
+
     async saveAttendance(classroomId, date, records) {
         const response = await apiClient.post(`/api/teacher/classrooms/${classroomId}/attendance`, {date, records})
         return response.data
