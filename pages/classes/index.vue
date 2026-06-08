@@ -33,7 +33,14 @@ const { isReadOnly } = useSchoolYear()
 const genderColors = {
   'Hommes': '#93C5FD',
   'Femmes': '#FDA4AF',
-  'Enfants': '#FCD34D'
+  'Enfants': '#FCD34D',
+  'Mixte': '#86EFAC'
+}
+
+const viewMode = ref('detailed')
+const setView = (v) => {
+  viewMode.value = v
+  if (process.client) localStorage.setItem('classes_view', v)
 }
 
 const currentSchoolId = computed(() => {
@@ -116,13 +123,17 @@ const groupedClasses = computed(() => {
 })
 
 onMounted(() => {
+  if (process.client) {
+    const saved = localStorage.getItem('classes_view')
+    if (saved === 'list' || saved === 'detailed') viewMode.value = saved
+  }
   fetchClasses()
 })
 </script>
 
 <template>
   <PageContainer>
-    <BreadCrumb :items="breadcrumbItems" />
+    <BreadCrumb :custom-items="breadcrumbItems" />
 
     <div v-if="isLoading" class="flex justify-center items-center h-64">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -136,7 +147,35 @@ onMounted(() => {
       <p class="text-gray-500">Aucune classe trouvée</p>
     </div>
 
-    <div v-else class="space-y-5 pb-6">
+    <div v-else>
+      <div class="flex items-center justify-between gap-2 mb-4">
+        <div class="inline-flex items-center gap-0.5 p-1 bg-white border border-gray-200 rounded-lg">
+          <button
+              type="button"
+              @click="setView('detailed')"
+              title="Vue détaillée"
+              aria-label="Vue détaillée"
+              :class="['flex items-center justify-center w-7 h-7 rounded-md transition-colors', viewMode === 'detailed' ? 'bg-default text-white' : 'text-gray-400 hover:text-default hover:bg-gray-100']"
+          >
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M3 3h6v6H3V3zm8 0h6v6h-6V3zM3 11h6v6H3v-6zm8 0h6v6h-6v-6z"/></svg>
+          </button>
+          <button
+              type="button"
+              @click="setView('list')"
+              title="Vue liste"
+              aria-label="Vue liste"
+              :class="['flex items-center justify-center w-7 h-7 rounded-md transition-colors', viewMode === 'list' ? 'bg-default text-white' : 'text-gray-400 hover:text-default hover:bg-gray-100']"
+          >
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M3 4h14v2H3V4zm0 5h14v2H3V9zm0 5h14v2H3v-2z"/></svg>
+          </button>
+        </div>
+        <NuxtLink to="/decisions" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-default bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+          Vue d'ensemble des décisions
+          <span aria-hidden="true">→</span>
+        </NuxtLink>
+      </div>
+
+      <div v-if="viewMode === 'detailed'" class="space-y-5 pb-6">
       <div v-for="group in groupedClasses" :key="`${group.cursus}_${group.level}`" class="space-y-2">
         <NuxtLink
             :to="`/cursus/${group.cursus_id}`"
@@ -194,6 +233,44 @@ onMounted(() => {
                 <div v-if="classroom.students.length === 0" class="text-center py-2 text-gray-400 text-xs">
                   Aucun élève inscrit
                 </div>
+              </div>
+
+              <NuxtLink
+                  :to="`/classes/${classroom.id}`"
+                  class="mt-2 flex items-center justify-center gap-1 text-[11px] font-medium text-default hover:text-primary border-t border-[#E6EFF5] pt-1.5 transition-colors font-nunito"
+              >
+                Suivi · émargement &amp; décisions
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <div v-else class="space-y-5 pb-6">
+        <div v-for="group in groupedClasses" :key="`list-${group.cursus}_${group.level}`">
+          <h2 class="text-sm font-semibold text-gray-800 mb-1.5 font-montserrat">{{ group.cursus }} · {{ group.level }}</h2>
+          <div class="bg-white rounded-2xl border overflow-hidden">
+            <div
+                v-for="(classroom, i) in group.classrooms"
+                :key="classroom.id"
+                class="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 border-l-4 hover:bg-gray-50 transition-colors"
+                :class="i < group.classrooms.length - 1 ? 'border-b border-[#E6EFF5]' : ''"
+                :style="{ borderLeftColor: genderColors[classroom.gender] || '#9CA3AF' }"
+            >
+              <NuxtLink :to="`/classes/${classroom.id}`" class="min-w-[10rem] flex-1">
+                <div class="text-sm font-medium text-gray-900 font-montserrat">{{ classroom.name }}</div>
+                <div class="text-[11px] text-placeholder">{{ classroom.gender }}</div>
+              </NuxtLink>
+              <div class="text-xs text-gray-600 w-24 shrink-0">{{ classroom.student_count }} élève{{ classroom.student_count > 1 ? 's' : '' }}</div>
+              <div class="text-xs w-32">
+                <span v-if="classroom.student_count > 0 && classroom.decided_count >= classroom.student_count" class="text-green-700 font-medium">{{ classroom.decided_count }}/{{ classroom.student_count }} décidés ✓</span>
+                <span v-else-if="classroom.decided_count > 0" class="text-amber-700">{{ classroom.decided_count }}/{{ classroom.student_count }} décidés</span>
+                <span v-else class="text-gray-400">{{ classroom.decided_count }}/{{ classroom.student_count }} décidés</span>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <NuxtLink :to="`/classes/${classroom.id}`" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-default text-white hover:opacity-90 transition-opacity">Émargement</NuxtLink>
+                <NuxtLink :to="`/classes/${classroom.id}?tab=decisions`" class="px-2.5 py-1 rounded-lg text-xs font-medium border border-gray-300 text-default hover:bg-gray-50 transition-colors">Décisions</NuxtLink>
               </div>
             </div>
           </div>

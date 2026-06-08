@@ -1,9 +1,15 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from '#imports'
 import { usePageTitle } from '~/composables/usePageTitle.js'
 import { useSchoolYear } from '~/composables/useSchoolYear'
 import schoolYearService from '~/services/schoolYear'
+import PageContainer from '~/components/layout/PageContainer.vue'
+import BreadCrumb from '~/components/navigation/BreadCrumb.vue'
+
+const breadcrumbItems = [
+  { name: 'Années scolaires', path: '/annees-scolaires' },
+  { name: 'Reconduire des classes', path: '/annees-scolaires/reconduire' },
+]
 
 definePageMeta({
   layout: 'auth',
@@ -13,7 +19,6 @@ definePageMeta({
 
 usePageTitle('Reconduire des classes')
 
-const router = useRouter()
 const { setFlashMessage } = useFlashMessage()
 const { years, load: loadYears } = useSchoolYear()
 
@@ -125,20 +130,12 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="p-4 xl:p-6">
-    <div class="mb-4">
-      <button
-          @click="router.push('/annees-scolaires')"
-          class="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 mb-1.5"
-      >
-        <span>←</span> Retour
-      </button>
-      <h1 class="text-lg font-bold text-default">Reconduire des classes</h1>
-      <p class="text-xs text-gray-600 mt-0.5 max-w-3xl">
-        Crée des copies vides (sans élèves) des classes sélectionnées dans l'année active.
-        Les classes déjà reconduites sont grisées.
-      </p>
-    </div>
+  <PageContainer>
+    <BreadCrumb :custom-items="breadcrumbItems" />
+    <p class="text-xs text-gray-600 mb-4 max-w-3xl">
+      Crée des copies vides (sans élèves) des classes sélectionnées dans l'année active.
+      Les classes déjà reconduites sont grisées.
+    </p>
 
     <div class="bg-white border border-gray-200 rounded-lg p-3 mb-4 flex flex-wrap items-end gap-x-4 gap-y-2">
       <div>
@@ -308,5 +305,5 @@ onMounted(async () => {
         </table>
       </div>
     </div>
-  </div>
+  </PageContainer>
 </template>
