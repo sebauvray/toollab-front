@@ -38,7 +38,7 @@ onMounted(() => fetchSchedules())
 
 <template>
   <PageContainer>
-    <BreadCrumb :items="breadcrumbItems"/>
+    <BreadCrumb :custom-items="breadcrumbItems"/>
 
     <div class="mb-3">
       <h1 class="text-lg font-bold text-gray-900">Mon planning</h1>

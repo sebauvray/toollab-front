@@ -45,7 +45,7 @@ const handleSubmit = async () => {
       return
     }
 
-    const loginResponse = await authService.login({
+    const loginResponse = await login({
       email: form.value.email,
       password: form.value.password,
       remember: form.value.remember
@@ -53,6 +53,7 @@ const handleSubmit = async () => {
 
     if (process.client) {
       localStorage.removeItem('current_school_id')
+      localStorage.removeItem('current_school_role')
     }
 
     const schools = await schoolService.getSchools()

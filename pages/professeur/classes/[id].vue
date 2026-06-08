@@ -2,6 +2,7 @@
 import {ref, computed, onMounted} from 'vue'
 import {useRoute} from '#imports'
 import PageContainer from '~/components/layout/PageContainer.vue'
+import BreadCrumb from '~/components/navigation/BreadCrumb.vue'
 import {usePageTitle} from '~/composables/usePageTitle.js'
 import teacherService from '~/services/teacher'
 
@@ -22,6 +23,11 @@ const yearClosed = ref(false)
 const isLoading = ref(true)
 const isSaving = ref(false)
 const error = ref(null)
+
+const breadcrumbItems = computed(() => [
+  {name: 'Mes classes', path: '/professeur/classes'},
+  {name: classroom.value?.name || 'Classe', path: route.path}
+])
 
 const outcomeOptions = [
   {
@@ -112,15 +118,14 @@ onMounted(() => fetchData())
 
 <template>
   <PageContainer>
+    <BreadCrumb :custom-items="breadcrumbItems" />
+
     <div v-if="isLoading" class="py-10 text-center text-gray-500 text-xs">Chargement…</div>
     <div v-else-if="error" class="bg-red-50 text-red-700 p-2 rounded">{{ error }}</div>
 
     <template v-else>
       <div class="flex items-center justify-between gap-3 mb-5">
-        <div class="min-w-0">
-          <h1 class="text-lg font-bold text-gray-900 truncate">{{ classroom?.name }}</h1>
-          <p class="text-xs text-gray-500">{{ students.length }} élève{{ students.length > 1 ? 's' : '' }}</p>
-        </div>
+        <p class="text-xs text-gray-500">{{ students.length }} élève{{ students.length > 1 ? 's' : '' }}</p>
         <button
             v-if="canEdit && students.length > 0"
             type="button"

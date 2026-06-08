@@ -45,7 +45,7 @@ onMounted(() => fetchClasses())
 
 <template>
   <PageContainer>
-    <BreadCrumb :items="breadcrumbItems"/>
+    <BreadCrumb :custom-items="breadcrumbItems"/>
 
     <div v-if="isLoading" class="py-10 text-center text-gray-500 text-xs">
       Chargement…

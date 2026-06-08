@@ -32,5 +32,13 @@ export default defineNuxtRouteMiddleware((to) => {
                 });
             }
         }
+
+        const isTeacher = localStorage.getItem('current_school_role') === 'Professeur';
+        const teacherAllowed = to.path.startsWith('/professeur')
+            || to.path === '/settings'
+            || noSchoolNeeded.includes(to.path);
+        if (isAuthenticated && isTeacher && !teacherAllowed) {
+            return navigateTo('/professeur/classes');
+        }
     }
 });

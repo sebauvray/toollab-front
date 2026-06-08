@@ -6,7 +6,6 @@ import Setting from "~/components/Icons/Setting.vue";
 import Cursus from "~/components/Icons/Cursus.vue";
 import NavLink from "~/components/navigation/NavLink.vue";
 import FamilyTLB from "~/components/Icons/Family-TLB.vue";
-import UserDropdown from "~/components/UserDropdown.vue";
 import CurrencyEuro from "~/components/Icons/CurrencyEuro.vue";
 import StudentTLB from "~/components/Icons/Student-TLB.vue";
 import TeacherTLB from "~/components/Icons/Teacher-TLB.vue";
@@ -16,8 +15,10 @@ import { useRouter } from '#imports';
 import userService from '~/services/user';
 import schoolService from '~/services/school';
 import { useSchoolYear } from '~/composables/useSchoolYear';
+import { useAuth } from '~/composables/useAuth';
 
 const router = useRouter();
+const { logout } = useAuth();
 
 const { years, currentYear, isReadOnly, load: loadYears, switchTo: switchYear, reset: resetYears } = useSchoolYear();
 const showYearDropdown = ref(false);
@@ -26,8 +27,8 @@ const yearDropdownRef = ref(null);
 const user = ref(null);
 const schools = ref([]);
 const selectedSchool = ref(null);
-const showSchoolDropdown = ref(false);
-const schoolDropdownRef = ref(null);
+const showAccountMenu = ref(false);
+const accountMenuRef = ref(null);
 const hasAdminAccess = ref(false);
 const isTeacher = ref(false);
 const isSidebarCollapsed = ref(false);
@@ -64,10 +65,17 @@ const logoUrl = computed(() => {
 
 const isSuperAdmin = computed(() => !!user.value?.is_super_admin);
 
+const currentRole = computed(() => {
+  if (isSuperAdmin.value) return 'Super-admin';
+  if (!selectedSchool.value) return '';
+  return schools.value.find(s => s.id === selectedSchool.value.id)?.role || '';
+});
+
 const checkAdminAccess = () => {
   if (isSuperAdmin.value) {
     hasAdminAccess.value = true;
     isTeacher.value = false;
+    if (process.client) localStorage.setItem('current_school_role', 'Super-admin');
     return;
   }
   if (selectedSchool.value && schools.value.length > 0) {
@@ -75,6 +83,7 @@ const checkAdminAccess = () => {
     if (currentSchoolRole) {
       hasAdminAccess.value = currentSchoolRole.role === 'Directeur' || currentSchoolRole.role === 'Administrateur';
       isTeacher.value = currentSchoolRole.role === 'Professeur';
+      if (process.client && currentSchoolRole.role) localStorage.setItem('current_school_role', currentSchoolRole.role);
     }
   }
 };
@@ -129,8 +138,9 @@ const loadUserSchools = async () => {
 };
 
 const selectSchool = (school) => {
+  showAccountMenu.value = false;
+  if (selectedSchool.value?.id === school.id) return;
   selectedSchool.value = school;
-  showSchoolDropdown.value = false;
   localStorage.setItem('current_school_id', String(school.id));
   resetYears();
   checkAdminAccess();
@@ -145,9 +155,20 @@ const selectYear = (yearId) => {
 };
 
 const goToAdmin = () => {
-  showSchoolDropdown.value = false;
+  showAccountMenu.value = false;
   localStorage.removeItem('current_school_id');
+  localStorage.removeItem('current_school_role');
   router.push('/admin');
+};
+
+const handleLogout = async () => {
+  showAccountMenu.value = false;
+  try {
+    await logout();
+    router.push('/login');
+  } catch (error) {
+    console.error('Erreur lors de la déconnexion:', error);
+  }
 };
 
 const checkScreenSize = () => {
@@ -162,8 +183,8 @@ const handleClickOutside = (event) => {
   if (showYearDropdown.value && yearDropdownRef.value && !yearDropdownRef.value.contains(event.target)) {
     showYearDropdown.value = false;
   }
-  if (showSchoolDropdown.value && schoolDropdownRef.value && !schoolDropdownRef.value.contains(event.target)) {
-    showSchoolDropdown.value = false;
+  if (showAccountMenu.value && accountMenuRef.value && !accountMenuRef.value.contains(event.target)) {
+    showAccountMenu.value = false;
   }
 };
 
@@ -202,7 +223,7 @@ onUnmounted(() => {
         <LogoText v-else class="w-36" />
       </div>
       <nav class="inline-flex flex-col gap-y-1.5 mt-1.5 flex-1">
-        <NavLink to="/" :icon="Home" text="Accueil" :collapsed="isSidebarCollapsed" />
+        <NavLink v-if="!isTeacher" to="/" :icon="Home" text="Accueil" :collapsed="isSidebarCollapsed" />
         <NavLink v-if="!isTeacher" to="/family" :icon="FamilyTLB" text="Familles" :collapsed="isSidebarCollapsed" />
         <NavLink v-if="hasAdminAccess" to="/cursus" :icon="Cursus" text="Cursus" :collapsed="isSidebarCollapsed" />
         <NavLink v-if="hasAdminAccess" to="/classes" :icon="StudentTLB" text="Classes" :collapsed="isSidebarCollapsed" />
@@ -214,47 +235,51 @@ onUnmounted(() => {
       </nav>
 
       <div class="mb-3" :class="isSidebarCollapsed ? 'px-1.5' : 'px-3'">
-        <div v-if="schools.length <= 1 && !isSuperAdmin && currentSchoolName" class="flex items-center gap-x-1.5 py-1.5"
-             :class="isSidebarCollapsed ? 'justify-center' : ''">
-          <div v-if="currentSchoolLogo" class="w-8 h-8 flex-shrink-0">
-            <img :src="logoUrl" alt="Logo" class="w-full h-full object-contain rounded-full" />
-          </div>
-          <div v-else class="w-8 h-8 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
-            <span class="text-white text-xs font-semibold">{{ currentSchoolInitial }}</span>
-          </div>
-          <div v-if="!isSidebarCollapsed" class="text-sm text-gray-800 truncate">{{ currentSchoolName }}</div>
-        </div>
-
-        <div v-else-if="schools.length > 1 || isSuperAdmin" class="relative" ref="schoolDropdownRef">
+        <div v-if="user" class="relative" ref="accountMenuRef">
           <button
-              @click="showSchoolDropdown = !showSchoolDropdown"
+              @click="showAccountMenu = !showAccountMenu"
               class="w-full flex items-center gap-x-1.5 px-2 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
               :class="isSidebarCollapsed ? 'justify-center px-1.5' : ''"
+              :title="isSidebarCollapsed ? `${user.first_name} ${user.last_name} — ${currentSchoolName}` : ''"
           >
             <div v-if="currentSchoolLogo" class="w-8 h-8 flex-shrink-0">
               <img :src="logoUrl" alt="Logo" class="w-full h-full object-contain rounded-full" />
             </div>
             <div v-else class="w-8 h-8 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
-              <span class="text-white text-xs font-semibold">{{ currentSchoolInitial }}</span>
+              <span class="text-white text-xs font-semibold">{{ currentSchoolInitial || initials }}</span>
             </div>
             <div v-if="!isSidebarCollapsed" class="flex-1 min-w-0 text-left">
-              <div class="text-sm text-gray-800 truncate">{{ currentSchoolName }}</div>
+              <div class="text-sm text-gray-800 truncate">{{ currentSchoolName || `${user.first_name} ${user.last_name}` }}</div>
             </div>
             <svg v-if="!isSidebarCollapsed" class="w-3.5 h-3.5 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
             </svg>
           </button>
 
           <div
-              v-if="showSchoolDropdown"
+              v-if="showAccountMenu"
               class="absolute bottom-full mb-1 bg-white border rounded-lg shadow-lg z-50 overflow-hidden"
-              :class="isSidebarCollapsed ? 'left-full ml-1.5 bottom-0 mb-0' : 'left-0 right-0'"
+              :class="isSidebarCollapsed ? 'left-full ml-1.5 bottom-0 mb-0 w-64' : 'left-0 right-0'"
           >
-            <div class="max-h-64 overflow-y-auto" :class="isSidebarCollapsed ? 'w-64' : ''">
+            <div class="flex items-center gap-x-1.5 px-2 py-2 border-b">
+              <div class="w-9 h-9 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
+                <span class="text-white text-xs font-semibold">{{ initials }}</span>
+              </div>
+              <div class="flex-1 min-w-0 text-left">
+                <div class="text-sm text-gray-800 truncate">{{ user.first_name }} {{ user.last_name }}</div>
+                <div class="text-xs text-gray-500 truncate">
+                  <span v-if="currentRole">{{ currentRole }}</span>
+                  <span v-if="currentRole && user.email"> · </span>
+                  <span v-if="user.email">{{ user.email }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="schools.length > 1 || isSuperAdmin" class="max-h-64 overflow-y-auto border-b">
               <button
                   v-if="isSuperAdmin"
                   @click="goToAdmin"
-                  class="w-full flex items-center gap-x-1.5 px-2 py-1.5 hover:bg-purple-50 transition-colors border-b"
+                  class="w-full flex items-center gap-x-1.5 px-2 py-1.5 hover:bg-purple-50 transition-colors"
               >
                 <div class="w-9 h-9 flex items-center justify-center rounded-full bg-purple-600 flex-shrink-0">
                   <span class="text-white text-xs">🛡</span>
@@ -272,9 +297,9 @@ onUnmounted(() => {
                   :class="{ 'bg-gray-50': selectedSchool?.id === school.id }"
               >
                 <div v-if="school.logo" class="w-9 h-9 flex-shrink-0">
-                  <img 
-                    :src="`${useRuntimeConfig().public.apiUrl}/storage/${school.logo}`" 
-                    alt="Logo" 
+                  <img
+                    :src="`${useRuntimeConfig().public.apiUrl}/storage/${school.logo}`"
+                    alt="Logo"
                     class="w-full h-full object-contain rounded-full"
                   />
                 </div>
@@ -302,13 +327,33 @@ onUnmounted(() => {
                 </svg>
               </button>
             </div>
+
+            <div class="py-1">
+              <NuxtLink
+                  to="/settings"
+                  @click="showAccountMenu = false"
+                  class="flex items-center gap-x-1.5 px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                <Setting class="size-4 text-gray-500" />
+                <span>Paramètres</span>
+              </NuxtLink>
+              <button
+                  @click="handleLogout"
+                  class="w-full flex items-center gap-x-1.5 px-2 py-1.5 text-xs text-red-600 hover:bg-gray-100 transition-colors"
+              >
+                <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+                <span>Déconnexion</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
       
     </aside>
     <div class="flex flex-col flex-1 overflow-hidden">
-      <div class="h-16 sm:h-20 flex items-center justify-end pr-3 sm:pr-8 gap-x-3 sm:gap-x-6 flex-shrink-0">
+      <div class="h-16 flex items-center justify-end pr-3 sm:pr-8 flex-shrink-0">
         <div class="flex items-center gap-x-3">
           <div v-if="years.length > 0" class="relative" ref="yearDropdownRef">
             <button
@@ -368,11 +413,6 @@ onUnmounted(() => {
               </NuxtLink>
             </div>
           </div>
-          <NuxtLink to="/settings"
-                    class="inline-flex items-center justify-center rounded-full bg-white border p-2 hover:bg-gray-100 transition-colors duration-200">
-            <Setting class="size-4 text-primary cursor-pointer" />
-          </NuxtLink>
-          <UserDropdown :user="user" :initials="initials" />
         </div>
       </div>
 
