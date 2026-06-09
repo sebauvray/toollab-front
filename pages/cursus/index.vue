@@ -189,8 +189,8 @@ onMounted(() => {
         @click="showAddCursusModal = true"
         :disabled="isReadOnly"
         :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
-        class="bg-default text-white px-4 py-1.5 w-fit rounded-lg hover:opacity-90 inline-flex items-center justify-between gap-x-1.5 ml-auto disabled:opacity-40 disabled:cursor-not-allowed">
-      <PlusLight class="size-4"/>
+        class="bg-default text-white px-3 py-1.5 text-sm w-fit rounded-lg hover:opacity-90 inline-flex items-center justify-between gap-x-1.5 ml-auto disabled:opacity-40 disabled:cursor-not-allowed">
+      <PlusLight class="size-3.5"/>
       <span>Créer un cursus</span>
     </button>
 

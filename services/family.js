@@ -103,4 +103,9 @@ export default {
             throw error
         }
     },
+
+    async exportStudents() {
+        const response = await apiClient.get('/api/families/export', { responseType: 'blob' })
+        return response.data
+    },
 }

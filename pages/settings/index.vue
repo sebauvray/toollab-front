@@ -552,22 +552,18 @@ onMounted(async () => {
                 required
             />
 
-            <div>
-              <div class="relative">
-                <select
-                    v-model="newUserForm.role"
-                    class="w-full px-2 py-2 border border-input-stroke rounded-lg transition-colors duration-200 focus:ring-0 focus:outline-none focus:border-default appearance-none bg-white"
-                >
-                  <option v-for="role in roles" :key="role.value" :value="role.value">
-                    {{ role.label }}
-                  </option>
-                </select>
-                <div class="absolute right-4 top-4 mt-1 pointer-events-none">
-                  <svg class="size-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                  </svg>
-                </div>
-              </div>
+            <div class="relative">
+              <select
+                  v-model="newUserForm.role"
+                  class="w-full pl-2 pr-8 py-1.5 text-sm border border-input-stroke rounded-lg bg-white transition-colors duration-200 focus:ring-0 focus:outline-none focus:border-default appearance-none"
+              >
+                <option v-for="role in roles" :key="role.value" :value="role.value">
+                  {{ role.label }}
+                </option>
+              </select>
+              <svg class="size-4 text-gray-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
             </div>
           </div>
 

@@ -99,5 +99,10 @@ export default {
             console.error('Erreur lors de la suppression de l\'élève de la classe:', error)
             throw error
         }
+    },
+
+    async exportClassrooms() {
+        const response = await apiClient.get('/api/admin/classrooms/export', { responseType: 'blob' })
+        return response.data
     }
 }

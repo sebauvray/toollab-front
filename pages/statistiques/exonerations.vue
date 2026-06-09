@@ -4,7 +4,10 @@
       <ClientOnly>
         <BreadCrumb />
       </ClientOnly>
-      <h1 class="text-lg font-bold text-gray-900 mb-5">Exonérations</h1>
+      <div class="flex items-center justify-between mb-5">
+        <h1 class="text-lg font-bold text-gray-900">Exonérations</h1>
+        <ExportButton :loading="exportingCsv" @click="exportCsv" />
+      </div>
 
       <div class="bg-white rounded-lg shadow-sm p-5 mb-5">
         <div class="flex gap-3">
@@ -140,6 +143,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { statisticsService } from '~/services/statistics'
+import { saveExport } from '~/utils/download'
 import BreadCrumb from '~/components/navigation/BreadCrumb.vue'
 import DataTable from '~/components/table/DataTable.vue'
 import PageContainer from '~/components/layout/PageContainer.vue'
@@ -261,6 +265,29 @@ const loadExonerations = async (page = 1) => {
 
 const handlePageChange = (page) => {
   loadExonerations(page)
+}
+
+const exportingCsv = ref(false)
+const exportCsv = async () => {
+  if (exportingCsv.value) return
+  const { setFlashMessage } = useFlashMessage()
+  if (selectedTypes.value.length === 0) {
+    setFlashMessage({ type: 'error', message: 'Sélectionnez au moins un type à exporter' })
+    return
+  }
+  exportingCsv.value = true
+  try {
+    const schoolId = localStorage.getItem('current_school_id') || 1
+    const params = { payment_type: 'exoneration' }
+    if (searchTerm.value) params.search = searchTerm.value
+    if (selectedTypes.value.length === 1) params.exoneration_type = selectedTypes.value[0]
+    const blob = await statisticsService.exportPayments(schoolId, params)
+    saveExport(blob, 'exonerations')
+  } catch (e) {
+    setFlashMessage({ type: 'error', message: 'Échec de l\'export' })
+  } finally {
+    exportingCsv.value = false
+  }
 }
 
 const handlePerPageChange = (perPage) => {

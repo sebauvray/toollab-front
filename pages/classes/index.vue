@@ -7,6 +7,7 @@ import Trash from "~/components/Icons/Trash.vue"
 import classeService from '~/services/classe'
 import { useSchoolYear } from '~/composables/useSchoolYear'
 import { usePageTitle } from "~/composables/usePageTitle.js"
+import { saveExport } from '~/utils/download'
 
 definePageMeta({
   layout: 'auth',
@@ -41,6 +42,21 @@ const viewMode = ref('detailed')
 const setView = (v) => {
   viewMode.value = v
   if (process.client) localStorage.setItem('classes_view', v)
+}
+
+const exportingClasses = ref(false)
+const exportClasses = async () => {
+  if (exportingClasses.value) return
+  exportingClasses.value = true
+  try {
+    const blob = await classeService.exportClassrooms()
+    saveExport(blob, 'classes')
+  } catch (e) {
+    const { setFlashMessage } = useFlashMessage()
+    setFlashMessage({ type: 'error', message: 'Échec de l\'export des classes' })
+  } finally {
+    exportingClasses.value = false
+  }
 }
 
 const currentSchoolId = computed(() => {
@@ -169,10 +185,13 @@ onMounted(() => {
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M3 4h14v2H3V4zm0 5h14v2H3V9zm0 5h14v2H3v-2z"/></svg>
           </button>
         </div>
-        <NuxtLink to="/decisions" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-default bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-          Vue d'ensemble des décisions
-          <span aria-hidden="true">→</span>
-        </NuxtLink>
+        <div class="flex items-center gap-2">
+          <ExportButton :loading="exportingClasses" @click="exportClasses" />
+          <NuxtLink to="/decisions" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-default bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            Vue d'ensemble des décisions
+            <span aria-hidden="true">→</span>
+          </NuxtLink>
+        </div>
       </div>
 
       <div v-if="viewMode === 'detailed'" class="space-y-5 pb-6">

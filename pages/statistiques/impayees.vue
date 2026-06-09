@@ -4,7 +4,10 @@
       <ClientOnly>
         <BreadCrumb />
       </ClientOnly>
-      <h1 class="text-lg font-bold text-gray-900 mb-5">Familles avec paiements en attente</h1>
+      <div class="flex items-center justify-between mb-5">
+        <h1 class="text-lg font-bold text-gray-900">Familles avec paiements en attente</h1>
+        <ExportButton :loading="exportingCsv" @click="exportCsv" />
+      </div>
 
       <div class="bg-white rounded-lg shadow-sm p-5 mb-5">
         <div class="flex gap-3">
@@ -91,6 +94,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { statisticsService } from '~/services/statistics'
+import { saveExport } from '~/utils/download'
 import BreadCrumb from '~/components/navigation/BreadCrumb.vue'
 import DataTable from '~/components/table/DataTable.vue'
 import PageContainer from '~/components/layout/PageContainer.vue'
@@ -184,6 +188,25 @@ const loadUnpaidFamilies = async (page = 1) => {
 
 const handlePageChange = (page) => {
   loadUnpaidFamilies(page)
+}
+
+const exportingCsv = ref(false)
+const exportCsv = async () => {
+  if (exportingCsv.value) return
+  exportingCsv.value = true
+  try {
+    const schoolId = localStorage.getItem('current_school_id') || 1
+    const params = {}
+    if (searchTerm.value) params.search = searchTerm.value
+    if (filterType.value !== 'all') params.filter = filterType.value
+    const blob = await statisticsService.exportUnpaidFamilies(schoolId, params)
+    saveExport(blob, 'familles_impayees')
+  } catch (e) {
+    const { setFlashMessage } = useFlashMessage()
+    setFlashMessage({ type: 'error', message: 'Échec de l\'export' })
+  } finally {
+    exportingCsv.value = false
+  }
 }
 
 const handlePerPageChange = (perPage) => {

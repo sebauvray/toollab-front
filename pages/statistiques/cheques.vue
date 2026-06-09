@@ -4,7 +4,10 @@
       <ClientOnly>
         <BreadCrumb />
       </ClientOnly>
-      <h1 class="text-lg font-bold text-gray-900 mb-5">Recherche de chèques</h1>
+      <div class="flex items-center justify-between mb-5">
+        <h1 class="text-lg font-bold text-gray-900">Recherche de chèques</h1>
+        <ExportButton :loading="exportingCsv" @click="exportCsv" />
+      </div>
 
       <div class="bg-white rounded-lg shadow-sm p-5 mb-5">
         <div class="flex gap-3">
@@ -112,6 +115,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { statisticsService } from '~/services/statistics'
+import { saveExport } from '~/utils/download'
 import BreadCrumb from '~/components/navigation/BreadCrumb.vue'
 import DataTable from '~/components/table/DataTable.vue'
 import PageContainer from '~/components/layout/PageContainer.vue'
@@ -245,6 +249,29 @@ const handlePerPageChange = (perPage) => {
 const handleSearch = () => {
   pagination.value.currentPage = 1
   loadCheques(1)
+}
+
+const exportingCsv = ref(false)
+const exportCsv = async () => {
+  if (exportingCsv.value) return
+  const { setFlashMessage } = useFlashMessage()
+  if (selectedBanks.value.length === 0) {
+    setFlashMessage({ type: 'error', message: 'Sélectionnez au moins une banque à exporter' })
+    return
+  }
+  exportingCsv.value = true
+  try {
+    const schoolId = localStorage.getItem('current_school_id') || 1
+    const params = { payment_type: 'cheque' }
+    if (searchTerm.value) params.search = searchTerm.value
+    if (selectedBanks.value.length < availableBanks.value.length) params.banks = selectedBanks.value.join(',')
+    const blob = await statisticsService.exportPayments(schoolId, params)
+    saveExport(blob, 'cheques')
+  } catch (e) {
+    setFlashMessage({ type: 'error', message: 'Échec de l\'export' })
+  } finally {
+    exportingCsv.value = false
+  }
 }
 
 const selectAllBanks = () => {

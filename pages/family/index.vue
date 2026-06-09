@@ -11,6 +11,7 @@ import PageContainer from "~/components/layout/PageContainer.vue";
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 import {usePageTitle} from "~/composables/usePageTitle.js";
 import { useSchoolYear } from "~/composables/useSchoolYear";
+import { saveExport } from "~/utils/download";
 
 const { isReadOnly } = useSchoolYear();
 
@@ -86,6 +87,21 @@ const handlePerPageChange = (perPage) => {
     fetchFamilies(1);
 };
 
+const exportingStudents = ref(false);
+const exportStudents = async () => {
+    if (exportingStudents.value) return;
+    exportingStudents.value = true;
+    try {
+        const blob = await familyService.exportStudents();
+        saveExport(blob, 'eleves');
+    } catch (e) {
+        const { setFlashMessage } = useFlashMessage();
+        setFlashMessage({ type: 'error', message: 'Échec de l\'export des élèves' });
+    } finally {
+        exportingStudents.value = false;
+    }
+};
+
 const handleAddResponsable = async (newResponsable) => {
     try {
         if (newResponsable && newResponsable.family_id) {
@@ -114,14 +130,17 @@ onMounted(() => {
             @save="handleAddResponsable"
         />
 
-        <button
-            @click="showAddResponsableModal = true"
-            :disabled="isReadOnly"
-            :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
-            class="bg-default text-white px-4 py-1.5 w-fit rounded-lg hover:opacity-90 inline-flex items-center justify-between gap-x-1.5 ml-auto disabled:opacity-40 disabled:cursor-not-allowed">
-            <PlusLight class="size-4"/>
-            <span>Créer une famille</span>
-        </button>
+        <div class="flex items-center gap-2 ml-auto w-fit">
+            <ExportButton :loading="exportingStudents" @click="exportStudents" />
+            <button
+                @click="showAddResponsableModal = true"
+                :disabled="isReadOnly"
+                :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
+                class="bg-default text-white px-3 py-1.5 text-sm w-fit rounded-lg hover:opacity-90 inline-flex items-center justify-between gap-x-1.5 disabled:opacity-40 disabled:cursor-not-allowed">
+                <PlusLight class="size-3.5"/>
+                <span>Créer une famille</span>
+            </button>
+        </div>
 
         <div v-if="error" class="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded relative">
             {{ error }}

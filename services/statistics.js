@@ -90,5 +90,21 @@ export const statisticsService = {
       console.error('Erreur lors de la récupération des banques:', error)
       throw error
     }
+  },
+
+  async exportPayments(schoolId, params = {}) {
+    const response = await apiClient.get('/api/statistics/export-payments', {
+      params: { school_id: schoolId, ...params },
+      responseType: 'blob'
+    })
+    return response.data
+  },
+
+  async exportUnpaidFamilies(schoolId, params = {}) {
+    const response = await apiClient.get('/api/statistics/export-unpaid-families', {
+      params: { school_id: schoolId, ...params },
+      responseType: 'blob'
+    })
+    return response.data
   }
 }
