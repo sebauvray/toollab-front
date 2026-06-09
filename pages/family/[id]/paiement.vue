@@ -675,7 +675,7 @@ const resetNewForm = () => {
                         <div class="flex flex-col sm:flex-row justify-end gap-1.5">
                             <button
                                 @click="cancelEdit"
-                                class="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded-lg text-xs"
+                                class="px-2 py-1 text-gray-600 border border-gray-300 hover:bg-gray-100 rounded-lg text-xs"
                             >
                                 Annuler
                             </button>
@@ -887,7 +887,7 @@ const resetNewForm = () => {
                         <div class="flex flex-col sm:flex-row justify-end gap-1.5">
                             <button
                                 @click="resetNewForm"
-                                class="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded-lg text-xs"
+                                class="px-2 py-1 text-gray-600 border border-gray-300 hover:bg-gray-100 rounded-lg text-xs"
                             >
                                 Annuler
                             </button>
@@ -995,7 +995,7 @@ const resetNewForm = () => {
                 <div class="flex flex-col sm:flex-row gap-2 justify-end">
                     <button
                         @click="closeDeleteModal"
-                        class="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        class="px-3 py-1.5 text-gray-600 border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors"
                     >
                         Annuler
                     </button>

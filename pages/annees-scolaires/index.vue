@@ -438,7 +438,7 @@ onMounted(async () => {
             >← Précédent</button>
             <span v-else></span>
             <div class="flex items-center gap-2">
-              <button type="button" @click="showCreateModal = false" :disabled="isSubmitting" class="px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 rounded-lg disabled:opacity-50">Annuler</button>
+              <button type="button" @click="showCreateModal = false" :disabled="isSubmitting" class="px-3 py-1.5 text-xs text-gray-700 border border-gray-300 hover:bg-gray-100 rounded-lg disabled:opacity-50">Annuler</button>
               <button
                   v-if="!isLastStep"
                   type="button"
@@ -469,7 +469,7 @@ onMounted(async () => {
             Pour réinscrire les élèves, ouvrez une nouvelle année après la clôture.
           </p>
           <div class="flex justify-end gap-x-1.5">
-            <button @click="showCloseModal = false; yearToClose = null" :disabled="isClosing" class="px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 rounded-lg">
+            <button @click="showCloseModal = false; yearToClose = null" :disabled="isClosing" class="px-3 py-1.5 text-xs text-gray-700 border border-gray-300 hover:bg-gray-100 rounded-lg">
               Annuler
             </button>
             <button @click="confirmClose" :disabled="isClosing" class="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:opacity-90 text-xs disabled:opacity-50">

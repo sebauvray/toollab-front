@@ -87,6 +87,7 @@ const handlePerPageChange = (perPage) => {
     fetchFamilies(1);
 };
 
+const canExport = ref(false);
 const exportingStudents = ref(false);
 const exportStudents = async () => {
     if (exportingStudents.value) return;
@@ -115,6 +116,10 @@ const handleAddResponsable = async (newResponsable) => {
 };
 
 onMounted(() => {
+    if (process.client) {
+        const role = localStorage.getItem('current_school_role');
+        canExport.value = ['Directeur', 'Administrateur', 'Super-admin'].includes(role);
+    }
     pagination.value.perPage = loadPerPage();
     fetchFamilies();
 });
@@ -131,7 +136,7 @@ onMounted(() => {
         />
 
         <div class="flex items-center gap-2 ml-auto w-fit">
-            <ExportButton :loading="exportingStudents" @click="exportStudents" />
+            <ExportButton v-if="canExport" :loading="exportingStudents" @click="exportStudents" />
             <button
                 @click="showAddResponsableModal = true"
                 :disabled="isReadOnly"

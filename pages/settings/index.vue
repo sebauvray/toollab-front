@@ -282,284 +282,124 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="container mx-auto px-5 py-6">
+  <div class="container mx-auto px-5 py-6 font-nunito">
     <div v-if="isLoading" class="flex justify-center items-center h-64">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
     </div>
 
-    <div v-else class="bg-white shadow rounded-lg">
-      <div class="flex border-b overflow-x-auto">
+    <template v-else>
+      <h1 class="text-base font-bold text-default font-montserrat mb-4">Paramètres</h1>
+
+      <div class="flex items-center gap-1 border-b border-[#E6EFF5] mb-5">
         <button
             @click="activeTab = 'profile'"
-            :class="[
-            'px-5 py-2 font-medium text-xs focus:outline-none transition-colors whitespace-nowrap',
-            activeTab === 'profile'
-              ? 'border-b-2 border-black text-black font-semibold'
-              : 'text-gray-500 hover:text-black'
-          ]"
-        >
-          Profil
-        </button>
-
+            :class="['px-3 py-2 text-xs font-medium -mb-px border-b-2 transition-colors whitespace-nowrap font-montserrat', activeTab === 'profile' ? 'border-default text-default' : 'border-transparent text-placeholder hover:text-default']"
+        >Profil</button>
         <button
             @click="activeTab = 'password'"
-            :class="[
-            'px-5 py-2 font-medium text-xs focus:outline-none transition-colors whitespace-nowrap',
-            activeTab === 'password'
-              ? 'border-b-2 border-black text-black font-semibold'
-              : 'text-gray-500 hover:text-black'
-          ]"
-        >
-          Mot de passe
-        </button>
-
+            :class="['px-3 py-2 text-xs font-medium -mb-px border-b-2 transition-colors whitespace-nowrap font-montserrat', activeTab === 'password' ? 'border-default text-default' : 'border-transparent text-placeholder hover:text-default']"
+        >Mot de passe</button>
         <button
             v-if="isDirector"
             @click="activeTab = 'school'"
-            :class="[
-            'px-5 py-2 font-medium text-xs focus:outline-none transition-colors whitespace-nowrap',
-            activeTab === 'school'
-              ? 'border-b-2 border-black text-black font-semibold'
-              : 'text-gray-500 hover:text-black'
-          ]"
-        >
-          Mon établissement
-        </button>
-
+            :class="['px-3 py-2 text-xs font-medium -mb-px border-b-2 transition-colors whitespace-nowrap font-montserrat', activeTab === 'school' ? 'border-default text-default' : 'border-transparent text-placeholder hover:text-default']"
+        >Mon établissement</button>
         <button
             v-if="isDirector"
             @click="activeTab = 'users'"
-            :class="[
-            'px-5 py-2 font-medium text-xs focus:outline-none transition-colors whitespace-nowrap',
-            activeTab === 'users'
-              ? 'border-b-2 border-black text-black font-semibold'
-              : 'text-gray-500 hover:text-black'
-          ]"
-        >
-          Utilisateurs
-        </button>
+            :class="['px-3 py-2 text-xs font-medium -mb-px border-b-2 transition-colors whitespace-nowrap font-montserrat', activeTab === 'users' ? 'border-default text-default' : 'border-transparent text-placeholder hover:text-default']"
+        >Utilisateurs</button>
       </div>
 
-      <div class="p-5">
-        <div
-            v-if="message.text"
-            :class="[
-            'p-3 mb-5 rounded text-white',
-            message.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-          ]"
-        >
-          {{ message.text }}
+      <div
+          v-if="message.text"
+          :class="['text-xs rounded-lg px-3 py-2 mb-4 ring-1', message.type === 'success' ? 'bg-green-50 text-green-700 ring-green-200' : 'bg-red-50 text-red-700 ring-red-200']"
+      >
+        {{ message.text }}
+      </div>
+
+      <div v-if="activeTab === 'profile'" class="bg-white rounded-2xl border p-5">
+        <h2 class="text-sm font-semibold text-default font-montserrat mb-4">Informations personnelles</h2>
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <InputText v-model="userForm.first_name" placeholder="Prénom" />
+          <InputText v-model="userForm.last_name" placeholder="Nom" />
         </div>
-
-        <div v-if="activeTab === 'profile'">
-          <h2 class="text-base font-semibold mb-5">Informations personnelles</h2>
-
-          <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
-            <div>
-              <InputText
-                  v-model="userForm.first_name"
-                  placeholder="Prénom"
-              />
-            </div>
-
-            <div>
-              <InputText
-                  v-model="userForm.last_name"
-                  placeholder="Nom"
-              />
-            </div>
-          </div>
-
-          <div class="flex justify-end mt-5">
-            <SaveButton @click="handleUpdateUser">
-              Enregistrer
-            </SaveButton>
-          </div>
+        <div class="flex justify-end mt-5">
+          <SaveButton @click="handleUpdateUser">Enregistrer</SaveButton>
         </div>
+      </div>
 
-        <div v-if="activeTab === 'password'">
-          <h2 class="text-base font-semibold mb-5">Changer de mot de passe</h2>
-
-          <div class="grid grid-cols-1 gap-5">
-            <div>
-              <InputText
-                  v-model="passwordForm.current_password"
-                  placeholder="Mot de passe actuel"
-                  type="password"
-              />
-            </div>
-
-            <div>
-              <InputText
-                  v-model="passwordForm.password"
-                  placeholder="Nouveau mot de passe"
-                  type="password"
-              />
-            </div>
-
-            <div>
-              <InputText
-                  v-model="passwordForm.password_confirmation"
-                  placeholder="Confirmer le nouveau mot de passe"
-                  type="password"
-              />
-            </div>
-          </div>
-
-          <div class="flex justify-end mt-5">
-            <SaveButton @click="handleUpdatePassword">
-              Mettre à jour
-            </SaveButton>
-          </div>
+      <div v-if="activeTab === 'password'" class="bg-white rounded-2xl border p-5">
+        <h2 class="text-sm font-semibold text-default font-montserrat mb-4">Changer de mot de passe</h2>
+        <div class="grid grid-cols-1 gap-5 max-w-lg">
+          <InputText v-model="passwordForm.current_password" placeholder="Mot de passe actuel" type="password" />
+          <InputText v-model="passwordForm.password" placeholder="Nouveau mot de passe" type="password" />
+          <InputText v-model="passwordForm.password_confirmation" placeholder="Confirmer le nouveau mot de passe" type="password" />
         </div>
+        <div class="flex justify-end mt-5">
+          <SaveButton @click="handleUpdatePassword">Mettre à jour</SaveButton>
+        </div>
+      </div>
 
-        <div v-if="activeTab === 'school' && isDirector">
-          <h2 class="text-base font-semibold mb-5">Informations de l'établissement</h2>
+      <div v-if="activeTab === 'school' && isDirector" class="bg-white rounded-2xl border p-5">
+        <h2 class="text-sm font-semibold text-default font-montserrat mb-4">Informations de l'établissement</h2>
 
-          <div class="mb-5">
-            <label class="block text-xs font-medium text-gray-700 mb-1.5">
-              Logo de l'établissement
+        <div class="flex items-center gap-4 mb-5">
+          <div v-if="logoPreview" class="w-20 h-20 rounded-2xl overflow-hidden border border-[#E6EFF5] shrink-0">
+            <img :src="logoPreview" alt="Logo de l'école" class="w-full h-full object-cover" />
+          </div>
+          <div v-else class="w-20 h-20 rounded-2xl bg-gray-50 flex items-center justify-center border border-[#E6EFF5] shrink-0 text-[11px] text-placeholder text-center px-1">
+            Aucun logo
+          </div>
+          <div>
+            <div class="text-[11px] uppercase tracking-wide text-placeholder mb-1.5 font-montserrat">Logo de l'établissement</div>
+            <label class="inline-flex items-center cursor-pointer px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+              <span>{{ logoPreview ? 'Changer le logo' : 'Ajouter un logo' }}</span>
+              <input type="file" accept="image/jpeg,image/jpg,image/png,image/gif" class="hidden" @change="handleFileChange" />
             </label>
-
-            <div class="flex items-center space-x-5">
-              <div
-                  v-if="logoPreview"
-                  class="w-24 h-24 rounded-full overflow-hidden border"
-              >
-                <img
-                    :src="logoPreview"
-                    alt="Logo de l'école"
-                    class="w-full h-full object-cover"
-                />
-              </div>
-
-              <div
-                  v-else
-                  class="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center border"
-              >
-                <span class="text-gray-400">Aucun logo</span>
-              </div>
-
-              <label class="cursor-pointer bg-gray-50 px-3 py-1.5 border rounded hover:bg-gray-100 transition-colors">
-                <span>{{ logoPreview ? 'Changer le logo' : 'Ajouter un logo' }}</span>
-                <input
-                    type="file"
-                    accept="image/jpeg,image/jpg,image/png,image/gif,image/svg+xml"
-                    class="hidden"
-                    @change="handleFileChange"
-                />
-              </label>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
-            <div>
-              <InputText
-                  v-model="schoolForm.name"
-                  placeholder="Nom de l'établissement"
-              />
-            </div>
-
-            <div>
-              <InputText
-                  v-model="schoolForm.email"
-                  placeholder="Email de l'établissement"
-                  type="email"
-              />
-            </div>
-
-            <div>
-              <InputText
-                  v-model="schoolForm.phone"
-                  placeholder="Téléphone"
-              />
-            </div>
-
-            <div class="md:col-span-2">
-              <InputText
-                  v-model="schoolForm.address"
-                  placeholder="Adresse"
-              />
-            </div>
-
-            <div>
-              <InputText
-                  v-model="schoolForm.zipcode"
-                  placeholder="Code postal"
-              />
-            </div>
-
-            <div>
-              <InputText
-                  v-model="schoolForm.city"
-                  placeholder="Ville"
-              />
-            </div>
-
-            <div>
-              <InputText
-                  v-model="schoolForm.country"
-                  placeholder="Pays"
-              />
-            </div>
-          </div>
-
-          <div class="flex justify-end mt-5">
-            <SaveButton @click="handleUpdateSchool">
-              Enregistrer
-            </SaveButton>
           </div>
         </div>
 
-        <div v-if="activeTab === 'users' && (isDirector) && school">
-          <div class="mb-6">
-            <h2 class="text-base font-semibold mb-5">Liste des membres du personnel</h2>
-            <UserList
-                :school-id="school.id"
-                ref="userListRef"
-                @update="checkUserRoles"
-            />
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <InputText v-model="schoolForm.name" placeholder="Nom de l'établissement" />
+          <InputText v-model="schoolForm.email" placeholder="Email de l'établissement" type="email" />
+          <InputText v-model="schoolForm.phone" placeholder="Téléphone" />
+          <div class="md:col-span-2">
+            <InputText v-model="schoolForm.address" placeholder="Adresse" />
           </div>
+          <InputText v-model="schoolForm.zipcode" placeholder="Code postal" />
+          <InputText v-model="schoolForm.city" placeholder="Ville" />
+          <InputText v-model="schoolForm.country" placeholder="Pays" />
+        </div>
 
-          <div class="w-full border-t border-gray-200 my-6"></div>
+        <div class="flex justify-end mt-5">
+          <SaveButton @click="handleUpdateSchool">Enregistrer</SaveButton>
+        </div>
+      </div>
 
-          <h2 class="text-base font-semibold mb-5">Ajouter un utilisateur</h2>
-          <p class="text-xs text-gray-600 mb-5">
+      <div v-if="activeTab === 'users' && isDirector && school" class="space-y-5">
+        <div>
+          <h2 class="text-sm font-semibold text-default font-montserrat mb-3">Liste des membres du personnel</h2>
+          <UserList :school-id="school.id" ref="userListRef" @update="checkUserRoles" />
+        </div>
+
+        <div class="bg-white rounded-2xl border p-5">
+          <h2 class="text-sm font-semibold text-default font-montserrat mb-1.5">Ajouter un utilisateur</h2>
+          <p class="text-xs text-placeholder mb-4 max-w-3xl">
             Créez un compte administrateur ou un responsable des inscriptions pour votre établissement.
-            Un email d'invitation sera envoyé à l'utilisateur pour définir son mot de passe.
-            Pour les professeurs, utilisez l'onglet dédié.
+            Un email d'invitation sera envoyé à l'utilisateur pour définir son mot de passe. Pour les professeurs, utilisez l'onglet dédié.
           </p>
 
-          <div class="grid grid-cols-1 gap-5 md:grid-cols-4">
-
-            <InputText
-                v-model="newUserForm.last_name"
-                placeholder="Nom"
-                required
-            />
-
-            <InputText
-                v-model="newUserForm.first_name"
-                placeholder="Prénom"
-                required
-            />
-
-
-            <InputText
-                v-model="newUserForm.email"
-                placeholder="Email"
-                type="email"
-                required
-            />
-
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <InputText v-model="newUserForm.last_name" placeholder="Nom" required />
+            <InputText v-model="newUserForm.first_name" placeholder="Prénom" required />
+            <InputText v-model="newUserForm.email" placeholder="Email" type="email" required />
             <div class="relative">
               <select
                   v-model="newUserForm.role"
                   class="w-full pl-2 pr-8 py-1.5 text-sm border border-input-stroke rounded-lg bg-white transition-colors duration-200 focus:ring-0 focus:outline-none focus:border-default appearance-none"
               >
-                <option v-for="role in roles" :key="role.value" :value="role.value">
-                  {{ role.label }}
-                </option>
+                <option v-for="role in roles" :key="role.value" :value="role.value">{{ role.label }}</option>
               </select>
               <svg class="size-4 text-gray-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -568,12 +408,10 @@ onMounted(async () => {
           </div>
 
           <div class="flex justify-end mt-5">
-            <SaveButton @click="handleCreateUser">
-              Ajouter l'utilisateur
-            </SaveButton>
+            <SaveButton @click="handleCreateUser">Ajouter l'utilisateur</SaveButton>
           </div>
         </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>

@@ -358,7 +358,7 @@ onUnmounted(() => {
           <div v-if="years.length > 0" class="relative" ref="yearDropdownRef">
             <button
                 @click="showYearDropdown = !showYearDropdown"
-                class="inline-flex items-center gap-x-1.5 px-2 py-1.5 rounded-lg border bg-white hover:bg-gray-100 transition-colors text-xs"
+                class="inline-flex items-center gap-x-1.5 px-2 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 transition-colors text-xs"
                 :class="isReadOnly ? 'border-amber-400 text-amber-700' : 'text-gray-700'"
             >
               <span class="font-medium">{{ currentYear?.label || 'Année' }}</span>

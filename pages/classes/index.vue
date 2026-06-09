@@ -165,7 +165,7 @@ onMounted(() => {
 
     <div v-else>
       <div class="flex items-center justify-between gap-2 mb-4">
-        <div class="inline-flex items-center gap-0.5 p-1 bg-white border border-gray-200 rounded-lg">
+        <div class="inline-flex items-center gap-0.5 p-1 bg-white border border-gray-300 rounded-lg">
           <button
               type="button"
               @click="setView('detailed')"
@@ -187,7 +187,7 @@ onMounted(() => {
         </div>
         <div class="flex items-center gap-2">
           <ExportButton :loading="exportingClasses" @click="exportClasses" />
-          <NuxtLink to="/decisions" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-default bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+          <NuxtLink to="/decisions" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-default bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
             Vue d'ensemble des décisions
             <span aria-hidden="true">→</span>
           </NuxtLink>

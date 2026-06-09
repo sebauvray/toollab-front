@@ -28,6 +28,19 @@ const roleLabels = {
   'responsible': 'Responsable'
 }
 
+const roleChip = {
+  director: 'bg-purple-50 text-purple-700 ring-purple-200',
+  admin: 'bg-blue-50 text-blue-700 ring-blue-200',
+  registar: 'bg-green-50 text-green-700 ring-green-200',
+  teacher: 'bg-amber-50 text-amber-700 ring-amber-200'
+}
+const roleDot = {
+  director: 'bg-purple-500',
+  admin: 'bg-blue-500',
+  registar: 'bg-green-500',
+  teacher: 'bg-amber-500'
+}
+
 const fetchUsers = async () => {
   try {
     isLoading.value = true
@@ -115,75 +128,59 @@ defineExpose({
   <div>
     <div
         v-if="message.text"
-        :class="[
-      'p-3 mb-5 rounded text-white',
-      message.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-    ]"
+        :class="['text-xs rounded-lg px-3 py-2 mb-4 ring-1', message.type === 'success' ? 'bg-green-50 text-green-700 ring-green-200' : 'bg-red-50 text-red-700 ring-red-200']"
     >
       {{ message.text }}
     </div>
 
-    <div v-if="isLoading" class="flex justify-center py-6">
+    <div v-if="isLoading" class="flex justify-center py-8">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
     </div>
 
-    <div v-else-if="users.length === 0" class="py-6 text-center text-gray-500">
+    <div v-else-if="users.length === 0" class="bg-white rounded-2xl border py-8 text-center text-xs text-placeholder">
       Aucun membre du personnel n'a été ajouté.
     </div>
 
-    <div v-else class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-        <tr>
-          <th scope="col" class="px-5 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Nom
-          </th>
-          <th scope="col" class="px-5 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Email
-          </th>
-          <th scope="col" class="px-5 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Rôles
-          </th>
-        </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-        <tr v-for="user in users" :key="user.user.id">
-          <td class="px-5 py-3 whitespace-nowrap">
-            <div class="text-xs font-medium text-gray-900">
-              {{ user.user.first_name }} {{ user.user.last_name }}
-            </div>
-          </td>
-          <td class="px-5 py-3 whitespace-nowrap">
-            <div class="text-xs text-gray-500">
-              {{ user.user.email }}
-            </div>
-          </td>
-          <td class="px-5 py-3">
-            <div class="flex flex-wrap gap-1.5">
-              <div
-                  v-for="role in user.roles"
-                  :key="role"
-                  class="px-1.5 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full group"
-                  :class="{
-                  'bg-purple-100 text-purple-800': role === 'director',
-                  'bg-blue-100 text-blue-800': role === 'admin',
-                  'bg-green-100 text-green-800': role === 'registar',
-                  'bg-orange-100 text-orange-800': role === 'teacher'
-                }">
-                <span>{{ roleLabels[role] }}</span>
-                <button
-                    v-if="role !== 'director'"
-                    @click="openRemoveRoleModal(user.user.id, role)"
-                    class="ml-1 text-gray-400 hover:text-red-600 focus:outline-none transition-colors"
-                    title="Supprimer ce rôle">
-                  <Trash class="size-3" />
-                </button>
-              </div>
-            </div>
-          </td>
-        </tr>
-        </tbody>
-      </table>
+    <div v-else class="bg-white rounded-2xl border overflow-hidden font-nunito">
+        <table class="min-w-full text-xs">
+          <thead class="bg-gray-50 border-b border-[#E6EFF5] font-montserrat">
+            <tr>
+              <th class="px-4 py-2 text-left font-semibold text-gray-600">Nom</th>
+              <th class="px-4 py-2 text-left font-semibold text-gray-600">Email</th>
+              <th class="px-4 py-2 text-left font-semibold text-gray-600">Rôles</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#E6EFF5]">
+            <tr v-for="user in users" :key="user.user.id" class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium text-gray-900 whitespace-nowrap">
+                {{ user.user.first_name }} {{ user.user.last_name }}
+              </td>
+              <td class="px-4 py-2.5 text-gray-600">
+                {{ user.user.email }}
+              </td>
+              <td class="px-4 py-2.5">
+                <div class="flex flex-wrap gap-1.5">
+                  <span
+                      v-for="role in user.roles"
+                      :key="role"
+                      :class="['inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium ring-1', roleChip[role] || 'bg-gray-50 text-gray-600 ring-gray-200']"
+                  >
+                    <span class="h-1.5 w-1.5 rounded-full" :class="roleDot[role] || 'bg-gray-400'"></span>
+                    {{ roleLabels[role] }}
+                    <button
+                        v-if="role !== 'director'"
+                        @click="openRemoveRoleModal(user.user.id, role)"
+                        class="ml-0.5 opacity-60 hover:opacity-100 hover:text-red-600 focus:outline-none transition-opacity"
+                        title="Supprimer ce rôle"
+                    >
+                      <Trash class="size-3" />
+                    </button>
+                  </span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
     </div>
 
     <ConfirmationModal

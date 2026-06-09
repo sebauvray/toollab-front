@@ -4,8 +4,7 @@
       <ClientOnly>
         <BreadCrumb />
       </ClientOnly>
-      <div class="flex items-center justify-between mb-5">
-        <h1 class="text-lg font-bold text-gray-900">Recherche de chèques</h1>
+      <div class="flex justify-end mb-3">
         <ExportButton :loading="exportingCsv" @click="exportCsv" />
       </div>
 
@@ -96,13 +95,17 @@
             <div class="col-span-2 text-xs text-gray-600">
               {{ (item.family?.responsibles && item.family.responsibles.length > 0 && item.family.responsibles[0].phone) || '-' }}
             </div>
-            <div class="col-span-1">
-              <NuxtLink 
+            <div class="col-span-1 flex justify-end">
+              <NuxtLink
                 v-if="item.family?.id"
                 :to="`/family/${item.family.id}/paiement`"
-                class="text-gray-900 hover:text-gray-700 underline text-xs"
+                title="Voir le paiement"
+                class="inline-flex items-center justify-center w-7 h-7 rounded-lg text-gray-500 hover:text-default hover:bg-gray-100 transition-colors"
               >
-                Voir
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.04 12.32a1 1 0 010-.64C3.42 7.51 7.36 4.5 12 4.5s8.57 3.01 9.96 7.18c.07.21.07.43 0 .64C20.58 16.49 16.64 19.5 12 19.5s-8.57-3.01-9.96-7.18z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
               </NuxtLink>
             </div>
           </div>
@@ -148,7 +151,7 @@ const columns = [
   { key: 'bank', label: 'Banque', width: '2' },
   { key: 'responsable', label: 'Nom du responsable', width: '3' },
   { key: 'phone', label: 'Téléphone', width: '2' },
-  { key: 'actions', label: 'Actions', width: '1' }
+  { key: 'actions', label: '', width: '1' }
 ]
 
 const bankDisplay = computed(() => {
