@@ -25,15 +25,49 @@ const error = ref(null)
 
 const activeTab = ref('students')
 
-const isSavingOutcomes = ref(false)
-const outcomeOptions = [
-  {value: 'passage', label: 'Passage', selectedClass: 'bg-green-600 text-white border-green-600', idleClass: 'bg-white text-green-700 border-green-300 hover:bg-green-50'},
-  {value: 'redoublement', label: 'Redoublement', selectedClass: 'bg-amber-500 text-white border-amber-500', idleClass: 'bg-white text-amber-700 border-amber-300 hover:bg-amber-50'},
-  {value: 'fin_cursus', label: 'Fin de cursus', selectedClass: 'bg-blue-600 text-white border-blue-600', idleClass: 'bg-white text-blue-700 border-blue-300 hover:bg-blue-50'},
-  {value: 'exclusion', label: 'Exclusion', selectedClass: 'bg-red-600 text-white border-red-600', idleClass: 'bg-white text-red-700 border-red-300 hover:bg-red-50'}
+const OUTCOMES = [
+  {value: 'passage', label: 'Passage', dot: 'bg-green-500', head: 'text-green-700', cellSel: 'bg-green-100 text-green-700 ring-1 ring-green-300', cellHover: 'hover:bg-green-50 hover:text-green-400'},
+  {value: 'redoublement', label: 'Redoublement', dot: 'bg-amber-500', head: 'text-amber-700', cellSel: 'bg-amber-100 text-amber-700 ring-1 ring-amber-300', cellHover: 'hover:bg-amber-50 hover:text-amber-400'},
+  {value: 'fin_cursus', label: 'Fin de cursus', dot: 'bg-blue-500', head: 'text-blue-700', cellSel: 'bg-blue-100 text-blue-700 ring-1 ring-blue-300', cellHover: 'hover:bg-blue-50 hover:text-blue-400'},
+  {value: 'exclusion', label: 'Exclusion', dot: 'bg-red-500', head: 'text-red-700', cellSel: 'bg-red-100 text-red-700 ring-1 ring-red-300', cellHover: 'hover:bg-red-50 hover:text-red-400'}
 ]
 const canEditOutcomes = computed(() => outcomesOpen.value && !yearClosed.value)
-const decisionsCount = computed(() => students.value.filter(s => s.outcome).length)
+const decidedCount = computed(() => students.value.filter(s => s.outcome).length)
+
+let outcomeSaveTimer = null
+const doSaveOutcomes = async () => {
+  if (!canEditOutcomes.value) return
+  const decisions = students.value
+      .filter(s => s.outcome)
+      .map(s => ({student_id: s.student_id, outcome: s.outcome, commentaire: s.commentaire || null}))
+  try {
+    await teacherService.saveOutcomes(route.params.id, decisions)
+  } catch (e) {
+    setFlashMessage({type: 'error', message: e.response?.data?.message || 'Erreur d\'enregistrement'})
+  }
+}
+const queueSaveOutcomes = () => {
+  clearTimeout(outcomeSaveTimer)
+  outcomeSaveTimer = setTimeout(doSaveOutcomes, 450)
+}
+const setOutcome = (s, val) => {
+  if (!canEditOutcomes.value) return
+  s.outcome = s.outcome === val ? '' : val
+  queueSaveOutcomes()
+}
+
+const note = ref(null)
+const noteInput = ref(null)
+const openNote = (s, ev) => {
+  if (!canEditOutcomes.value && !s.commentaire) return
+  const r = ev.currentTarget.getBoundingClientRect()
+  note.value = {s, top: r.bottom + 4, left: Math.min(r.left, window.innerWidth - 264)}
+  nextTick(() => noteInput.value?.focus())
+}
+const closeNote = () => { note.value = null }
+const commitNote = () => {
+  if (note.value) { queueSaveOutcomes(); closeNote() }
+}
 
 const monthNames = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.']
 const CYCLE = ['', 'present', 'absent_justifie', 'absent_non_justifie']
@@ -225,27 +259,6 @@ const onAddSession = (ev) => {
   mat.value.forEach(s => { s.cells[d] = {status: '', justification: ''} })
 }
 
-const handleSaveOutcomes = async () => {
-  if (!canEditOutcomes.value) return
-  const decisions = students.value
-      .filter(s => s.outcome)
-      .map(s => ({student_id: s.student_id, outcome: s.outcome, commentaire: s.commentaire || null}))
-  if (decisions.length === 0) {
-    setFlashMessage({type: 'error', message: 'Aucune décision à enregistrer'})
-    return
-  }
-  try {
-    isSavingOutcomes.value = true
-    await teacherService.saveOutcomes(route.params.id, decisions)
-    setFlashMessage({type: 'success', message: 'Décisions enregistrées'})
-    await fetchData()
-  } catch (e) {
-    setFlashMessage({type: 'error', message: e.response?.data?.message || 'Erreur lors de l\'enregistrement'})
-  } finally {
-    isSavingOutcomes.value = false
-  }
-}
-
 onMounted(() => fetchData())
 </script>
 
@@ -353,56 +366,55 @@ onMounted(() => fetchData())
       </div>
 
       <div v-else-if="activeTab === 'decisions'">
-        <div class="flex items-center justify-between gap-3 mb-3">
-          <p class="text-xs text-gray-500">{{ students.length }} élève{{ students.length > 1 ? 's' : '' }}</p>
-          <button
-              v-if="canEditOutcomes && students.length > 0"
-              type="button"
-              @click="handleSaveOutcomes"
-              :disabled="isSavingOutcomes || decisionsCount === 0"
-              :class="['flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0', decisionsCount === 0 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-default text-white hover:opacity-90']"
-          >
-            <span v-if="decisionsCount > 0" class="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1 rounded-full bg-white/25 text-xs font-bold">{{ decisionsCount }}</span>
-            {{ isSavingOutcomes ? 'Enregistrement…' : decisionsCount === 0 ? 'Aucune décision saisie' : `Enregistrer ${decisionsCount > 1 ? 'les décisions' : 'la décision'}` }}
-          </button>
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+            <span class="text-placeholder">{{ canEditOutcomes ? 'Clique la colonne voulue pour décider :' : 'Décisions de fin d\'année :' }}</span>
+            <span v-for="o in OUTCOMES" :key="o.value" class="inline-flex items-center gap-1.5">
+              <span class="h-2.5 w-2.5 rounded-full" :class="o.dot"></span>{{ o.label }}
+            </span>
+          </div>
+          <span v-if="!canEditOutcomes" class="text-[11px] px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 ring-1 ring-amber-200 shrink-0">Lecture seule</span>
         </div>
 
-        <div v-if="yearClosed" class="mb-3 px-2 py-1.5 rounded-md bg-gray-100 text-gray-700 text-xs">Année clôturée — lecture seule</div>
-
-        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <table class="min-w-full">
-            <thead class="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Élève</th>
-              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-2/5">Décision</th>
-              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Commentaire</th>
-            </tr>
+        <div v-if="students.length === 0" class="bg-white rounded-2xl border py-10 text-center text-xs text-placeholder">Aucun élève inscrit dans cette classe.</div>
+        <div v-else class="bg-white rounded-2xl border overflow-x-auto font-nunito">
+          <table class="text-xs border-collapse w-full">
+            <thead>
+              <tr class="border-b border-[#E6EFF5]">
+                <th class="sticky left-0 z-10 bg-white text-left font-semibold text-gray-700 px-3 py-2 min-w-[11rem] border-r border-[#E6EFF5] font-montserrat">
+                  Élève <span class="font-normal text-placeholder">· {{ decidedCount }}/{{ students.length }}</span>
+                </th>
+                <th v-for="o in OUTCOMES" :key="o.value" :class="['px-3 py-2 text-center font-semibold border-l border-[#E6EFF5] whitespace-nowrap', o.head]">{{ o.label }}</th>
+                <th class="px-2 py-2 text-center font-semibold text-gray-700 border-l border-[#E6EFF5]">Note</th>
+              </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
-            <tr v-for="s in students" :key="s.student_id">
-              <td class="px-3 py-1.5 text-xs text-gray-900 font-medium">{{ s.last_name }} {{ s.first_name }}</td>
-              <td class="px-3 py-1.5">
-                <div v-if="canEditOutcomes" class="flex flex-wrap gap-1.5">
-                  <label
-                      v-for="opt in outcomeOptions"
-                      :key="opt.value"
-                      :class="['inline-flex items-center gap-1 px-2 py-1 rounded border text-xs font-medium cursor-pointer transition-colors', s.outcome === opt.value ? opt.selectedClass : opt.idleClass]"
+            <tbody>
+              <tr v-for="s in students" :key="s.student_id" class="border-b border-[#E6EFF5] last:border-b-0 hover:bg-gray-50">
+                <td class="sticky left-0 z-10 bg-white px-3 py-1.5 font-medium text-gray-900 border-r border-[#E6EFF5] whitespace-nowrap font-montserrat">{{ s.last_name }} {{ s.first_name }}</td>
+                <td v-for="o in OUTCOMES" :key="o.value" class="px-1.5 py-1.5 border-l border-[#E6EFF5]">
+                  <button
+                      type="button"
+                      @click="setOutcome(s, o.value)"
+                      :disabled="!canEditOutcomes"
+                      :class="[
+                        'w-full h-7 rounded-md text-sm font-bold flex items-center justify-center transition-colors',
+                        s.outcome === o.value ? o.cellSel : (canEditOutcomes ? 'text-transparent cursor-pointer ' + o.cellHover : 'text-transparent cursor-default')
+                      ]"
+                  >✓</button>
+                </td>
+                <td class="px-2 py-1.5 text-center border-l border-[#E6EFF5]">
+                  <button
+                      type="button"
+                      @click="openNote(s, $event)"
+                      :disabled="(!canEditOutcomes || !s.outcome) && !s.commentaire"
+                      :title="s.commentaire || ((canEditOutcomes && s.outcome) ? 'Ajouter une note' : '')"
+                      :class="['relative inline-flex items-center justify-center w-7 h-7 rounded-md transition-colors', s.commentaire ? 'text-amber-600 hover:bg-amber-50' : (canEditOutcomes && s.outcome ? 'text-gray-300 hover:text-gray-500 hover:bg-gray-50' : 'text-gray-200 cursor-default')]"
                   >
-                    <input type="radio" :name="`outcome-${s.student_id}`" :value="opt.value" v-model="s.outcome" class="hidden" />
-                    {{ opt.label }}
-                  </label>
-                </div>
-                <span v-else-if="s.outcome" :class="['inline-flex items-center px-2 py-1 rounded border text-xs font-medium', outcomeOptions.find(o => o.value === s.outcome)?.selectedClass]">{{ outcomeOptions.find(o => o.value === s.outcome)?.label }}</span>
-                <span v-else class="text-xs text-gray-400">Aucune décision</span>
-              </td>
-              <td class="px-3 py-1.5">
-                <input v-if="canEditOutcomes" v-model="s.commentaire" type="text" placeholder="Optionnel" class="w-full px-1.5 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:border-primary" />
-                <span v-else class="text-xs text-gray-600">{{ s.commentaire || '—' }}</span>
-              </td>
-            </tr>
-            <tr v-if="students.length === 0">
-              <td colspan="3" class="px-3 py-6 text-center text-xs text-gray-500">Aucun élève inscrit dans cette classe.</td>
-            </tr>
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    <span v-if="s.commentaire" class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                  </button>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -424,6 +436,23 @@ onMounted(() => fetchData())
           placeholder="Motif (optionnel)"
           class="w-full border border-amber-200 rounded px-2 py-1 text-xs focus:outline-none focus:border-amber-400"
       />
+    </div>
+
+    <div
+        v-if="note"
+        class="fixed z-50 bg-white border border-[#E6EFF5] rounded-lg shadow-lg p-2 w-60 font-nunito"
+        :style="{top: note.top + 'px', left: note.left + 'px'}"
+    >
+      <div class="text-[11px] text-placeholder mb-1">Note · {{ note.s.last_name }} {{ note.s.first_name }}</div>
+      <textarea
+          ref="noteInput"
+          v-model="note.s.commentaire"
+          :readonly="!canEditOutcomes"
+          @blur="commitNote"
+          rows="2"
+          placeholder="Commentaire (optionnel)"
+          class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:border-gray-400 resize-none"
+      ></textarea>
     </div>
 
     <div

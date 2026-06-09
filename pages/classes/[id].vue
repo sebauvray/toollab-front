@@ -32,10 +32,10 @@ const attMeta = {
   absent_non_justifie: { glyph: '✗', cls: 'bg-red-100 text-red-700 border-red-300', label: 'Absent non justifié' }
 }
 const outcomeMeta = {
-  passage: { label: 'Passage', cls: 'bg-green-100 text-green-800 border-green-200' },
-  redoublement: { label: 'Redoublement', cls: 'bg-amber-100 text-amber-800 border-amber-200' },
-  fin_cursus: { label: 'Fin de cursus', cls: 'bg-blue-100 text-blue-800 border-blue-200' },
-  exclusion: { label: 'Exclusion', cls: 'bg-red-100 text-red-800 border-red-200' }
+  passage: { label: 'Passage', dot: 'bg-green-500', head: 'text-green-700', cellSel: 'bg-green-100 text-green-700 ring-1 ring-green-300' },
+  redoublement: { label: 'Redoublement', dot: 'bg-amber-500', head: 'text-amber-700', cellSel: 'bg-amber-100 text-amber-700 ring-1 ring-amber-300' },
+  fin_cursus: { label: 'Fin de cursus', dot: 'bg-blue-500', head: 'text-blue-700', cellSel: 'bg-blue-100 text-blue-700 ring-1 ring-blue-300' },
+  exclusion: { label: 'Exclusion', dot: 'bg-red-500', head: 'text-red-700', cellSel: 'bg-red-100 text-red-700 ring-1 ring-red-300' }
 }
 
 const breadcrumbItems = computed(() => [
@@ -215,27 +215,34 @@ onMounted(() => {
       </div>
 
       <div v-else-if="activeTab === 'decisions'">
-        <p class="text-xs text-placeholder mb-2">{{ decidedCount }} / {{ students.length }} élève{{ students.length > 1 ? 's' : '' }} avec une décision</p>
-        <div class="bg-white rounded-2xl border overflow-hidden font-nunito">
-          <table class="min-w-full text-xs">
-            <thead class="bg-gray-50 border-b border-[#E6EFF5] font-montserrat">
-              <tr>
-                <th class="px-3 py-2 text-left font-semibold text-gray-600">Élève</th>
-                <th class="px-3 py-2 text-left font-semibold text-gray-600 w-44">Décision</th>
-                <th class="px-3 py-2 text-left font-semibold text-gray-600">Commentaire</th>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-3 text-xs">
+          <span class="text-placeholder">Décisions de fin d'année · {{ decidedCount }}/{{ students.length }} décidés :</span>
+          <span v-for="(m, k) in outcomeMeta" :key="k" class="inline-flex items-center gap-1.5">
+            <span class="h-2.5 w-2.5 rounded-full" :class="m.dot"></span>{{ m.label }}
+          </span>
+        </div>
+        <div v-if="students.length === 0" class="bg-white rounded-2xl border py-10 text-center text-xs text-placeholder">Aucun élève inscrit dans cette classe.</div>
+        <div v-else class="bg-white rounded-2xl border overflow-x-auto font-nunito">
+          <table class="text-xs border-collapse w-full">
+            <thead>
+              <tr class="border-b border-[#E6EFF5]">
+                <th class="sticky left-0 z-10 bg-white text-left font-semibold text-gray-700 px-3 py-2 min-w-[11rem] border-r border-[#E6EFF5] font-montserrat">Élève</th>
+                <th v-for="(m, k) in outcomeMeta" :key="k" :class="['px-3 py-2 text-center font-semibold border-l border-[#E6EFF5] whitespace-nowrap', m.head]">{{ m.label }}</th>
+                <th class="px-2 py-2 text-center font-semibold text-gray-700 border-l border-[#E6EFF5]">Note</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-[#E6EFF5]">
-              <tr v-for="s in students" :key="s.student_id" class="hover:bg-gray-50">
-                <td class="px-3 py-1.5 font-medium text-gray-900">{{ s.last_name }} {{ s.first_name }}</td>
-                <td class="px-3 py-1.5">
-                  <span v-if="s.outcome" :class="['inline-flex items-center px-2 py-0.5 rounded border text-[11px] font-medium', outcomeMeta[s.outcome]?.cls]">{{ outcomeMeta[s.outcome]?.label }}</span>
-                  <span v-else class="text-gray-400">—</span>
+            <tbody>
+              <tr v-for="s in students" :key="s.student_id" class="border-b border-[#E6EFF5] last:border-b-0 hover:bg-gray-50">
+                <td class="sticky left-0 z-10 bg-white px-3 py-1.5 font-medium text-gray-900 border-r border-[#E6EFF5] whitespace-nowrap font-montserrat">{{ s.last_name }} {{ s.first_name }}</td>
+                <td v-for="(m, k) in outcomeMeta" :key="k" class="px-1.5 py-1.5 border-l border-[#E6EFF5]">
+                  <span :class="['flex items-center justify-center w-full h-7 rounded-md text-sm font-bold', s.outcome === k ? m.cellSel : 'text-transparent']">✓</span>
                 </td>
-                <td class="px-3 py-1.5 text-gray-600">{{ s.commentaire || '—' }}</td>
-              </tr>
-              <tr v-if="students.length === 0">
-                <td colspan="3" class="px-3 py-6 text-center text-placeholder">Aucun élève inscrit dans cette classe.</td>
+                <td class="px-2 py-1.5 text-center border-l border-[#E6EFF5]">
+                  <span v-if="s.commentaire" class="inline-flex items-center justify-center w-7 h-7 text-amber-600" :title="s.commentaire">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                  </span>
+                  <span v-else class="text-gray-200">·</span>
+                </td>
               </tr>
             </tbody>
           </table>

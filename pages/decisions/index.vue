@@ -27,10 +27,10 @@ const breadcrumbItems = [
 ]
 
 const outcomeMeta = {
-  passage: { label: 'Passage', cls: 'bg-green-100 text-green-800 border-green-200' },
-  redoublement: { label: 'Redoublement', cls: 'bg-amber-100 text-amber-800 border-amber-200' },
-  fin_cursus: { label: 'Fin de cursus', cls: 'bg-blue-100 text-blue-800 border-blue-200' },
-  exclusion: { label: 'Exclusion', cls: 'bg-red-100 text-red-800 border-red-200' }
+  passage: { label: 'Passage', dot: 'bg-green-500', cls: 'bg-green-50 text-green-700 ring-1 ring-green-200' },
+  redoublement: { label: 'Redoublement', dot: 'bg-amber-500', cls: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
+  fin_cursus: { label: 'Fin de cursus', dot: 'bg-blue-500', cls: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200' },
+  exclusion: { label: 'Exclusion', dot: 'bg-red-500', cls: 'bg-red-50 text-red-700 ring-1 ring-red-200' }
 }
 
 const cursusOptions = computed(() => [...new Set(items.value.map(i => i.cursus).filter(Boolean))].sort())
@@ -133,8 +133,11 @@ onMounted(() => fetchData())
               <td class="px-3 py-1.5 text-gray-600">{{ i.cursus || '—' }}</td>
               <td class="px-3 py-1.5 text-gray-600">{{ i.classroom_name || '—' }}</td>
               <td class="px-3 py-1.5">
-                <span v-if="i.outcome" :class="['inline-flex items-center px-2 py-0.5 rounded border text-[11px] font-medium', outcomeMeta[i.outcome]?.cls]">{{ outcomeMeta[i.outcome]?.label }}</span>
-                <span v-else class="text-gray-400">Non décidé</span>
+                <span v-if="i.outcome" :class="['inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium', outcomeMeta[i.outcome]?.cls]">
+                  <span class="h-1.5 w-1.5 rounded-full" :class="outcomeMeta[i.outcome]?.dot"></span>
+                  {{ outcomeMeta[i.outcome]?.label }}
+                </span>
+                <span v-else class="text-gray-300">Non décidé</span>
               </td>
             </tr>
             <tr v-if="filteredItems.length === 0">
