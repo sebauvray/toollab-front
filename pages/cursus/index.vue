@@ -37,6 +37,8 @@ const pagination = ref({
   total: 0
 })
 
+const { loadPerPage, savePerPage } = useTablePerPage('cursus_per_page')
+
 const columns = [
   { key: 'name', label: 'Nom du cursus', width: '5' },
   { key: 'classCount', label: 'Nombre de classes', width: '2' },
@@ -84,6 +86,12 @@ const fetchCursus = async (page = 1) => {
 
 const handlePageChange = (page) => {
   fetchCursus(page)
+}
+
+const handlePerPageChange = (perPage) => {
+  savePerPage(perPage)
+  pagination.value.perPage = perPage
+  fetchCursus(1)
 }
 
 const handleAddCursus = async (newCursus) => {
@@ -153,6 +161,7 @@ const handleRowClick = (cursus) => {
 }
 
 onMounted(() => {
+  pagination.value.perPage = loadPerPage()
   fetchCursus()
 })
 </script>
@@ -195,6 +204,7 @@ onMounted(() => {
         :pagination="pagination"
         :loading="isLoading"
         @page-change="handlePageChange"
+        @per-page-change="handlePerPageChange"
     >
       <template #default="{ item, isLastRow }">
         <div

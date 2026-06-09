@@ -67,6 +67,7 @@
         :pagination="pagination"
         :loading="loading"
         @page-change="handlePageChange"
+        @per-page-change="handlePerPageChange"
       >
         <template #default="{ item, isLastRow }">
           <div 
@@ -168,6 +169,8 @@ const pagination = ref({
   total: 0
 })
 
+const { loadPerPage, savePerPage } = useTablePerPage('exonerations_per_page')
+
 const filterDisplay = computed(() => {
   if (selectedTypes.value.length === 0) return 'Aucune sélection'
   if (selectedTypes.value.length === availableTypes.length) return 'Toutes les exonérations'
@@ -260,6 +263,12 @@ const handlePageChange = (page) => {
   loadExonerations(page)
 }
 
+const handlePerPageChange = (perPage) => {
+  savePerPage(perPage)
+  pagination.value.perPage = perPage
+  loadExonerations(1)
+}
+
 const handleSearch = () => {
   pagination.value.currentPage = 1
   expandedComments.value.clear()
@@ -308,6 +317,7 @@ const handleClickOutside = (event) => {
 }
 
 onMounted(() => {
+  pagination.value.perPage = loadPerPage()
   loadExonerations()
   setTimeout(() => {
     document.addEventListener('click', handleClickOutside)

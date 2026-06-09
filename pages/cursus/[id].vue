@@ -53,6 +53,7 @@
           :pagination="pagination"
           :loading="isLoading"
           @page-change="handlePageChange"
+          @per-page-change="handlePerPageChange"
       >
         <template #default="{ item, isLastRow }">
           <div
@@ -165,6 +166,8 @@ const pagination = ref({
   total: 0
 });
 
+const { loadPerPage, savePerPage } = useTablePerPage('cursus_classes_per_page');
+
 const columns = [
   { key: 'name', label: 'Nom de la classe', width: '3' },
   { key: 'level', label: 'Niveau', width: '3' },
@@ -233,6 +236,12 @@ const fetchClasses = async (page = 1) => {
 
 const handlePageChange = (page) => {
   fetchClasses(page);
+};
+
+const handlePerPageChange = (perPage) => {
+  savePerPage(perPage);
+  pagination.value.perPage = perPage;
+  fetchClasses(1);
 };
 
 const handleAddClass = async (newClass) => {
@@ -356,6 +365,7 @@ const openModalFromHash = async () => {
 }
 
 onMounted(async () => {
+  pagination.value.perPage = loadPerPage();
   await fetchCursus();
   await openModalFromHash();
 });

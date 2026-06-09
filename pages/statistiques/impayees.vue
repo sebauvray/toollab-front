@@ -48,6 +48,7 @@
         :pagination="pagination"
         :loading="loading"
         @page-change="handlePageChange"
+        @per-page-change="handlePerPageChange"
       >
         <template #default="{ item, isLastRow }">
           <div 
@@ -112,6 +113,8 @@ const pagination = ref({
   perPage: 10,
   total: 0
 })
+
+const { loadPerPage, savePerPage } = useTablePerPage('impayees_per_page')
 
 const filterOptions = [
   { value: 'all', label: 'Toutes les familles' },
@@ -183,6 +186,12 @@ const handlePageChange = (page) => {
   loadUnpaidFamilies(page)
 }
 
+const handlePerPageChange = (perPage) => {
+  savePerPage(perPage)
+  pagination.value.perPage = perPage
+  loadUnpaidFamilies(1)
+}
+
 const handleSearch = () => {
   pagination.value.currentPage = 1
   loadUnpaidFamilies(1)
@@ -207,6 +216,7 @@ const handleClickOutside = (event) => {
 }
 
 onMounted(() => {
+  pagination.value.perPage = loadPerPage()
   loadUnpaidFamilies()
   // Ajouter un petit délai pour éviter les conflits d'événements
   setTimeout(() => {

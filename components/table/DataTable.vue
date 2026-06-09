@@ -20,7 +20,13 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['page-change'])
+const emit = defineEmits(['page-change', 'per-page-change'])
+
+const perPageOptions = [10, 25, 50, 100]
+
+const handlePerPageChange = (val) => {
+  emit('per-page-change', Number(val))
+}
 
 const handlePageChange = (page) => {
   if (page === props.pagination.currentPage) return
@@ -117,7 +123,16 @@ const isLastRow = (index) => {
       </slot>
     </template>
     <div class="flex justify-between items-center py-3 px-5 border-t border-[#E6EFF5]">
-      <div class="w-36"></div>
+      <div class="w-36 flex items-center gap-1.5">
+        <label class="text-xs text-placeholder whitespace-nowrap">Par page</label>
+        <select
+            :value="pagination.perPage"
+            @change="handlePerPageChange($event.target.value)"
+            class="border border-input-stroke rounded-md text-xs px-1.5 py-1 bg-white focus:outline-none cursor-pointer"
+        >
+          <option v-for="n in perPageOptions" :key="n" :value="n">{{ n }}</option>
+        </select>
+      </div>
 
       <div class="flex items-center space-x-1 justify-center">
         <button

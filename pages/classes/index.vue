@@ -234,13 +234,6 @@ onMounted(() => {
                   Aucun élève inscrit
                 </div>
               </div>
-
-              <NuxtLink
-                  :to="`/classes/${classroom.id}`"
-                  class="mt-2 flex items-center justify-center gap-1 text-[11px] font-medium text-default hover:text-primary border-t border-[#E6EFF5] pt-1.5 transition-colors font-nunito"
-              >
-                Suivi · émargement &amp; décisions
-              </NuxtLink>
             </div>
           </div>
         </div>

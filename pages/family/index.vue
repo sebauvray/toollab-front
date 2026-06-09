@@ -34,6 +34,8 @@ const pagination = ref({
     total: 0
 });
 
+const { loadPerPage, savePerPage } = useTablePerPage('families_per_page');
+
 const columns = [
     { key: 'nom', label: 'Nom du responsable', width: '7' },
     { key: 'nombreEleves', label: 'Nombre d\'élèves', width: '3' },
@@ -78,6 +80,12 @@ const handlePageChange = (page) => {
     fetchFamilies(page);
 };
 
+const handlePerPageChange = (perPage) => {
+    savePerPage(perPage);
+    pagination.value.perPage = perPage;
+    fetchFamilies(1);
+};
+
 const handleAddResponsable = async (newResponsable) => {
     try {
         if (newResponsable && newResponsable.family_id) {
@@ -91,6 +99,7 @@ const handleAddResponsable = async (newResponsable) => {
 };
 
 onMounted(() => {
+    pagination.value.perPage = loadPerPage();
     fetchFamilies();
 });
 </script>
@@ -124,6 +133,7 @@ onMounted(() => {
             :pagination="pagination"
             :loading="isLoading"
             @page-change="handlePageChange"
+            @per-page-change="handlePerPageChange"
         >
             <template #default="{ item, isLastRow }">
                 <NuxtLink

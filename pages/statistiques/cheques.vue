@@ -67,6 +67,7 @@
         :pagination="pagination"
         :loading="loading"
         @page-change="handlePageChange"
+        @per-page-change="handlePerPageChange"
       >
         <template #default="{ item, isLastRow }">
           <div 
@@ -134,6 +135,8 @@ const pagination = ref({
   perPage: 10,
   total: 0
 })
+
+const { loadPerPage, savePerPage } = useTablePerPage('cheques_per_page')
 
 const columns = [
   { key: 'numero', label: 'N° Chèque', width: '2' },
@@ -233,6 +236,12 @@ const handlePageChange = (page) => {
   loadCheques(page)
 }
 
+const handlePerPageChange = (perPage) => {
+  savePerPage(perPage)
+  pagination.value.perPage = perPage
+  loadCheques(1)
+}
+
 const handleSearch = () => {
   pagination.value.currentPage = 1
   loadCheques(1)
@@ -266,6 +275,7 @@ const handleClickOutside = (event) => {
 }
 
 onMounted(async () => {
+  pagination.value.perPage = loadPerPage()
   await loadAvailableBanks()
   await loadCheques()
   
