@@ -31,6 +31,10 @@ const fetchSchedules = async () => {
   }
 }
 
+const openClassroom = (s) => {
+  if (s?.classroom?.id) navigateTo(`/professeur/classes/${s.classroom.id}`)
+}
+
 onMounted(() => fetchSchedules())
 </script>
 
@@ -44,6 +48,6 @@ onMounted(() => fetchSchedules())
     <div v-else-if="schedules.length === 0" class="py-10 text-center text-gray-500 text-xs">
       Aucun créneau ne vous est attribué pour cette année.
     </div>
-    <ScheduleGrid v-else :schedules="schedules"/>
+    <ScheduleGrid v-else :schedules="schedules" @select="openClassroom"/>
   </PageContainer>
 </template>

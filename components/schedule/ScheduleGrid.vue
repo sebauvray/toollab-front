@@ -8,6 +8,8 @@ const props = defineProps({
   }
 })
 
+const emit = defineEmits(['select'])
+
 const DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
 const START_HOUR = 8
 const END_HOUR = 22
@@ -197,7 +199,10 @@ const tooltipFor = (s) => {
               v-for="s in schedulesByDay[day]"
               :key="s.id"
               :title="tooltipFor(s)"
-              class="absolute rounded-md px-1 py-1 text-[11px] leading-tight shadow-sm overflow-hidden cursor-default"
+              :role="s.classroom?.id ? 'button' : null"
+              :tabindex="s.classroom?.id ? 0 : null"
+              class="absolute rounded-md px-1 py-1 text-[11px] leading-tight shadow-sm overflow-hidden transition focus:outline-none"
+              :class="s.classroom?.id ? 'cursor-pointer hover:brightness-95 hover:shadow focus:ring-2 focus:ring-default/40' : 'cursor-default'"
               :style="{
                 top: s.top + 'px',
                 height: s.height + 'px',
@@ -205,6 +210,8 @@ const tooltipFor = (s) => {
                 width: `calc(${s.widthPct}% - 4px)`,
                 backgroundColor: colorFor(s.classroom?.gender)
               }"
+              @click="s.classroom?.id && emit('select', s)"
+              @keydown.enter.prevent="s.classroom?.id && emit('select', s)"
           >
             <div class="font-bold text-gray-900 truncate">{{ s.classroom?.name }}</div>
             <div class="text-gray-800 truncate">{{ teacherLabel(s) }}</div>

@@ -77,6 +77,10 @@ const fetchSchedules = async () => {
   }
 }
 
+const openClassroom = (s) => {
+  if (s?.classroom?.id) navigateTo(`/classes/${s.classroom.id}`)
+}
+
 const handleInvite = async () => {
   inviteError.value = ''
   const {first_name, last_name, email} = inviteForm.value
@@ -316,7 +320,7 @@ onMounted(() => {
       <div v-if="isLoadingSchedules" class="py-10 text-center text-gray-500 text-xs">
         Chargement du planning…
       </div>
-      <ScheduleGrid v-else :schedules="schedules"/>
+      <ScheduleGrid v-else :schedules="schedules" @select="openClassroom"/>
     </section>
 
     <ConfirmationModal

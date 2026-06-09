@@ -32,10 +32,10 @@ const attMeta = {
   absent_non_justifie: { glyph: '✗', cls: 'bg-red-100 text-red-700 border-red-300', label: 'Absent non justifié' }
 }
 const outcomeMeta = {
-  passage: { label: 'Passage', dot: 'bg-green-500', head: 'text-green-700', cellSel: 'bg-green-100 text-green-700 ring-1 ring-green-300' },
-  redoublement: { label: 'Redoublement', dot: 'bg-amber-500', head: 'text-amber-700', cellSel: 'bg-amber-100 text-amber-700 ring-1 ring-amber-300' },
-  fin_cursus: { label: 'Fin de cursus', dot: 'bg-blue-500', head: 'text-blue-700', cellSel: 'bg-blue-100 text-blue-700 ring-1 ring-blue-300' },
-  exclusion: { label: 'Exclusion', dot: 'bg-red-500', head: 'text-red-700', cellSel: 'bg-red-100 text-red-700 ring-1 ring-red-300' }
+  passage: { label: 'Passage', dot: 'bg-green-500', chip: 'bg-green-100 text-green-700 ring-1 ring-green-300' },
+  redoublement: { label: 'Redoublement', dot: 'bg-amber-500', chip: 'bg-amber-100 text-amber-700 ring-1 ring-amber-300' },
+  fin_cursus: { label: 'Fin de cursus', dot: 'bg-blue-500', chip: 'bg-blue-100 text-blue-700 ring-1 ring-blue-300' },
+  exclusion: { label: 'Exclusion', dot: 'bg-red-500', chip: 'bg-red-100 text-red-700 ring-1 ring-red-300' }
 }
 
 const breadcrumbItems = computed(() => [
@@ -73,32 +73,16 @@ const ratesMap = computed(() => {
   return m
 })
 
-const totalsByDate = computed(() => {
-  const t = {}
-  for (const d of dates.value) {
-    t[d] = { present: 0, absent_justifie: 0, absent_non_justifie: 0 }
-    for (const s of students.value) {
-      const c = s.attendance[d]
-      if (c) t[d][c.status]++
-    }
+const hoverTip = ref(null)
+const onCellEnter = (c, ev) => {
+  if (c && c.status === 'absent_justifie' && c.justification) {
+    const r = ev.currentTarget.getBoundingClientRect()
+    hoverTip.value = { text: c.justification, top: r.bottom + 4, left: Math.min(r.left, window.innerWidth - 220) }
+  } else {
+    hoverTip.value = null
   }
-  return t
-})
-
-const totalLabel = (d) => {
-  const t = totalsByDate.value[d]
-  const parts = []
-  if (t.present) parts.push(`${t.present}✓`)
-  if (t.absent_justifie) parts.push(`${t.absent_justifie}J`)
-  if (t.absent_non_justifie) parts.push(`${t.absent_non_justifie}✗`)
-  return parts.join(' ') || '–'
 }
-
-const cellTitle = (c, d) => {
-  let t = `${attMeta[c.status]?.label} · ${d}`
-  if (c.status === 'absent_justifie' && c.justification) t += ` — ${c.justification}`
-  return t
-}
+const onCellLeave = () => { hoverTip.value = null }
 
 const fetchData = async () => {
   try {
@@ -168,7 +152,10 @@ onMounted(() => {
             <span class="inline-flex items-center justify-center w-5 h-5 rounded border border-gray-200 text-[11px]">–</span>
             Non pointé
           </span>
-          <span class="text-placeholder">· survol d'une cellule justifiée = motif</span>
+          <span class="inline-flex items-center gap-1.5 text-gray-400">
+            <span class="relative inline-flex items-center justify-center w-5 h-5 rounded border border-amber-300 bg-amber-100 text-[11px] font-bold text-amber-700">J<span class="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-amber-500"></span></span>
+            Motif renseigné (survol = détail)
+          </span>
         </div>
 
         <div v-if="students.length === 0" class="bg-white rounded-2xl border py-10 text-center text-xs text-placeholder">Aucun élève inscrit dans cette classe.</div>
@@ -194,54 +181,49 @@ onMounted(() => {
                 <td class="sticky left-0 z-10 bg-white px-3 py-1.5 font-medium text-gray-900 border-r border-[#E6EFF5] whitespace-nowrap font-montserrat">{{ s.last_name }} {{ s.first_name }}</td>
                 <template v-for="g in monthGroups" :key="g.ym">
                   <td v-for="(d, i) in g.dates" :key="d" :class="['px-2 py-1.5 text-center', i === 0 ? 'border-l border-[#E6EFF5]' : '']">
-                    <span v-if="s.attendance[d]" :title="cellTitle(s.attendance[d], d)" :class="['inline-flex items-center justify-center w-5 h-5 rounded border text-[11px] font-bold cursor-default', attMeta[s.attendance[d].status]?.cls]">{{ attMeta[s.attendance[d].status]?.glyph }}</span>
+                    <span
+                        v-if="s.attendance[d]"
+                        :class="['relative inline-flex items-center justify-center w-5 h-5 rounded border text-[11px] font-bold', attMeta[s.attendance[d].status]?.cls, s.attendance[d].status === 'absent_justifie' && s.attendance[d].justification ? 'cursor-help' : 'cursor-default']"
+                        @mouseenter="onCellEnter(s.attendance[d], $event)"
+                        @mouseleave="onCellLeave"
+                    >
+                      {{ attMeta[s.attendance[d].status]?.glyph }}
+                      <span v-if="s.attendance[d].status === 'absent_justifie' && s.attendance[d].justification" class="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    </span>
                     <span v-else class="text-gray-300">–</span>
                   </td>
                 </template>
                 <td class="px-2 py-1.5 text-center border-l border-[#E6EFF5] font-semibold" :class="ratesMap[s.student_id] === null ? 'text-gray-300' : ratesMap[s.student_id] < 70 ? 'text-amber-600' : 'text-gray-700'">{{ ratesMap[s.student_id] !== null ? ratesMap[s.student_id] + '%' : '—' }}</td>
               </tr>
             </tbody>
-            <tfoot>
-              <tr class="bg-gray-50 font-semibold text-gray-600">
-                <td class="sticky left-0 z-10 bg-gray-50 px-3 py-1.5 border-r border-[#E6EFF5] font-montserrat">∑ par séance</td>
-                <template v-for="g in monthGroups" :key="g.ym">
-                  <td v-for="(d, i) in g.dates" :key="d" :class="['px-2 py-1.5 text-center whitespace-nowrap text-[10px]', i === 0 ? 'border-l border-[#E6EFF5]' : '']">{{ totalLabel(d) }}</td>
-                </template>
-                <td class="border-l border-[#E6EFF5]"></td>
-              </tr>
-            </tfoot>
           </table>
         </div>
       </div>
 
       <div v-else-if="activeTab === 'decisions'">
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-3 text-xs">
-          <span class="text-placeholder">Décisions de fin d'année · {{ decidedCount }}/{{ students.length }} décidés :</span>
-          <span v-for="(m, k) in outcomeMeta" :key="k" class="inline-flex items-center gap-1.5">
-            <span class="h-2.5 w-2.5 rounded-full" :class="m.dot"></span>{{ m.label }}
-          </span>
-        </div>
+        <div class="mb-3 text-xs text-placeholder">Décisions de fin d'année · {{ decidedCount }}/{{ students.length }} décidés</div>
         <div v-if="students.length === 0" class="bg-white rounded-2xl border py-10 text-center text-xs text-placeholder">Aucun élève inscrit dans cette classe.</div>
         <div v-else class="bg-white rounded-2xl border overflow-x-auto font-nunito">
           <table class="text-xs border-collapse w-full">
             <thead>
               <tr class="border-b border-[#E6EFF5]">
                 <th class="sticky left-0 z-10 bg-white text-left font-semibold text-gray-700 px-3 py-2 min-w-[11rem] border-r border-[#E6EFF5] font-montserrat">Élève</th>
-                <th v-for="(m, k) in outcomeMeta" :key="k" :class="['px-3 py-2 text-center font-semibold border-l border-[#E6EFF5] whitespace-nowrap', m.head]">{{ m.label }}</th>
-                <th class="px-2 py-2 text-center font-semibold text-gray-700 border-l border-[#E6EFF5]">Note</th>
+                <th class="px-3 py-2 text-left font-semibold text-gray-700 w-48">Décision</th>
+                <th class="px-3 py-2 text-left font-semibold text-gray-700 border-l border-[#E6EFF5]">Note</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="s in students" :key="s.student_id" class="border-b border-[#E6EFF5] last:border-b-0 hover:bg-gray-50">
-                <td class="sticky left-0 z-10 bg-white px-3 py-1.5 font-medium text-gray-900 border-r border-[#E6EFF5] whitespace-nowrap font-montserrat">{{ s.last_name }} {{ s.first_name }}</td>
-                <td v-for="(m, k) in outcomeMeta" :key="k" class="px-1.5 py-1.5 border-l border-[#E6EFF5]">
-                  <span :class="['flex items-center justify-center w-full h-7 rounded-md text-sm font-bold', s.outcome === k ? m.cellSel : 'text-transparent']">✓</span>
-                </td>
-                <td class="px-2 py-1.5 text-center border-l border-[#E6EFF5]">
-                  <span v-if="s.commentaire" class="inline-flex items-center justify-center w-7 h-7 text-amber-600" :title="s.commentaire">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              <tr v-for="s in students" :key="s.student_id" class="border-b border-[#E6EFF5] last:border-b-0 hover:bg-gray-50 align-top">
+                <td class="sticky left-0 z-10 bg-white px-3 py-2 font-medium text-gray-900 border-r border-[#E6EFF5] whitespace-nowrap font-montserrat">{{ s.last_name }} {{ s.first_name }}</td>
+                <td class="px-3 py-2">
+                  <span v-if="s.outcome && outcomeMeta[s.outcome]" :class="['inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium', outcomeMeta[s.outcome].chip]">
+                    <span class="h-1.5 w-1.5 rounded-full" :class="outcomeMeta[s.outcome].dot"></span>{{ outcomeMeta[s.outcome].label }}
                   </span>
-                  <span v-else class="text-gray-200">·</span>
+                  <span v-else class="text-gray-300 text-[11px] italic">Non décidé</span>
+                </td>
+                <td class="px-3 py-2 border-l border-[#E6EFF5] text-gray-700">
+                  <span v-if="s.commentaire">{{ s.commentaire }}</span>
+                  <span v-else class="text-gray-300">—</span>
                 </td>
               </tr>
             </tbody>
@@ -249,5 +231,13 @@ onMounted(() => {
         </div>
       </div>
     </template>
+
+    <div
+        v-if="hoverTip"
+        class="fixed z-40 bg-white border border-amber-200 rounded-lg shadow-md px-2.5 py-1.5 text-[11px] text-amber-800 max-w-[14rem] font-nunito pointer-events-none"
+        :style="{ top: hoverTip.top + 'px', left: hoverTip.left + 'px' }"
+    >
+      <span class="font-semibold">Motif :</span> {{ hoverTip.text }}
+    </div>
   </PageContainer>
 </template>
