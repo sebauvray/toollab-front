@@ -31,6 +31,11 @@ export default {
         }
     },
 
+    async telechargerFacture(familyId) {
+        const response = await apiClient.get(`/api/families/${familyId}/paiements/facture`, { responseType: 'blob' })
+        return response.data
+    },
+
     async supprimerLigne(familyId, ligneId) {
         try {
             const response = await apiClient.delete(`/api/families/${familyId}/paiements/lignes/${ligneId}`)

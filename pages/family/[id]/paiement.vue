@@ -8,6 +8,7 @@ import EditIcon from '~/components/Icons/Edit.vue'
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 import { usePageTitle } from "~/composables/usePageTitle.js";
 import { useSchoolYear } from "~/composables/useSchoolYear";
+import { saveBlob } from "~/utils/download";
 
 const { isReadOnly } = useSchoolYear();
 
@@ -117,6 +118,22 @@ const filteredEditBanques = computed(() => {
 const montantTotal = computed(() => detailsPaiement.value?.montant_total || 0)
 const montantPaye = computed(() => detailsPaiement.value?.montant_paye || 0)
 const resteAPayer = computed(() => detailsPaiement.value?.reste_a_payer || 0)
+
+const factureDisponible = computed(() => montantTotal.value > 0 || montantPaye.value > 0)
+const telechargementFacture = ref(false)
+
+const telechargerFacture = async () => {
+    if (telechargementFacture.value) return
+    telechargementFacture.value = true
+    try {
+        const blob = await paiementService.telechargerFacture(route.params.id)
+        saveBlob(blob, `facture_${new Date().toISOString().slice(0, 10)}.pdf`)
+    } catch (error) {
+        setFlashMessage({ type: 'error', message: 'Échec du téléchargement de la facture' })
+    } finally {
+        telechargementFacture.value = false
+    }
+}
 
 const isValidNewForm = computed(() => {
     if (!newForm.value.type) return false
@@ -905,7 +922,18 @@ const resetNewForm = () => {
         </section>
 
         <section class="lg:col-span-1 bg-white rounded-lg p-3 self-start shadow-sm order-1 lg:order-2">
-            <h2 class="font-bold text-base mb-3 text-gray-800">Paiement</h2>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="font-bold text-base text-gray-800">Paiement</h2>
+                <button
+                    v-if="factureDisponible"
+                    type="button"
+                    :disabled="telechargementFacture"
+                    @click="telechargerFacture"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-default bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-60 disabled:cursor-wait"
+                >
+                    {{ telechargementFacture ? 'Téléchargement…' : 'Facture PDF' }}
+                </button>
+            </div>
 
             <div v-if="tarifDetails">
                 <div v-for="eleve in tarifDetails.details_par_eleve" :key="eleve.student_id" class="mb-2">

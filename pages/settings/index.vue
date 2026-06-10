@@ -2,6 +2,7 @@
 import {ref, onMounted, computed} from 'vue'
 import {useAuth} from '~/composables/useAuth'
 import InputText from "~/components/form/InputText.vue"
+import InputSelect from "~/components/form/InputSelect.vue"
 import SaveButton from "~/components/form/SaveButton.vue"
 import {usePageTitle} from "~/composables/usePageTitle.js"
 import UserList from "~/components/settings/UserList.vue"
@@ -48,8 +49,19 @@ const schoolForm = ref({
   address: '',
   zipcode: '',
   city: '',
-  country: ''
+  country: '',
+  siret: '',
+  vat_mode: '',
+  vat_number: ''
 })
+
+const vatModes = [
+  {value: '', label: 'Non renseigné'},
+  {value: 'association', label: 'Association exonérée — art. 261, 7-1° du CGI'},
+  {value: 'enseignement', label: 'Enseignement exonéré — art. 261, 4-4° du CGI'},
+  {value: 'franchise', label: 'Franchise en base — art. 293 B du CGI'},
+  {value: 'assujetti', label: 'Assujetti à la TVA (20 %)'}
+]
 
 const newUserForm = ref({
   first_name: '',
@@ -117,6 +129,9 @@ const populateSchoolForm = () => {
     schoolForm.value.zipcode = school.value.zipcode || ''
     schoolForm.value.city = school.value.city || ''
     schoolForm.value.country = school.value.country || ''
+    schoolForm.value.siret = school.value.siret || ''
+    schoolForm.value.vat_mode = school.value.vat_mode || ''
+    schoolForm.value.vat_number = school.value.vat_number || ''
 
     if (school.value.logo) {
       logoPreview.value = `${useRuntimeConfig().public.apiUrl}/storage/${school.value.logo}`
@@ -370,6 +385,13 @@ onMounted(async () => {
           <InputText v-model="schoolForm.zipcode" placeholder="Code postal" />
           <InputText v-model="schoolForm.city" placeholder="Ville" />
           <InputText v-model="schoolForm.country" placeholder="Pays" />
+          <InputText v-model="schoolForm.siret" placeholder="SIRET (ou n° RNA)" />
+          <InputSelect v-model="schoolForm.vat_mode" placeholder="Régime TVA" :options="vatModes" />
+          <InputText v-if="schoolForm.vat_mode === 'assujetti'" v-model="schoolForm.vat_number" placeholder="N° TVA intracommunautaire" />
+          <p class="text-[11px] text-placeholder md:col-span-2">
+            Le SIRET et la mention du régime TVA sélectionné apparaissent sur les factures remises aux familles.
+            En cas de doute sur le régime applicable, rapprochez-vous de votre expert-comptable.
+          </p>
         </div>
 
         <div class="flex justify-end mt-5">
