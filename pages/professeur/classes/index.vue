@@ -68,8 +68,8 @@ onMounted(() => fetchClasses())
           <span class="truncate">{{ c.name }}</span>
           <span
               v-if="c.is_main_teacher"
-              class="shrink-0 px-1.5 py-0.5 text-[11px] font-medium rounded-full bg-white/25 ring-1 ring-white/40"
-          >Principal</span>
+              class="shrink-0 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-white text-gray-800 shadow-sm"
+          >Prof principal</span>
         </div>
         <div class="p-3 space-y-1.5 text-xs">
           <div class="text-gray-600">

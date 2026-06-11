@@ -212,7 +212,7 @@ const handleSave = () => {
             <SelectGenre v-model="newClass.gender" placeholder="Genre"/>
             <InputNumber v-model="newClass.size" placeholder="Effectif maximum" :min="1" :max="100"/>
             <div class="col-span-2">
-              <InputText v-model="newClass.telegram_link" placeholder="Lien Telegram"/>
+              <InputText v-model="newClass.telegram_link" placeholder="Lien du groupe de classe"/>
             </div>
           </div>
         </div>

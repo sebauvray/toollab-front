@@ -95,7 +95,7 @@ const tabs = computed(() => {
     {key: 'students', label: 'Élèves'},
     {key: 'attendance', label: 'Émargement'}
   ]
-  if (outcomesOpen.value && isMainTeacher.value) t.push({key: 'decisions', label: 'Décisions'})
+  if (outcomesOpen.value) t.push({key: 'decisions', label: 'Décisions'})
   return t
 })
 
@@ -375,6 +375,13 @@ onMounted(() => fetchData())
       </div>
 
       <div v-else-if="activeTab === 'decisions'">
+        <div
+            v-if="!isMainTeacher"
+            class="mb-3 flex items-start gap-2 rounded-lg bg-amber-50 ring-1 ring-amber-200 px-3 py-2 text-xs text-amber-800"
+        >
+          <svg class="size-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Vous n'êtes pas le professeur principal de cette classe : vous pouvez suivre les décisions de fin d'année, mais leur saisie est réservée au professeur principal.</span>
+        </div>
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
             <span class="text-placeholder">{{ canEditOutcomes ? 'Clique la colonne voulue pour décider :' : 'Décisions de fin d\'année :' }}</span>
@@ -382,7 +389,7 @@ onMounted(() => fetchData())
               <span class="h-2.5 w-2.5 rounded-full" :class="o.dot"></span>{{ o.label }}
             </span>
           </div>
-          <span v-if="!canEditOutcomes" class="text-[11px] px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 ring-1 ring-amber-200 shrink-0">Lecture seule</span>
+          <span v-if="!canEditOutcomes && isMainTeacher" class="text-[11px] px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 ring-1 ring-amber-200 shrink-0">Lecture seule</span>
         </div>
 
         <div v-if="students.length === 0" class="bg-white rounded-2xl border py-10 text-center text-xs text-placeholder">Aucun élève inscrit dans cette classe.</div>
