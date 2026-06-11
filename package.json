@@ -18,5 +18,8 @@
     "chart.js": "^4.5.0",
     "nuxt": "^3.14.159",
     "vue": "latest"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0"
   }
 }

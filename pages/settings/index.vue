@@ -1,6 +1,8 @@
 <script setup>
 import {ref, onMounted, computed} from 'vue'
 import {useAuth} from '~/composables/useAuth'
+import PageContainer from '~/components/layout/PageContainer.vue'
+import BreadCrumb from '~/components/navigation/BreadCrumb.vue'
 import InputText from "~/components/form/InputText.vue"
 import InputSelect from "~/components/form/InputSelect.vue"
 import SaveButton from "~/components/form/SaveButton.vue"
@@ -297,14 +299,14 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="container mx-auto px-5 py-6 font-nunito">
+  <PageContainer>
+    <BreadCrumb :custom-items="[{ name: 'Paramètres', path: '/settings' }]" />
+
     <div v-if="isLoading" class="flex justify-center items-center h-64">
       <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
     </div>
 
-    <template v-else>
-      <h1 class="text-base font-bold text-default font-montserrat mb-4">Paramètres</h1>
-
+    <div v-else class="font-nunito">
       <div class="flex items-center gap-1 border-b border-[#E6EFF5] mb-5">
         <button
             @click="activeTab = 'profile'"
@@ -434,6 +436,6 @@ onMounted(async () => {
           </div>
         </div>
       </div>
-    </template>
-  </div>
+    </div>
+  </PageContainer>
 </template>

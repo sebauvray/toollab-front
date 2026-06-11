@@ -4,6 +4,7 @@ import { useRouter } from '#imports'
 import { useSchoolYear } from '~/composables/useSchoolYear'
 import { usePageTitle } from '~/composables/usePageTitle.js'
 import InputText from '~/components/form/InputText.vue'
+import PlusLight from '~/components/Icons/PlusLight.vue'
 import schoolYearService from '~/services/schoolYear'
 import tarificationService from '~/services/tarification'
 
@@ -224,103 +225,117 @@ onMounted(async () => {
         <button
             v-if="hasArchivedYears"
             @click="router.push('/annees-scolaires/reconduire')"
-            class="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-xs font-medium"
+            class="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm"
         >
           Reconduire des classes
         </button>
         <button
             @click="openCreate"
-            class="px-3 py-1.5 bg-primary text-white rounded-lg hover:opacity-90 transition-opacity text-xs font-medium"
+            class="bg-default text-white px-3 py-1.5 text-sm rounded-lg hover:opacity-90 inline-flex items-center gap-x-1.5 transition-opacity"
         >
-          Ouvrir une nouvelle année
+          <PlusLight class="size-3.5"/>
+          <span>Ouvrir une nouvelle année</span>
         </button>
       </div>
     </div>
 
     <p class="text-xs text-gray-600 mb-5">
-      Ouvrir une nouvelle année clôture l'année active. Les cursus et niveaux restent permanents.
-      Les classes ne sont pas reconduites automatiquement. Vous pouvez recopier les tarifs et réductions
-      depuis une année précédente.
+      Ouvrir une nouvelle année clôture l'année active. Les cursus et niveaux restent permanents,
+      les classes ne sont pas reconduites automatiquement, et les tarifs peuvent être recopiés
+      depuis une année précédente. La colonne « Décisions » ouvre ou ferme la saisie des résultats
+      de fin d'année (passage, redoublement…) par les professeurs.
     </p>
 
-    <div
-        v-if="activeYear"
-        class="bg-white rounded-lg border p-4 mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-    >
-      <div class="flex-1">
-        <h3 class="font-semibold text-default mb-1">Décisions de fin d'année · {{ activeYear.label }}</h3>
-        <p class="text-xs text-gray-600">
-          Quand cette option est activée, chaque professeur peut saisir, pour ses élèves,
-          le résultat de fin d'année (passage, redoublement, exclusion, fin de cursus).
-          Désactivez-la une fois les décisions rendues.
-        </p>
-      </div>
-      <button
-          type="button"
-          @click="toggleOutcomes(activeYear)"
-          :disabled="togglingOutcomesId === activeYear.id"
-          :class="[
-            'flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors shrink-0',
-            activeYear.outcomes_open
-              ? 'bg-green-50 border-green-300 hover:bg-green-100'
-              : 'bg-gray-50 border-gray-300 hover:bg-gray-100',
-            togglingOutcomesId === activeYear.id ? 'opacity-60 cursor-wait' : ''
-          ]"
-      >
-        <span
-            :class="[
-              'relative inline-block w-10 h-5 rounded-full transition-colors',
-              activeYear.outcomes_open ? 'bg-green-500' : 'bg-gray-300'
-            ]"
-        >
-          <span
-              :class="[
-                'absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow transition-all',
-                activeYear.outcomes_open ? 'left-[1.375rem]' : 'left-0.5'
-              ]"
-          ></span>
-        </span>
-        <span
-            :class="[
-              'text-xs font-medium',
-              activeYear.outcomes_open ? 'text-green-800' : 'text-gray-700'
-            ]"
-        >
-          Saisie {{ activeYear.outcomes_open ? 'activée' : 'désactivée' }}
-        </span>
-      </button>
-    </div>
-
-    <div class="bg-white rounded-lg border overflow-hidden">
-      <div class="grid grid-cols-12 px-3 py-2 bg-gray-50 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-        <div class="col-span-4">Libellé</div>
-        <div class="col-span-3">Ouverte le</div>
-        <div class="col-span-3">Clôturée le</div>
-        <div class="col-span-2 text-right">État</div>
-      </div>
-      <div v-for="year in sortedYears" :key="year.id"
-           class="grid grid-cols-12 px-3 py-2 border-t items-center hover:bg-gray-50 text-xs">
-        <div class="col-span-4">
-          <button @click="switchTo(year.id)" class="text-left">
-            <span class="text-sm font-medium" :class="currentYear?.id === year.id ? 'text-primary' : 'text-default'">{{ year.label }}</span>
-            <span v-if="currentYear?.id === year.id" class="ml-1.5 text-xs text-primary">(vue actuelle)</span>
-          </button>
-        </div>
-        <div class="col-span-3 text-xs text-gray-600">{{ formatDate(year.opened_at) }}</div>
-        <div class="col-span-3 text-xs text-gray-600">{{ formatDate(year.closed_at) }}</div>
-        <div class="col-span-2 flex items-center justify-end gap-x-1.5">
-          <button
-              v-if="year.is_active"
-              @click.stop="openClose(year)"
-              class="text-xs px-1.5 py-1 rounded border border-red-300 text-red-700 hover:bg-red-50"
-          >Clôturer</button>
-          <span v-if="year.is_active" class="inline-block px-1.5 py-0.5 text-xs rounded bg-green-100 text-green-800">Active</span>
-          <span v-else class="inline-block px-1.5 py-0.5 text-xs rounded bg-gray-100 text-gray-700">Archivée</span>
-        </div>
-      </div>
-      <div v-if="sortedYears.length === 0" class="px-3 py-6 text-center text-gray-500 text-xs">
-        Aucune année scolaire — créez la première.
-      </div>
+    <div class="bg-white rounded-2xl border overflow-hidden font-nunito">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-[#E6EFF5]">
+            <th class="px-4 py-2.5 text-left text-xs font-montserrat font-semibold text-gray-500">Année</th>
+            <th class="px-4 py-2.5 text-left text-xs font-montserrat font-semibold text-gray-500">Ouverte le</th>
+            <th class="px-4 py-2.5 text-left text-xs font-montserrat font-semibold text-gray-500">Clôturée le</th>
+            <th class="px-4 py-2.5 text-left text-xs font-montserrat font-semibold text-gray-500">Décisions</th>
+            <th class="px-4 py-2.5 text-left text-xs font-montserrat font-semibold text-gray-500">État</th>
+            <th class="px-4 py-2.5"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+              v-for="year in sortedYears"
+              :key="year.id"
+              class="border-b border-[#E6EFF5] last:border-b-0 hover:bg-gray-50 transition-colors"
+          >
+            <td class="px-4 py-2.5">
+              <button @click="switchTo(year.id)" class="inline-flex items-center gap-x-2 text-left">
+                <span class="font-medium font-montserrat text-default">{{ year.label }}</span>
+                <span
+                    v-if="currentYear?.id === year.id"
+                    class="px-1.5 py-0.5 text-[11px] rounded bg-gray-100 text-gray-500"
+                >Vue actuelle</span>
+              </button>
+            </td>
+            <td class="px-4 py-2.5 text-xs text-gray-600">{{ formatDate(year.opened_at) }}</td>
+            <td class="px-4 py-2.5 text-xs text-gray-600">{{ formatDate(year.closed_at) }}</td>
+            <td class="px-4 py-2.5">
+              <button
+                  v-if="year.is_active"
+                  type="button"
+                  @click.stop="toggleOutcomes(year)"
+                  :disabled="togglingOutcomesId === year.id"
+                  :class="[
+                    'inline-flex items-center gap-1.5',
+                    togglingOutcomesId === year.id ? 'opacity-60 cursor-wait' : ''
+                  ]"
+              >
+                <span
+                    :class="[
+                      'relative inline-block w-8 h-4 rounded-full transition-colors',
+                      year.outcomes_open ? 'bg-green-500' : 'bg-gray-300'
+                    ]"
+                >
+                  <span
+                      :class="[
+                        'absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-all',
+                        year.outcomes_open ? 'left-[1.125rem]' : 'left-0.5'
+                      ]"
+                  ></span>
+                </span>
+                <span :class="['text-xs', year.outcomes_open ? 'text-green-700' : 'text-gray-500']">
+                  {{ year.outcomes_open ? 'Saisie ouverte' : 'Saisie fermée' }}
+                </span>
+              </button>
+              <span v-else class="text-xs text-gray-400">–</span>
+            </td>
+            <td class="px-4 py-2.5">
+              <span
+                  v-if="year.is_active"
+                  class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700 ring-1 ring-green-300"
+              >
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                Active
+              </span>
+              <span
+                  v-else
+                  class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600 ring-1 ring-gray-300"
+              >
+                <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                Archivée
+              </span>
+            </td>
+            <td class="px-4 py-2.5 text-right">
+              <button
+                  v-if="year.is_active"
+                  @click.stop="openClose(year)"
+                  class="px-2.5 py-1 text-xs rounded-lg border border-gray-300 text-gray-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700 transition-colors"
+              >Clôturer</button>
+            </td>
+          </tr>
+          <tr v-if="sortedYears.length === 0">
+            <td colspan="6" class="px-4 py-6 text-center text-gray-500 text-xs">
+              Aucune année scolaire — créez la première.
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <Teleport to="body">
@@ -459,8 +474,8 @@ onMounted(async () => {
       </div>
 
       <div v-if="showCloseModal" class="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-3">
-        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-5">
-          <h2 class="text-lg font-bold text-default mb-2">Clôturer {{ yearToClose?.label }} ?</h2>
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-5">
+          <h2 class="text-base font-bold text-default mb-2">Clôturer {{ yearToClose?.label }} ?</h2>
           <p class="text-xs text-gray-600 mb-3">
             L'année passera en lecture seule. L'historique (inscriptions, paiements, classes)
             restera consultable. Aucune modification ne sera plus possible sur cette année.

@@ -35,6 +35,7 @@ export default {
                 years: new Date().getFullYear(),
                 type: classData.type || 'Standard',
                 telegram_link: classData.telegram_link,
+                main_teacher_id: classData.main_teacher_id ?? null,
                 schedules: classData.schedules || []
             }
 
@@ -60,6 +61,7 @@ export default {
                 years: classData.years || new Date().getFullYear(),
                 type: classData.type || 'Standard',
                 telegram_link: classData.telegram_link,
+                main_teacher_id: classData.main_teacher_id ?? null,
                 schedules: classData.schedules || []
             }
 

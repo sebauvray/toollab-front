@@ -17,6 +17,10 @@ const props = defineProps({
     error: {
         type: String,
         default: ''
+    },
+    dropUp: {
+        type: Boolean,
+        default: false
     }
 })
 
@@ -107,8 +111,8 @@ const handleClickOutside = (event) => {
 
         <div
             v-if="isOpen"
-            class="absolute w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50"
-            style="top: 100%;"
+            class="absolute w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50"
+            :class="dropUp ? 'bottom-full mb-1' : 'top-full mt-1'"
         >
             <div
                 v-for="option in options"

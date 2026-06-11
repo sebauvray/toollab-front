@@ -195,8 +195,8 @@ onMounted(() => {
           :class="[
             'px-3 py-1.5 text-xs font-medium border-b-2 transition-colors',
             activeTab === 'list'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              ? 'border-default text-default'
+              : 'border-transparent text-placeholder hover:text-default'
           ]"
       >
         Liste des professeurs
@@ -207,8 +207,8 @@ onMounted(() => {
           :class="[
             'px-3 py-1.5 text-xs font-medium border-b-2 transition-colors',
             activeTab === 'planning'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              ? 'border-default text-default'
+              : 'border-transparent text-placeholder hover:text-default'
           ]"
       >
         Planning

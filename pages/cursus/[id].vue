@@ -255,6 +255,7 @@ const handleAddClass = async (newClass) => {
       type: cursus.value.name,
       school_id: localStorage.getItem('current_school_id') || 1,
       telegram_link: newClass.telegram_link,
+      main_teacher_id: newClass.main_teacher_id || null,
       schedules: newClass.schedules || []
     };
 
@@ -293,6 +294,7 @@ const handleUpdateClass = async (updatedClass) => {
       size: parseInt(updatedClass.size),
       type: cursus.value.name,
       telegram_link: updatedClass.telegram_link,
+      main_teacher_id: updatedClass.main_teacher_id || null,
       schedules: updatedClass.schedules || []
     };
 

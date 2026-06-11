@@ -62,10 +62,14 @@ onMounted(() => fetchClasses())
           class="block bg-white rounded-lg border border-gray-200 overflow-hidden hover:border-gray-400 hover:shadow-md transition-all"
       >
         <div
-            class="px-3 py-2 text-white font-semibold"
+            class="px-3 py-2 text-white font-semibold flex items-center justify-between gap-2"
             :style="{backgroundColor: genderColors[c.gender] || '#6B7280'}"
         >
-          {{ c.name }}
+          <span class="truncate">{{ c.name }}</span>
+          <span
+              v-if="c.is_main_teacher"
+              class="shrink-0 px-1.5 py-0.5 text-[11px] font-medium rounded-full bg-white/25 ring-1 ring-white/40"
+          >Principal</span>
         </div>
         <div class="p-3 space-y-1.5 text-xs">
           <div class="text-gray-600">
@@ -74,7 +78,6 @@ onMounted(() => fetchClasses())
           </div>
           <div class="text-gray-700">
             {{ c.student_count }} élève{{ c.student_count > 1 ? 's' : '' }}
-            <span class="text-gray-400"> / {{ c.size }}</span>
           </div>
           <div class="pt-1.5 border-t border-gray-100 space-y-0.5">
             <div v-for="(s, idx) in c.schedules" :key="idx" class="text-xs text-gray-600">

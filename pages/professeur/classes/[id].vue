@@ -19,6 +19,7 @@ const {setFlashMessage} = useFlashMessage()
 const classroom = ref(null)
 const students = ref([])
 const outcomesOpen = ref(false)
+const isMainTeacher = ref(false)
 const yearClosed = ref(false)
 const isLoading = ref(true)
 const error = ref(null)
@@ -31,7 +32,7 @@ const OUTCOMES = [
   {value: 'fin_cursus', label: 'Fin de cursus', dot: 'bg-blue-500', head: 'text-blue-700', cellSel: 'bg-blue-100 text-blue-700 ring-1 ring-blue-300', cellHover: 'hover:bg-blue-50 hover:text-blue-400'},
   {value: 'exclusion', label: 'Exclusion', dot: 'bg-red-500', head: 'text-red-700', cellSel: 'bg-red-100 text-red-700 ring-1 ring-red-300', cellHover: 'hover:bg-red-50 hover:text-red-400'}
 ]
-const canEditOutcomes = computed(() => outcomesOpen.value && !yearClosed.value)
+const canEditOutcomes = computed(() => outcomesOpen.value && isMainTeacher.value && !yearClosed.value)
 const decidedCount = computed(() => students.value.filter(s => s.outcome).length)
 
 let outcomeSaveTimer = null
@@ -94,7 +95,7 @@ const tabs = computed(() => {
     {key: 'students', label: 'Élèves'},
     {key: 'attendance', label: 'Émargement'}
   ]
-  if (outcomesOpen.value) t.push({key: 'decisions', label: 'Décisions'})
+  if (outcomesOpen.value && isMainTeacher.value) t.push({key: 'decisions', label: 'Décisions'})
   return t
 })
 
@@ -148,6 +149,7 @@ const fetchData = async () => {
       classroom.value = response.data.classroom
       students.value = response.data.students.map(s => ({...s, outcome: s.outcome || '', commentaire: s.commentaire || ''}))
       outcomesOpen.value = response.data.outcomes_open
+      isMainTeacher.value = !!response.data.is_main_teacher
       yearClosed.value = response.data.year_closed
     }
   } catch (e) {
@@ -280,6 +282,13 @@ onMounted(() => fetchData())
         >
           {{ t.label }}
         </button>
+        <span
+            v-if="isMainTeacher"
+            class="ml-auto mb-1 inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium rounded-full bg-amber-100 text-amber-700 ring-1 ring-amber-300"
+        >
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+          Professeur principal
+        </span>
       </div>
 
       <div v-if="activeTab === 'students'">

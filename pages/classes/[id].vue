@@ -3,8 +3,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from '#imports'
 import PageContainer from '~/components/layout/PageContainer.vue'
 import BreadCrumb from '~/components/navigation/BreadCrumb.vue'
+import UpdateClassModal from '~/components/modals/UpdateClassModal.vue'
+import Edit from '~/components/Icons/Edit.vue'
 import { usePageTitle } from '~/composables/usePageTitle.js'
 import suiviService from '~/services/suivi'
+import classeService from '~/services/classe'
+import cursusService from '~/services/cursus'
 
 definePageMeta({
   layout: 'auth',
@@ -99,6 +103,57 @@ const fetchData = async () => {
   }
 }
 
+const { setFlashMessage } = useFlashMessage()
+const showEditModal = ref(false)
+const editClassData = ref(null)
+const editLevels = ref([])
+const isOpeningEdit = ref(false)
+
+const openEditModal = async () => {
+  if (isOpeningEdit.value) return
+  isOpeningEdit.value = true
+  try {
+    const res = await classeService.getClassById(route.params.id)
+    const full = res.data
+    const cursusRes = await cursusService.getCursusById(full.cursus_id)
+    editLevels.value = cursusRes.data?.cursus?.levels || []
+    editClassData.value = full
+    showEditModal.value = true
+  } catch (e) {
+    console.error('Erreur chargement classe:', e)
+    setFlashMessage({ type: 'error', message: 'Impossible de charger les informations de la classe' })
+  } finally {
+    isOpeningEdit.value = false
+  }
+}
+
+const handleUpdateClass = async (updatedClass) => {
+  try {
+    const response = await classeService.updateClass(updatedClass.id, {
+      name: updatedClass.name,
+      cursus_id: editClassData.value.cursus_id,
+      level_id: updatedClass.levelId,
+      gender: updatedClass.gender,
+      size: parseInt(updatedClass.size),
+      type: editClassData.value.type,
+      years: editClassData.value.years,
+      telegram_link: updatedClass.telegram_link,
+      main_teacher_id: updatedClass.main_teacher_id || null,
+      schedules: updatedClass.schedules || []
+    })
+    if (response.status === 'success') {
+      setFlashMessage({ type: 'success', message: response.message || 'Classe mise à jour' })
+      showEditModal.value = false
+      editClassData.value = null
+      await fetchData()
+    } else {
+      setFlashMessage({ type: 'error', message: response.message || 'Erreur lors de la modification' })
+    }
+  } catch (e) {
+    setFlashMessage({ type: 'error', message: e?.response?.data?.message || 'Erreur lors de la modification' })
+  }
+}
+
 onMounted(() => {
   if (route.query.tab === 'decisions') activeTab.value = 'decisions'
   fetchData()
@@ -134,6 +189,15 @@ onMounted(() => {
             </div>
           </div>
         </div>
+        <button
+            type="button"
+            @click="openEditModal"
+            :disabled="isOpeningEdit"
+            class="inline-flex items-center gap-x-1.5 px-3 py-1.5 text-xs border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors shrink-0 disabled:opacity-50"
+        >
+          <Edit class="size-3.5"/>
+          <span>{{ isOpeningEdit ? 'Chargement…' : 'Modifier' }}</span>
+        </button>
       </div>
 
       <div class="flex items-center gap-1 border-b border-[#E6EFF5] mb-4">
@@ -239,5 +303,14 @@ onMounted(() => {
     >
       <span class="font-semibold">Motif :</span> {{ hoverTip.text }}
     </div>
+
+    <UpdateClassModal
+        :is-open="showEditModal"
+        :cursus-name="editClassData?.cursus || ''"
+        :levels="editLevels"
+        :class-data="editClassData"
+        @close="showEditModal = false"
+        @update="handleUpdateClass"
+    />
   </PageContainer>
 </template>
