@@ -71,50 +71,43 @@ onBeforeUnmount(() => {
 <template>
   <!-- Utiliser v-if avec isBrowser pour s'assurer que Teleport ne s'exécute que côté client -->
   <Teleport to="body" v-if="isBrowser && isOpen">
-    <div class="fixed inset-0 z-50 overflow-y-auto">
-      <div class="flex items-center justify-center min-h-screen pt-3 px-3 pb-16 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 transition-opacity" aria-hidden="true" @click="handleCancel">
-          <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+    <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-3" @click.self="handleCancel">
+      <div
+          class="bg-white rounded-2xl shadow-xl w-full max-w-md font-nunito"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-headline"
+      >
+        <div class="px-5 pt-4 pb-3 border-b border-[#E6EFF5] flex items-center justify-between">
+          <h3 class="text-base font-bold text-default font-montserrat" id="modal-headline">
+            {{ title }}
+          </h3>
+          <button
+              @click="handleCancel"
+              class="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-50"
+              aria-label="Fermer"
+          >
+            <Cross class="size-4" />
+          </button>
         </div>
 
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="px-5 py-4">
+          <p class="text-xs text-gray-600 leading-relaxed">{{ message }}</p>
+        </div>
 
-        <div
-            class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-6 sm:align-middle sm:max-w-lg sm:w-full"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modal-headline"
-        >
-          <div class="flex justify-between items-center px-5 py-3 border-b">
-            <h3 class="text-base font-medium text-gray-900" id="modal-headline">
-              {{ title }}
-            </h3>
-            <button
-                @click="handleCancel"
-                class="text-gray-400 hover:text-gray-500 focus:outline-none"
-            >
-              <Cross class="size-4" />
-            </button>
-          </div>
-
-          <div class="px-5 py-3">
-            <p class="text-gray-700">{{ message }}</p>
-          </div>
-
-          <div class="px-5 py-3 bg-gray-50 flex justify-end space-x-2">
-            <button
-                @click="handleCancel"
-                class="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-3 py-1.5 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 sm:text-xs"
-            >
-              {{ cancelButtonText }}
-            </button>
-            <button
-                @click="handleConfirm"
-                :class="`inline-flex justify-center rounded-md shadow-sm px-3 py-1.5 ${confirmButtonClass} text-sm font-medium sm:text-xs`"
-            >
-              {{ confirmButtonText }}
-            </button>
-          </div>
+        <div class="px-5 py-3 border-t border-[#E6EFF5] flex justify-end gap-x-1.5">
+          <button
+              @click="handleCancel"
+              class="px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            {{ cancelButtonText }}
+          </button>
+          <button
+              @click="handleConfirm"
+              :class="`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors ${confirmButtonClass}`"
+          >
+            {{ confirmButtonText }}
+          </button>
         </div>
       </div>
     </div>

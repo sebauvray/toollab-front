@@ -70,57 +70,55 @@ const handleSave = () => {
 </script>
 
 <template>
-  <div v-if="isOpen" class="fixed inset-0 font-nunito bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-2xl px-6 pt-5 pb-8 w-[50rem] max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center mb-3">
-        <h2 class="text-lg font-bold mx-auto">Ajouter un cursus</h2>
+  <div v-if="isOpen" class="fixed inset-0 font-nunito bg-black/50 flex items-center justify-center z-50 p-3" @click.self="$emit('close')">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl">
+      <div class="px-5 pt-4 pb-3 border-b border-[#E6EFF5] flex items-center justify-between">
+        <h2 class="text-base font-bold text-default font-montserrat">Ajouter un cursus</h2>
         <button
             @click="$emit('close')"
-            class="text-gray-500 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-50"
+            class="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-50"
             aria-label="Fermer"
         >
           <Cross class="size-4"/>
         </button>
       </div>
-      <div class="w-full h-px border rounded-xl bg-gray-200"></div>
 
-      <div v-if="error" class="bg-red-100 text-red-800 p-2 rounded mt-3 mb-1.5">
-        {{ error }}
-      </div>
-
-      <div class="mt-6">
-        <div class="grid grid-cols-2 gap-5 mb-6">
-          <div class="flex flex-col gap-y-1.5">
-            <div class="text-sm font-semibold text-default mb-1 pl-1">Nom du cursus</div>
-            <InputText
-                v-model="currentCursus.name"
-                placeholder="Nom du cursus"
-                required
-            />
-          </div>
-          <div class="flex flex-col justify-between">
-            <div class="text-sm font-semibold text-default mb-1 pl-1">Type de cursus</div>
-            <ToogleCursus v-model="currentCursus.progression" />
-          </div>
+      <div class="px-5 py-4 space-y-4">
+        <div v-if="error" class="bg-red-50 text-red-700 ring-1 ring-red-200 px-3 py-2 rounded-lg text-xs">
+          {{ error }}
         </div>
 
-        <div v-if="currentCursus.progression === 'levels'" class="flex flex-col gap-y-3 mt-8">
-          <div class="text-sm font-semibold text-default mb-1 pl-1">Nombre de niveaux</div>
-          <div class="w-1/2">
+        <div>
+          <h3 class="text-xs font-montserrat font-semibold text-gray-500 mb-2">Cursus</h3>
+          <InputText
+              v-model="currentCursus.name"
+              placeholder="Nom du cursus"
+              required
+          />
+        </div>
+
+        <div>
+          <h3 class="text-xs font-montserrat font-semibold text-gray-500 mb-2">Progression</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+            <ToogleCursus v-model="currentCursus.progression" />
             <InputNumber
+                v-if="currentCursus.progression === 'levels'"
                 v-model="currentCursus.levels_count"
                 placeholder="Nombre de niveaux"
                 :min="1"
                 :max="20"
             />
           </div>
+          <p class="text-[11px] text-placeholder mt-1.5">
+            {{ currentCursus.progression === 'levels' ? 'Les élèves progressent de niveau en niveau d\'une année sur l\'autre.' : 'Cursus sans niveaux : les élèves restent dans le même groupe.' }}
+          </p>
         </div>
       </div>
 
-      <div class="flex justify-center gap-x-2 mt-8">
+      <div class="px-5 py-3 border-t border-[#E6EFF5] flex justify-end gap-x-1.5">
         <CancelButton @click="$emit('close')" :disabled="isSubmitting">Annuler</CancelButton>
         <SaveButton @click="handleSave" :disabled="isSubmitting">
-          {{ isSubmitting ? 'Création en cours...' : 'Enregistrer' }}
+          {{ isSubmitting ? 'Création en cours…' : 'Enregistrer' }}
         </SaveButton>
       </div>
     </div>

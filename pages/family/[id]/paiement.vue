@@ -1078,21 +1078,24 @@ const resetNewForm = () => {
             </div>
         </section>
 
-        <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg p-5 max-w-md mx-3 shadow-xl">
-                <h3 class="text-base font-semibold mb-3 text-gray-800">Confirmer la suppression</h3>
-                <p class="text-gray-600 mb-5">Voulez-vous vraiment supprimer ce paiement ?</p>
-
-                <div class="flex flex-col sm:flex-row gap-2 justify-end">
+        <div v-if="showDeleteModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 font-nunito" @click.self="closeDeleteModal">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-md">
+                <div class="px-5 pt-4 pb-3 border-b border-[#E6EFF5]">
+                    <h3 class="text-base font-bold text-default font-montserrat">Supprimer ce règlement ?</h3>
+                </div>
+                <div class="px-5 py-4 text-xs text-gray-600 leading-relaxed">
+                    Cette ligne sera définitivement supprimée et le reste à payer de la famille sera recalculé.
+                </div>
+                <div class="px-5 py-3 border-t border-[#E6EFF5] flex justify-end gap-x-1.5">
                     <button
                         @click="closeDeleteModal"
-                        class="px-3 py-1.5 text-gray-600 border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors"
+                        class="px-3 py-1.5 text-xs text-gray-700 border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors"
                     >
                         Annuler
                     </button>
                     <button
                         @click="confirmDelete"
-                        class="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                        class="px-3 py-1.5 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
                     >
                         Supprimer
                     </button>

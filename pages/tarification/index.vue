@@ -585,7 +585,7 @@ onMounted(() => {
                             <button
                                 @click="updateTarif"
                                 :disabled="isSaving"
-                                class="px-4 py-1.5 text-sm bg-default text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                                class="px-3 py-1.5 text-xs bg-default text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity font-medium"
                             >
                                 Enregistrer
                             </button>
@@ -706,15 +706,15 @@ onMounted(() => {
         </div>
 
         <Teleport to="body">
-            <div v-if="showAddFamiliale" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3">
-                <div class="bg-white rounded-2xl w-[95vw] max-w-md flex flex-col max-h-[90vh]">
-                    <div class="px-5 pt-4 pb-3 border-b border-gray-200 flex items-center justify-between">
-                        <h3 class="text-base font-semibold text-gray-800">
+            <div v-if="showAddFamiliale" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 font-nunito">
+                <div class="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col max-h-[88vh]">
+                    <div class="px-5 pt-4 pb-3 border-b border-[#E6EFF5] flex items-center justify-between">
+                        <h3 class="text-base font-bold text-default font-montserrat">
                             {{ editingFamiliale ? 'Modifier' : 'Ajouter' }} une réduction familiale
                         </h3>
                         <button
                             @click="showAddFamiliale = false; editingFamiliale = null; resetFamilialeForm()"
-                            class="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100"
+                            class="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-50"
                             aria-label="Fermer"
                         >
                             <Cross class="size-4"/>
@@ -728,15 +728,13 @@ onMounted(() => {
                             :min="2"
                         />
 
-                        <div class="flex gap-2">
+                        <div class="flex rounded-lg border border-input-stroke overflow-hidden divide-x divide-input-stroke">
                             <button
                                 type="button"
                                 @click="familialeForm.mode = 'montant'"
                                 :class="[
-                                    'flex-1 px-3 py-1.5 text-xs rounded-md border transition-colors',
-                                    familialeForm.mode === 'montant'
-                                        ? 'bg-default text-white border-default'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                    'flex-1 px-3 py-1.5 text-xs font-medium transition-colors',
+                                    familialeForm.mode === 'montant' ? 'bg-default text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
                                 ]"
                             >
                                 Définir un montant
@@ -745,10 +743,8 @@ onMounted(() => {
                                 type="button"
                                 @click="familialeForm.mode = 'pourcentage'"
                                 :class="[
-                                    'flex-1 px-3 py-1.5 text-xs rounded-md border transition-colors',
-                                    familialeForm.mode === 'pourcentage'
-                                        ? 'bg-default text-white border-default'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                    'flex-1 px-3 py-1.5 text-xs font-medium transition-colors',
+                                    familialeForm.mode === 'pourcentage' ? 'bg-default text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
                                 ]"
                             >
                                 Définir un pourcentage
@@ -772,7 +768,7 @@ onMounted(() => {
                             @input="calculerMontantCible"
                         />
 
-                        <div v-if="familialeForm.pourcentage_reduction" class="bg-gray-50 px-3 py-2 rounded-md space-y-0.5">
+                        <div v-if="familialeForm.pourcentage_reduction" class="rounded-lg border border-[#E6EFF5] px-3 py-2 space-y-0.5">
                             <p class="text-xs text-gray-600">
                                 Réduction : <span class="font-semibold text-gray-800">{{ familialeForm.pourcentage_reduction }}%</span>
                             </p>
@@ -782,17 +778,17 @@ onMounted(() => {
                         </div>
                     </div>
 
-                    <div class="px-5 py-3 border-t border-gray-200 flex justify-end gap-2">
+                    <div class="px-5 py-3 border-t border-[#E6EFF5] flex justify-end gap-x-1.5">
                         <button
                             @click="showAddFamiliale = false; editingFamiliale = null; resetFamilialeForm()"
-                            class="px-4 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                            class="px-3 py-1.5 text-xs border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                         >
                             Annuler
                         </button>
                         <button
                             @click="editingFamiliale ? updateReductionFamiliale() : addReductionFamiliale()"
                             :disabled="isSaving || !familialeForm.nombre_eleves_min || !familialeForm.pourcentage_reduction"
-                            class="px-4 py-1.5 text-sm bg-default text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                            class="px-3 py-1.5 text-xs bg-default text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity font-medium"
                         >
                             {{ editingFamiliale ? 'Modifier' : 'Ajouter' }}
                         </button>
@@ -803,15 +799,15 @@ onMounted(() => {
 
         <Teleport to="body">
             <div v-if="showAddMultiCursus"
-                 class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3">
-                <div class="bg-white rounded-2xl w-[95vw] max-w-md flex flex-col max-h-[90vh]">
-                    <div class="px-5 pt-4 pb-3 border-b border-gray-200 flex items-center justify-between">
-                        <h3 class="text-base font-semibold text-gray-800">
+                 class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 font-nunito">
+                <div class="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col max-h-[88vh]">
+                    <div class="px-5 pt-4 pb-3 border-b border-[#E6EFF5] flex items-center justify-between">
+                        <h3 class="text-base font-bold text-default font-montserrat">
                             {{ editingMultiCursus ? 'Modifier' : 'Ajouter' }} une réduction multi-cursus
                         </h3>
                         <button
                             @click="showAddMultiCursus = false; editingMultiCursus = null; resetMultiCursusForm()"
-                            class="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100"
+                            class="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-50"
                             aria-label="Fermer"
                         >
                             <Cross class="size-4"/>
@@ -833,17 +829,17 @@ onMounted(() => {
                         />
                     </div>
 
-                    <div class="px-5 py-3 border-t border-gray-200 flex justify-end gap-2">
+                    <div class="px-5 py-3 border-t border-[#E6EFF5] flex justify-end gap-x-1.5">
                         <button
                             @click="showAddMultiCursus = false; editingMultiCursus = null; resetMultiCursusForm()"
-                            class="px-4 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                            class="px-3 py-1.5 text-xs border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                         >
                             Annuler
                         </button>
                         <button
                             @click="editingMultiCursus ? updateReductionMultiCursus() : addReductionMultiCursus()"
                             :disabled="isSaving || !multiCursusForm.cursus_requis_id || !multiCursusForm.pourcentage_reduction"
-                            class="px-4 py-1.5 text-sm bg-default text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                            class="px-3 py-1.5 text-xs bg-default text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity font-medium"
                         >
                             {{ editingMultiCursus ? 'Modifier' : 'Ajouter' }}
                         </button>
