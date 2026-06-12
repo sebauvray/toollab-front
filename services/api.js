@@ -2,7 +2,6 @@ import * as axiosModule from 'axios'
 const axios = axiosModule.default || axiosModule
 
 const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
@@ -10,6 +9,10 @@ const apiClient = axios.create({
 })
 
 export function setupInterceptors() {
+    // L'URL de l'API est lue au runtime depuis NUXT_PUBLIC_API_URL
+    // (et non figée au build), pour pouvoir déployer le même bundle par environnement.
+    apiClient.defaults.baseURL = useRuntimeConfig().public.apiUrl
+
     apiClient.interceptors.request.use(
         (config) => {
             if (process.client) {
