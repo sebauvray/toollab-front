@@ -119,6 +119,18 @@ const montantTotal = computed(() => detailsPaiement.value?.montant_total || 0)
 const montantPaye = computed(() => detailsPaiement.value?.montant_paye || 0)
 const resteAPayer = computed(() => detailsPaiement.value?.reste_a_payer || 0)
 
+const pourcentagePaye = computed(() => {
+    if (montantTotal.value <= 0) return 100
+    return Math.min(100, Math.round((montantPaye.value / montantTotal.value) * 100))
+})
+
+const statutPaiement = computed(() => {
+    if (montantTotal.value <= 0) return {label: 'Exonérée', chip: 'bg-blue-100 text-blue-700 ring-blue-300', dot: 'bg-blue-500', bar: 'bg-blue-400'}
+    if (resteAPayer.value <= 0) return {label: 'Payé', chip: 'bg-green-100 text-green-700 ring-green-300', dot: 'bg-green-500', bar: 'bg-green-500'}
+    if (montantPaye.value === 0) return {label: 'Incomplet', chip: 'bg-red-100 text-red-700 ring-red-300', dot: 'bg-red-500', bar: 'bg-red-400'}
+    return {label: 'Partiellement payé', chip: 'bg-amber-100 text-amber-700 ring-amber-300', dot: 'bg-amber-500', bar: 'bg-amber-400'}
+})
+
 const factureDisponible = computed(() => montantTotal.value > 0 || montantPaye.value > 0)
 const telechargementFacture = ref(false)
 
@@ -133,6 +145,35 @@ const telechargerFacture = async () => {
     } finally {
         telechargementFacture.value = false
     }
+}
+
+const fieldErrors = ref({})
+
+const validateNewForm = () => {
+    const errs = {}
+    const f = newForm.value
+    if (!f.type) return false
+    if (f.type === 'cheque') {
+        if (f.memeBanque) {
+            if (!f.banqueCommune) errs.banqueCommune = 'Sélectionnez la banque commune'
+            else if (!banquesFrancaises.includes(f.banqueCommune) && f.banqueCommune !== 'Autre') errs.banqueCommune = 'Choisissez une banque dans la liste'
+        }
+        if (f.memeNom && !f.nomCommun?.trim()) errs.nomCommun = "Indiquez le nom de l'émetteur commun"
+        f.cheques.forEach((c, i) => {
+            if (!f.memeBanque) {
+                if (!c.banque) errs[`c${i}_banque`] = 'Sélectionnez une banque'
+                else if (!banquesFrancaises.includes(c.banque) && c.banque !== 'Autre') errs[`c${i}_banque`] = 'Choisissez une banque dans la liste'
+            }
+            if (!c.numero) errs[`c${i}_numero`] = 'Numéro de chèque requis'
+            if (!f.memeNom && !c.nom_emetteur?.trim()) errs[`c${i}_nom`] = "Nom de l'émetteur requis"
+            if (!c.montant || c.montant <= 0) errs[`c${i}_montant`] = 'Montant requis'
+        })
+    } else {
+        if (!f.montant || f.montant <= 0) errs.montant = 'Saisissez un montant supérieur à 0'
+        if (f.type === 'exoneration' && !f.justification?.trim()) errs.justification = "Précisez le motif de l'exonération"
+    }
+    fieldErrors.value = errs
+    return Object.keys(errs).length === 0
 }
 
 const isValidNewForm = computed(() => {
@@ -164,10 +205,17 @@ const typesLabels = {
 }
 
 const typesIcons = {
-    espece: '💵',
-    carte: '💳',
-    cheque: '🧾',
-    exoneration: '✋'
+    espece: '<rect x="3" y="7" width="18" height="10" rx="2"/><circle cx="12" cy="12" r="2.5"/>',
+    carte: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10.5h18"/>',
+    cheque: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10.5h8M7 14h5"/>',
+    exoneration: '<path d="M19 5 5 19"/><circle cx="7.5" cy="7.5" r="2.2"/><circle cx="16.5" cy="16.5" r="2.2"/>'
+}
+
+const typesShort = {
+    espece: 'Espèces',
+    carte: 'Carte',
+    cheque: 'Chèque',
+    exoneration: 'Exonération'
 }
 
 
@@ -192,18 +240,6 @@ const onBanqueInput = (value, chequeIndex = null) => {
 const onBanqueBlur = (value, chequeIndex = null) => {
     // Ne pas valider si l'utilisateur clique sur une suggestion
     setTimeout(() => {
-        if (!showBanqueSuggestions.value) {
-            const exactMatch = banquesFrancaises.find(banque => banque.toLowerCase() === value.toLowerCase())
-            if (!exactMatch && value !== '' && value !== 'Autre') {
-                // Permettre "Autre" comme valeur valide
-                if (chequeIndex !== null) {
-                    newForm.value.cheques[chequeIndex].banque = ''
-                } else {
-                    newForm.value.banqueCommune = ''
-                }
-                banqueSearchTerm.value = ''
-            }
-        }
         showBanqueSuggestions.value = false
     }, 150)
 }
@@ -234,13 +270,6 @@ const onEditBanqueInput = (value) => {
 
 const onEditBanqueBlur = (value) => {
     setTimeout(() => {
-        if (!showEditBanqueSuggestions.value) {
-            const exactMatch = banquesFrancaises.find(banque => banque.toLowerCase() === value.toLowerCase())
-            if (!exactMatch && value !== '' && value !== 'Autre') {
-                editForm.value.cheque.banque = ''
-                editBanqueSearchTerm.value = ''
-            }
-        }
         showEditBanqueSuggestions.value = false
     }, 150)
 }
@@ -463,6 +492,7 @@ const onTypeChange = () => {
 
 const selectType = (type) => {
     newForm.value.type = type
+    fieldErrors.value = {}
     onTypeChange()
 }
 
@@ -476,7 +506,7 @@ const updateMontantTotal = () => {
 }
 
 const addNewLigne = async () => {
-    if (!isValidNewForm.value) return
+    if (!validateNewForm()) return
 
     try {
         if (newForm.value.type === 'cheque') {
@@ -540,15 +570,25 @@ const addNewLigne = async () => {
         await loadData()
         resetNewForm()
     } catch (error) {
-        setFlashMessage({
-            type: 'error',
-            message: error.response?.data?.message || 'Erreur lors de l\'ajout'
-        })
+        let message = error.response?.data?.message || 'Erreur lors de l\'ajout'
+        if (error.response?.status === 422 && /dépasser le montant dû/i.test(message)) {
+            const reste = Math.round(Math.max(0, resteAPayer.value))
+            const parType = {
+                exoneration: `L'exonération saisie dépasse ce que la famille doit encore (reste à payer : ${reste}€).`,
+                cheque: `Le total des chèques dépasse ce que la famille doit encore (reste à payer : ${reste}€).`,
+                espece: `Ce montant dépasse ce que la famille doit encore (reste à payer : ${reste}€).`,
+                carte: `Ce montant dépasse ce que la famille doit encore (reste à payer : ${reste}€).`,
+            }
+            message = parType[newForm.value.type] || message
+        }
+        fieldErrors.value = { api: message }
+        setFlashMessage({ type: 'error', message })
     }
 }
 
 const resetNewForm = () => {
     showNewForm.value = false
+    fieldErrors.value = {}
     newForm.value = {
         type: '',
         montant: '',
@@ -577,71 +617,87 @@ const resetNewForm = () => {
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-default"></div>
     </div>
 
-    <div v-else class="grid grid-cols-1 lg:grid-cols-3 mt-5 px-5 font-montserrat w-full gap-3 items-start">
+    <div v-else class="grid grid-cols-1 lg:grid-cols-3 mt-5 px-5 pb-6 font-montserrat w-full gap-3 items-start">
         <BreadCrumb :custom-items="breadcrumbItems" />
 
-        <section class="lg:col-span-2 bg-white rounded-lg p-3 shadow-sm order-2 lg:order-1">
-            <h2 class="font-bold text-base mb-3 text-gray-800">Mode de paiement</h2>
-
-            <div class="space-y-2">
-                <div
-                    v-for="ligne in lignesPaiement"
-                    :key="ligne.id"
-                    class="border rounded-lg p-2 transition-colors bg-gray-50 border-gray-200 hover:shadow-sm"
+        <section class="lg:col-span-2 bg-white rounded-2xl border p-4 order-2 lg:order-1">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="font-bold text-base text-gray-800">Règlements</h2>
+                <button
+                    v-if="!showNewForm && !isReadOnly"
+                    @click="showNewForm = true"
+                    class="inline-flex items-center gap-x-1.5 bg-default text-white px-3 py-1.5 text-xs rounded-lg hover:opacity-90 transition-opacity font-medium"
                 >
-                    <div v-if="editingLineId !== ligne.id" class="flex items-center justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2">
-                                <span class="text-lg">{{ typesIcons[ligne.type_paiement] }}</span>
-                                <span class="font-medium text-xs text-gray-800">
-                  {{ typesLabels[ligne.type_paiement] }}
-                </span>
-                                <span class="text-sm font-semibold text-gray-900">{{ ligne.montant || 0 }}€</span>
-                            </div>
+                    <Plus class="size-3.5" />
+                    <span>Ajouter un règlement</span>
+                </button>
+            </div>
 
-                            <div v-if="ligne.type_paiement === 'cheque' && ligne.details" class="mt-1.5 text-xs text-gray-600 ml-6">
-                                <span>{{ ligne.details.banque }} - N°{{ ligne.details.numero }}</span>
-                                <span class="ml-1.5">({{ ligne.details.nom_emetteur }})</span>
-                            </div>
+            <div v-if="lignesPaiement.length === 0 && !showNewForm" class="rounded-xl border border-[#E6EFF5] py-8 text-center text-xs text-placeholder font-nunito">
+                Aucun règlement enregistré pour cette année.
+            </div>
 
-                            <div v-else-if="ligne.type_paiement === 'exoneration' && ligne.details?.justification" class="mt-1.5 text-xs text-gray-600 ml-6">
-                                Justification : {{ ligne.details.justification }}
-                            </div>
-                        </div>
+            <div v-if="lignesPaiement.length > 0" class="rounded-xl border border-[#E6EFF5] divide-y divide-[#E6EFF5] font-nunito overflow-hidden">
+                <div v-for="ligne in lignesPaiement" :key="ligne.id" class="px-3 py-2.5 hover:bg-gray-50/70 transition-colors">
+                    <div v-if="editingLineId !== ligne.id" class="flex items-center gap-3">
+                        <span class="flex items-center gap-2 shrink-0 w-28">
+                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-gray-100 text-gray-500 shrink-0">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24" v-html="typesIcons[ligne.type_paiement]"></svg>
+                            </span>
+                            <span class="text-xs font-medium text-gray-700">{{ typesShort[ligne.type_paiement] }}</span>
+                        </span>
 
-                        <div class="flex items-center gap-1.5" v-if="!isReadOnly">
+                        <span v-if="ligne.type_paiement === 'cheque' && ligne.details" class="text-xs text-gray-600 flex-1 min-w-0 truncate">
+                            {{ ligne.details.banque }} · n° {{ ligne.details.numero }}<span v-if="ligne.details.nom_emetteur"> · {{ ligne.details.nom_emetteur }}</span>
+                        </span>
+                        <span v-else-if="ligne.type_paiement === 'exoneration' && ligne.details?.justification" class="text-xs text-gray-600 flex-1 min-w-0 truncate">
+                            {{ ligne.details.justification }}
+                        </span>
+                        <span v-else class="flex-1"></span>
+
+                        <span class="font-montserrat font-bold text-sm text-default tabular-nums shrink-0">{{ ligne.montant || 0 }}€</span>
+
+                        <span class="flex items-center shrink-0" v-if="!isReadOnly">
                             <button
                                 @click="startEdit(ligne)"
-                                class="p-1.5 text-gray-700 hover:bg-white hover:shadow-sm rounded-lg transition-colors"
+                                class="inline-flex items-center justify-center w-7 h-7 rounded-lg text-gray-400 hover:text-default hover:bg-gray-100 transition-colors"
+                                title="Modifier"
                             >
-                                <EditIcon class="w-4 h-4" />
+                                <EditIcon class="size-3.5" />
                             </button>
                             <button
                                 @click="openDeleteModal(ligne)"
-                                class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                class="inline-flex items-center justify-center w-7 h-7 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                title="Supprimer"
                             >
-                                <Trash class="w-4 h-4" />
+                                <Trash class="size-3.5" />
                             </button>
-                        </div>
+                        </span>
                     </div>
 
                     <div v-else class="space-y-2">
-                        <div class="flex items-center gap-2">
-                            <span class="text-lg">{{ typesIcons[ligne.type_paiement] }}</span>
-                            <span class="font-medium text-xs text-gray-800">
-                {{ typesLabels[ligne.type_paiement] }}
-              </span>
-                            <input
-                                v-model="editForm.montant"
-                                type="text"
-                                placeholder="Montant"
-                                @input="editForm.montant = forceInteger(editForm.montant)"
-                                class="px-1.5 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-xs"
-                            />
+                        <div class="flex items-center gap-3">
+                            <span class="flex items-center gap-2 shrink-0 w-28">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-gray-100 text-gray-500 shrink-0">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24" v-html="typesIcons[ligne.type_paiement]"></svg>
+                                </span>
+                                <span class="text-xs font-medium text-gray-700">{{ typesShort[ligne.type_paiement] }}</span>
+                            </span>
+                            <div class="relative w-36">
+                                <input
+                                    v-model="editForm.montant"
+                                    type="text"
+                                    placeholder=" "
+                                    @input="editForm.montant = forceInteger(editForm.montant)"
+                                    class="peer w-full pl-2.5 pr-7 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default tabular-nums"
+                                />
+                                <span class="absolute left-2 top-[19px] -translate-y-1/2 bg-white px-1 pointer-events-none transition-all duration-150 text-sm text-placeholder peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-default peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:text-default">Montant</span>
+                                <span class="absolute right-2.5 top-[19px] -translate-y-1/2 text-sm text-gray-400 pointer-events-none">€</span>
+                            </div>
                         </div>
 
-                        <div v-if="ligne.type_paiement === 'cheque'" class="banque-autocomplete relative ml-6">
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+                        <div v-if="ligne.type_paiement === 'cheque'" class="banque-autocomplete relative">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                 <div class="relative">
                                     <input
                                         ref="editBanqueInputRef"
@@ -650,55 +706,65 @@ const resetNewForm = () => {
                                         @blur="onEditBanqueBlur($event.target.value)"
                                         @keydown="handleEditBanqueKeydown"
                                         @focus="showEditBanqueSuggestions = true"
-                                        placeholder="Banque"
-                                        class="w-full px-1.5 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-xs"
+                                        placeholder=" "
+                                        class="peer w-full px-2.5 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default"
                                         autocomplete="off"
                                     />
+                                    <span class="absolute left-2 top-[19px] -translate-y-1/2 bg-white px-1 pointer-events-none transition-all duration-150 text-sm text-placeholder peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-default peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:text-default">Banque</span>
                                     <div v-if="showEditBanqueSuggestions && filteredEditBanques.length > 0"
-                                         class="banque-suggestion absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                         class="banque-suggestion absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                                         <div v-for="(banque, index) in filteredEditBanques"
                                              :key="banque"
                                              @mousedown="selectEditBanque(banque)"
                                              :class="[
-                           'px-2 py-1.5 cursor-pointer text-xs',
-                           index === selectedEditBanqueIndex ? 'bg-blue-100' : 'hover:bg-gray-100'
+                           'px-2.5 py-1.5 cursor-pointer text-xs',
+                           index === selectedEditBanqueIndex ? 'bg-gray-100' : 'hover:bg-gray-100'
                          ]">
                                             {{ banque }}
                                         </div>
                                     </div>
                                 </div>
-                                <input
-                                    v-model="editForm.cheque.numero"
-                                    placeholder="Numéro"
-                                    class="px-1.5 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-xs"
-                                />
-                                <input
-                                    v-model="editForm.cheque.nom_emetteur"
-                                    placeholder="Nom émetteur"
-                                    class="px-1.5 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-xs"
-                                />
+                                <div class="relative">
+                                    <input
+                                        v-model="editForm.cheque.numero"
+                                        placeholder=" "
+                                        class="peer w-full px-2.5 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default"
+                                    />
+                                    <span class="absolute left-2 top-[19px] -translate-y-1/2 bg-white px-1 pointer-events-none transition-all duration-150 text-sm text-placeholder peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-default peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:text-default">Numéro</span>
+                                </div>
+                                <div class="relative">
+                                    <input
+                                        v-model="editForm.cheque.nom_emetteur"
+                                        placeholder=" "
+                                        class="peer w-full px-2.5 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default"
+                                    />
+                                    <span class="absolute left-2 top-[19px] -translate-y-1/2 bg-white px-1 pointer-events-none transition-all duration-150 text-sm text-placeholder peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-default peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:text-default">Nom émetteur</span>
+                                </div>
                             </div>
                         </div>
 
-                        <div v-else-if="ligne.type_paiement === 'exoneration'" class="ml-6">
-              <textarea
-                  v-model="editForm.justification"
-                  placeholder="Justification"
-                  rows="2"
-                  class="w-full px-1.5 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-xs"
-              ></textarea>
+                        <div v-else-if="ligne.type_paiement === 'exoneration'">
+              <div class="relative">
+                  <textarea
+                      v-model="editForm.justification"
+                      placeholder=" "
+                      rows="2"
+                      class="peer w-full px-2.5 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default"
+                  ></textarea>
+                  <span class="absolute left-2 top-[1.1rem] -translate-y-1/2 bg-white px-1 pointer-events-none transition-all duration-150 text-sm text-placeholder peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-default peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:text-default">Justification</span>
+              </div>
                         </div>
 
-                        <div class="flex flex-col sm:flex-row justify-end gap-1.5">
+                        <div class="flex justify-end gap-x-1.5">
                             <button
                                 @click="cancelEdit"
-                                class="px-2 py-1 text-gray-600 border border-gray-300 hover:bg-gray-100 rounded-lg text-xs"
+                                class="px-3 py-1.5 text-xs text-gray-700 border border-gray-300 hover:bg-gray-50 rounded-lg"
                             >
                                 Annuler
                             </button>
                             <button
                                 @click="saveEdit(ligne)"
-                                class="px-2 py-1 bg-black text-white rounded-lg hover:bg-gray-800 text-xs"
+                                class="px-3 py-1.5 text-xs bg-default text-white rounded-lg hover:opacity-90"
                             >
                                 Valider
                             </button>
@@ -706,87 +772,52 @@ const resetNewForm = () => {
                     </div>
                 </div>
 
-                <div v-if="!showNewForm && !isReadOnly">
-                    <button
-                        @click="showNewForm = true"
-                        class="w-full p-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-700 transition-colors flex items-center justify-center gap-1.5 text-xs"
-                    >
-                        <Plus class="w-4 h-4" />
-                        <span>Ajouter un moyen de paiement</span>
-                    </button>
-                </div>
+            </div>
 
-                <div v-else-if="showNewForm && !isReadOnly" class="border-2 border-gray-300 rounded-lg p-2 bg-gray-50">
+            <div v-if="showNewForm && !isReadOnly" class="mt-3 rounded-xl border border-[#E6EFF5] p-4 font-nunito panel-in">
                     <div class="space-y-3">
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                            <button
-                                @click="selectType('espece')"
-                                :class="[
-                    'flex flex-col items-center p-2 rounded-lg border-2 transition-all duration-200',
-                    newForm.type === 'espece'
-                      ? 'border-black bg-gray-100 text-black shadow-md'
-                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:shadow-sm'
-                  ]"
-                            >
-                                <div class="text-xl mb-1">💵</div>
-                                <span class="text-xs font-medium">Espèces</span>
-                            </button>
-
-                            <button
-                                @click="selectType('carte')"
-                                :class="[
-                    'flex flex-col items-center p-2 rounded-lg border-2 transition-all duration-200',
-                    newForm.type === 'carte'
-                      ? 'border-black bg-gray-100 text-black shadow-md'
-                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:shadow-sm'
-                  ]"
-                            >
-                                <div class="text-xl mb-1">💳</div>
-                                <span class="text-xs font-medium">Carte</span>
-                            </button>
-
-                            <button
-                                @click="selectType('cheque')"
-                                :class="[
-                    'flex flex-col items-center p-2 rounded-lg border-2 transition-all duration-200',
-                    newForm.type === 'cheque'
-                      ? 'border-black bg-gray-100 text-black shadow-md'
-                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:shadow-sm'
-                  ]"
-                            >
-                                <div class="text-xl mb-1">🧾</div>
-                                <span class="text-xs font-medium">Chèques</span>
-                            </button>
-
-                            <button
-                                @click="selectType('exoneration')"
-                                :class="[
-                    'flex flex-col items-center p-2 rounded-lg border-2 transition-all duration-200',
-                    newForm.type === 'exoneration'
-                      ? 'border-black bg-gray-100 text-black shadow-md'
-                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:shadow-sm'
-                  ]"
-                            >
-                                <div class="text-xl mb-1">✋</div>
-                                <span class="text-xs font-medium">Exonération</span>
-                            </button>
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <h3 class="font-montserrat font-semibold text-sm text-default">Nouveau règlement</h3>
+                            <div class="inline-flex rounded-lg border border-input-stroke overflow-hidden divide-x divide-input-stroke">
+                                <button
+                                    v-for="t in [['espece', 'Espèces'], ['carte', 'Carte'], ['cheque', 'Chèques'], ['exoneration', 'Exonération']]"
+                                    :key="t[0]"
+                                    @click="selectType(t[0])"
+                                    :class="[
+                                        'px-3 py-1.5 text-xs font-medium transition-colors',
+                                        newForm.type === t[0] ? 'bg-default text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+                                    ]"
+                                >{{ t[1] }}</button>
+                            </div>
                         </div>
 
                         <div v-if="newForm.type === 'cheque'">
                             <div class="flex items-center gap-3 mb-3">
-                                <label class="text-xs font-medium">Nombre de chèques :</label>
-                                <select v-model.number="newForm.nombreCheques" @change="initializeCheques" class="px-1.5 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-xs">
-                                    <option v-for="n in 7" :key="n" :value="n">{{ n }}</option>
-                                </select>
+                                <span class="text-xs text-gray-600">Nombre de chèques</span>
+                                <div class="inline-flex items-center rounded-lg border border-input-stroke overflow-hidden">
+                                    <button
+                                        type="button"
+                                        @click="newForm.nombreCheques = Math.max(1, newForm.nombreCheques - 1); initializeCheques()"
+                                        :disabled="newForm.nombreCheques <= 1"
+                                        class="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-default hover:bg-gray-50 disabled:opacity-30 border-r border-input-stroke transition-colors"
+                                    >−</button>
+                                    <span class="w-9 text-center text-sm font-semibold tabular-nums text-default">{{ newForm.nombreCheques }}</span>
+                                    <button
+                                        type="button"
+                                        @click="newForm.nombreCheques = Math.min(7, newForm.nombreCheques + 1); initializeCheques()"
+                                        :disabled="newForm.nombreCheques >= 7"
+                                        class="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-default hover:bg-gray-50 disabled:opacity-30 border-l border-input-stroke transition-colors"
+                                    >+</button>
+                                </div>
                             </div>
 
                             <div class="space-y-1.5 mb-3">
                                 <label class="flex items-center gap-1.5">
-                                    <input type="checkbox" v-model="newForm.memeNom" class="rounded border-black text-black focus:ring-black focus:ring-2">
+                                    <input type="checkbox" v-model="newForm.memeNom" class="accent-default">
                                     <span class="text-xs">Même nom sur tous les chèques</span>
                                 </label>
                                 <label class="flex items-center gap-1.5">
-                                    <input type="checkbox" v-model="newForm.memeBanque" class="rounded border-black text-black focus:ring-black focus:ring-2">
+                                    <input type="checkbox" v-model="newForm.memeBanque" class="accent-default">
                                     <span class="text-xs">Même banque pour tous les chèques</span>
                                 </label>
                             </div>
@@ -799,34 +830,39 @@ const resetNewForm = () => {
                                         @blur="onBanqueBlur($event.target.value)"
                                         @keydown="handleBanqueKeydown"
                                         @focus="showBanqueSuggestions = true"
-                                        placeholder="Banque"
-                                        class="w-full px-1.5 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-xs"
+                                        placeholder=" "
+                                        :class="['peer w-full px-2.5 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default', fieldErrors['banqueCommune'] ? '!border-red-400' : '']"
                                         autocomplete="off"
                                     />
+                                    <span class="absolute left-2 top-[19px] -translate-y-1/2 bg-white px-1 pointer-events-none transition-all duration-150 text-sm text-placeholder peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-default peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:text-default" :class="fieldErrors['banqueCommune'] ? '!text-red-500' : ''">Banque</span>
+                                    <p v-if="fieldErrors['banqueCommune']" class="mt-1 text-[11px] text-red-600">{{ fieldErrors['banqueCommune'] }}</p>
                                     <div v-if="showBanqueSuggestions && filteredBanques.length > 0"
-                                         class="banque-suggestion absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                         class="banque-suggestion absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                                         <div v-for="(banque, index) in filteredBanques"
                                              :key="banque"
                                              @mousedown="selectBanque(banque)"
                                              :class="[
                            'px-2 py-1.5 cursor-pointer text-xs',
-                           index === selectedBanqueIndex ? 'bg-blue-100' : 'hover:bg-gray-100'
+                           index === selectedBanqueIndex ? 'bg-gray-100' : 'hover:bg-gray-100'
                          ]">
                                             {{ banque }}
                                         </div>
                                     </div>
                                 </div>
-                                <input
-                                    v-if="newForm.memeNom"
-                                    v-model="newForm.nomCommun"
-                                    placeholder="Nom émetteur"
-                                    class="px-1.5 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-xs"
-                                />
+                                <div v-if="newForm.memeNom" class="relative">
+                                    <input
+                                        v-model="newForm.nomCommun"
+                                        placeholder=" "
+                                        :class="['peer w-full px-2.5 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default', fieldErrors['nomCommun'] ? '!border-red-400' : '']"
+                                    />
+                                    <span class="absolute left-2 top-[19px] -translate-y-1/2 bg-white px-1 pointer-events-none transition-all duration-150 text-sm text-placeholder peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-default peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:text-default" :class="fieldErrors['nomCommun'] ? '!text-red-500' : ''">Nom émetteur</span>
+                                    <p v-if="fieldErrors['nomCommun']" class="mt-1 text-[11px] text-red-600">{{ fieldErrors['nomCommun'] }}</p>
+                                </div>
                             </div>
 
-                            <div class="space-y-2">
-                                <div v-for="(cheque, index) in newForm.cheques" :key="index" class="border rounded-lg p-2 bg-white">
-                                    <h4 class="font-medium mb-1.5 text-xs">Chèque {{ index + 1 }}</h4>
+                            <div class="rounded-lg border border-[#E6EFF5] divide-y divide-[#E6EFF5]">
+                                <div v-for="(cheque, index) in newForm.cheques" :key="index" class="px-3 py-2.5">
+                                    <h4 class="text-[11px] font-montserrat font-semibold text-gray-500 mb-1.5">Chèque {{ index + 1 }}</h4>
                                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1.5">
                                         <div v-if="!newForm.memeBanque" class="banque-autocomplete relative">
                                             <input
@@ -835,93 +871,129 @@ const resetNewForm = () => {
                                                 @blur="onBanqueBlur($event.target.value, index)"
                                                 @keydown="handleBanqueKeydown"
                                                 @focus="showBanqueSuggestions = true"
-                                                placeholder="Banque"
-                                                class="w-full px-1.5 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-xs"
+                                                placeholder=" "
+                                                :class="['peer w-full px-2.5 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default', fieldErrors[`c${index}_banque`] ? '!border-red-400' : '']"
                                                 autocomplete="off"
                                             />
+                                            <span class="absolute left-2 top-[19px] -translate-y-1/2 bg-white px-1 pointer-events-none transition-all duration-150 text-sm text-placeholder peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-default peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:text-default" :class="fieldErrors[`c${index}_banque`] ? '!text-red-500' : ''">Banque</span>
+                                            <p v-if="fieldErrors[`c${index}_banque`]" class="mt-1 text-[11px] text-red-600">{{ fieldErrors[`c${index}_banque`] }}</p>
                                             <div v-if="showBanqueSuggestions && filteredBanques.length > 0"
-                                                 class="banque-suggestion absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                                 class="banque-suggestion absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                                                 <div v-for="(banque, banqueIndex) in filteredBanques"
                                                      :key="banque"
                                                      @mousedown="selectBanque(banque, index)"
                                                      :class="[
                                'px-2 py-1.5 cursor-pointer text-xs',
-                               banqueIndex === selectedBanqueIndex ? 'bg-blue-100' : 'hover:bg-gray-100'
+                               banqueIndex === selectedBanqueIndex ? 'bg-gray-100' : 'hover:bg-gray-100'
                              ]">
                                                     {{ banque }}
                                                 </div>
                                             </div>
                                         </div>
-                                        <input
-                                            v-model="cheque.numero"
-                                            placeholder="Numéro"
-                                            class="px-1.5 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-xs"
-                                        />
-                                        <input
-                                            v-if="!newForm.memeNom"
-                                            v-model="cheque.nom_emetteur"
-                                            placeholder="Nom émetteur"
-                                            class="px-1.5 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-xs"
-                                        />
-                                        <input
-                                            v-model="cheque.montant"
-                                            type="text"
-                                            placeholder="Montant"
-                                            @input="cheque.montant = forceInteger(cheque.montant); updateMontantTotal()"
-                                            class="px-1.5 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-xs"
-                                        />
+                                        <div class="relative">
+                                            <input
+                                                v-model="cheque.numero"
+                                                placeholder=" "
+                                                :class="['peer w-full px-2.5 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default', fieldErrors[`c${index}_numero`] ? '!border-red-400' : '']"
+                                            />
+                                            <span class="absolute left-2 top-[19px] -translate-y-1/2 bg-white px-1 pointer-events-none transition-all duration-150 text-sm text-placeholder peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-default peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:text-default" :class="fieldErrors[`c${index}_numero`] ? '!text-red-500' : ''">Numéro</span>
+                                            <p v-if="fieldErrors[`c${index}_numero`]" class="mt-1 text-[11px] text-red-600">{{ fieldErrors[`c${index}_numero`] }}</p>
+                                        </div>
+                                        <div v-if="!newForm.memeNom" class="relative">
+                                            <input
+                                                v-model="cheque.nom_emetteur"
+                                                placeholder=" "
+                                                :class="['peer w-full px-2.5 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default', fieldErrors[`c${index}_nom`] ? '!border-red-400' : '']"
+                                            />
+                                            <span class="absolute left-2 top-[19px] -translate-y-1/2 bg-white px-1 pointer-events-none transition-all duration-150 text-sm text-placeholder peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-default peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:text-default" :class="fieldErrors[`c${index}_nom`] ? '!text-red-500' : ''">Nom émetteur</span>
+                                            <p v-if="fieldErrors[`c${index}_nom`]" class="mt-1 text-[11px] text-red-600">{{ fieldErrors[`c${index}_nom`] }}</p>
+                                        </div>
+                                        <div class="relative">
+                                            <input
+                                                v-model="cheque.montant"
+                                                type="text"
+                                                placeholder=" "
+                                                @input="cheque.montant = forceInteger(cheque.montant); updateMontantTotal()"
+                                                :class="['peer w-full pl-2.5 pr-7 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default tabular-nums', fieldErrors[`c${index}_montant`] ? '!border-red-400' : '']"
+                                            />
+                                            <span class="absolute left-2 top-[19px] -translate-y-1/2 bg-white px-1 pointer-events-none transition-all duration-150 text-sm text-placeholder peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-default peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:text-default" :class="fieldErrors[`c${index}_montant`] ? '!text-red-500' : ''">Montant</span>
+                                            <span class="absolute right-2.5 top-[19px] -translate-y-1/2 text-sm text-gray-400 pointer-events-none">€</span>
+                                            <p v-if="fieldErrors[`c${index}_montant`]" class="mt-1 text-[11px] text-red-600">{{ fieldErrors[`c${index}_montant`] }}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <div v-else-if="newForm.type === 'espece' || newForm.type === 'carte'">
-                            <input
-                                v-model="newForm.montant"
-                                type="text"
-                                placeholder="Montant"
-                                @input="newForm.montant = forceInteger(newForm.montant)"
-                                class="w-full px-1.5 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-xs"
-                            />
+                            <div class="relative w-44">
+                                <input
+                                    v-model="newForm.montant"
+                                    type="text"
+                                    placeholder=" "
+                                    @input="newForm.montant = forceInteger(newForm.montant)"
+                                    :class="['peer w-full pl-2.5 pr-7 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default tabular-nums', fieldErrors['montant'] ? '!border-red-400' : '']"
+                                />
+                                <span class="absolute left-2 top-[19px] -translate-y-1/2 bg-white px-1 pointer-events-none transition-all duration-150 text-sm text-placeholder peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-default peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:text-default" :class="fieldErrors['montant'] ? '!text-red-500' : ''">Montant</span>
+                                <span class="absolute right-2.5 top-[19px] -translate-y-1/2 text-sm text-gray-400 pointer-events-none">€</span>
+                                <p v-if="fieldErrors['montant']" class="mt-1 text-[11px] text-red-600">{{ fieldErrors['montant'] }}</p>
+                            </div>
                         </div>
 
-                        <div v-else-if="newForm.type === 'exoneration'">
-                            <input
-                                v-model="newForm.montant"
-                                type="text"
-                                placeholder="Montant"
-                                @input="newForm.montant = forceInteger(newForm.montant)"
-                                class="w-full px-1.5 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-xs mb-1.5"
-                            />
-                            <textarea
-                                v-model="newForm.justification"
-                                placeholder="Justification"
-                                rows="2"
-                                class="w-full px-1.5 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-black text-xs"
-                            ></textarea>
+                        <div v-else-if="newForm.type === 'exoneration'" class="space-y-3">
+                            <div class="relative w-44">
+                                <input
+                                    v-model="newForm.montant"
+                                    type="text"
+                                    placeholder=" "
+                                    @input="newForm.montant = forceInteger(newForm.montant)"
+                                    :class="['peer w-full pl-2.5 pr-7 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default tabular-nums', fieldErrors['montant'] ? '!border-red-400' : '']"
+                                />
+                                <span class="absolute left-2 top-[19px] -translate-y-1/2 bg-white px-1 pointer-events-none transition-all duration-150 text-sm text-placeholder peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-default peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:text-default" :class="fieldErrors['montant'] ? '!text-red-500' : ''">Montant</span>
+                                <span class="absolute right-2.5 top-[19px] -translate-y-1/2 text-sm text-gray-400 pointer-events-none">€</span>
+                                <p v-if="fieldErrors['montant']" class="mt-1 text-[11px] text-red-600">{{ fieldErrors['montant'] }}</p>
+                            </div>
+                            <div class="relative">
+                                <textarea
+                                    v-model="newForm.justification"
+                                    placeholder=" "
+                                    rows="2"
+                                    :class="['peer w-full px-2.5 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default', fieldErrors['justification'] ? '!border-red-400' : '']"
+                                ></textarea>
+                                <span class="absolute left-2 top-[1.1rem] -translate-y-1/2 bg-white px-1 pointer-events-none transition-all duration-150 text-sm text-placeholder peer-focus:top-0 peer-focus:text-xs peer-focus:font-medium peer-focus:text-default peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:text-default" :class="fieldErrors['justification'] ? '!text-red-500' : ''">Justification</span>
+                                <p v-if="fieldErrors['justification']" class="mt-1 text-[11px] text-red-600">{{ fieldErrors['justification'] }}</p>
+                            </div>
                         </div>
 
-                        <div class="flex flex-col sm:flex-row justify-end gap-1.5">
+                        <div v-if="fieldErrors['api']" class="rounded-lg bg-red-50 ring-1 ring-red-200 px-3 py-2 text-xs text-red-700">
+                            {{ fieldErrors['api'] }}
+                        </div>
+
+                        <div class="flex items-center justify-between gap-x-1.5">
+                            <span v-if="newForm.type === 'cheque' && newForm.cheques.length > 1" class="text-xs text-placeholder font-nunito">
+                                Total saisi : <span class="font-semibold text-default tabular-nums">{{ newForm.montant || 0 }}€</span>
+                            </span>
+                            <span v-else></span>
+                            <div class="flex gap-x-1.5">
                             <button
                                 @click="resetNewForm"
-                                class="px-2 py-1 text-gray-600 border border-gray-300 hover:bg-gray-100 rounded-lg text-xs"
+                                class="px-3 py-1.5 text-xs text-gray-700 border border-gray-300 hover:bg-gray-50 rounded-lg"
                             >
                                 Annuler
                             </button>
                             <button
                                 @click="addNewLigne"
-                                :disabled="!isValidNewForm"
-                                class="px-2 py-1 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+                                class="px-3 py-1.5 text-xs bg-default text-white rounded-lg hover:opacity-90"
                             >
                                 Ajouter
                             </button>
+                            </div>
                         </div>
                     </div>
-                </div>
             </div>
         </section>
 
-        <section class="lg:col-span-1 bg-white rounded-lg p-3 self-start shadow-sm order-1 lg:order-2">
+        <section class="lg:col-span-1 bg-white rounded-2xl border p-4 self-start order-1 lg:order-2">
             <div class="flex items-center justify-between mb-3">
                 <h2 class="font-bold text-base text-gray-800">Paiement</h2>
                 <button
@@ -935,82 +1007,73 @@ const resetNewForm = () => {
                 </button>
             </div>
 
-            <div v-if="tarifDetails">
-                <div v-for="eleve in tarifDetails.details_par_eleve" :key="eleve.student_id" class="mb-2">
-                    <h3 class="font-semibold text-xs text-gray-800">{{ eleve.student_name }}</h3>
-                    <div v-for="cursus in eleve.cursus" :key="cursus.cursus_id" class="flex items-center justify-between font-nunito px-2 font-light text-xs text-gray-600">
+            <div class="rounded-xl border border-[#E6EFF5] px-3 py-2.5 font-nunito mb-3">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs text-placeholder">Total annuel <span class="font-montserrat font-bold text-default text-base ml-1">{{ Math.round(montantTotal) }}€</span></span>
+                    <span :class="['inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] ring-1', statutPaiement.chip]">
+                        <span :class="['w-1.5 h-1.5 rounded-full', statutPaiement.dot]"></span>
+                        {{ statutPaiement.label }}
+                    </span>
+                </div>
+                <div class="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                    <div
+                        :class="['h-full rounded-full transition-all duration-700 ease-out', statutPaiement.bar]"
+                        :style="{ width: pourcentagePaye + '%' }"
+                    ></div>
+                </div>
+                <div class="flex justify-between mt-1.5 text-[11px] text-placeholder">
+                    <span>Encaissé : <span class="font-semibold text-default">{{ Math.round(montantPaye) }}€</span></span>
+                    <span>Reste à payer : <span :class="['font-semibold', resteAPayer <= 0 ? 'text-green-600' : 'text-default']">{{ Math.round(Math.max(0, resteAPayer)) }}€</span></span>
+                </div>
+            </div>
+
+            <div v-if="tarifDetails" class="font-nunito mb-3">
+                <div v-for="eleve in tarifDetails.details_par_eleve" :key="eleve.student_id" class="mb-2 last:mb-0">
+                    <h3 class="font-semibold text-xs text-gray-800 font-montserrat">{{ eleve.student_name }}</h3>
+                    <div v-for="cursus in eleve.cursus" :key="cursus.cursus_id" class="flex items-center justify-between px-2 text-xs text-gray-600 py-0.5">
                         <div>{{ cursus.cursus_name }}</div>
-                        <div>x1</div>
                         <div class="font-medium text-gray-800">{{ Math.round(cursus.tarif_final) }}€</div>
                     </div>
                 </div>
             </div>
 
-            <div class="my-1.5 border border-gray-200 mx-2"></div>
-
-            <div class="grid grid-cols-4 auto-cols-fr auto-rows-fr w-full font-nunito px-2 font-light text-xs">
-                <div class="font-semibold text-gray-800">Total</div>
-                <div class="inline-flex items-center justify-center"></div>
-                <div class="inline-flex items-center justify-center"></div>
-                <div class="inline-flex items-center justify-end font-bold text-base text-gray-800">{{ Math.round(montantTotal) }}€</div>
-            </div>
-
-            <div class="my-1.5 border border-gray-200 mx-2"></div>
-
-            <div class="bg-gradient-to-br from-gray-50 to-gray-100 border mx-1 p-2 rounded-lg font-nunito shadow-inner">
-                <div v-if="detailsPaiement?.details" class="flex flex-col gap-y-1.5 mb-2">
-                    <div v-if="detailsPaiement.details.espece > 0" class="grid grid-cols-3 w-full text-xs bg-white rounded-md p-1.5 shadow-sm">
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-base">💵</span>
-                            <span class="font-semibold text-gray-700">Espèces</span>
-                        </div>
-                        <div class="inline-flex items-center justify-center"></div>
-                        <div class="inline-flex items-center justify-end font-medium text-gray-800">{{ Math.round(detailsPaiement.details.espece) }}€</div>
-                    </div>
-
-                    <div v-if="detailsPaiement.details.carte > 0" class="grid grid-cols-3 w-full text-xs bg-white rounded-md p-1.5 shadow-sm">
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-base">💳</span>
-                            <span class="font-semibold text-gray-700">CB</span>
-                        </div>
-                        <div class="inline-flex items-center justify-center"></div>
-                        <div class="inline-flex items-center justify-end font-medium text-gray-800">{{ Math.round(detailsPaiement.details.carte) }}€</div>
-                    </div>
-
-                    <div v-if="detailsPaiement.details.cheque > 0" class="grid grid-cols-3 w-full text-xs bg-white rounded-md p-1.5 shadow-sm">
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-base">🧾</span>
-                            <span class="font-semibold text-gray-700">Chèques</span>
-                        </div>
-                        <div class="inline-flex items-center justify-center text-gray-600 font-medium">x{{ detailsPaiement.details.cheques.length }}</div>
-                        <div class="inline-flex items-center justify-end font-medium text-gray-800">{{ Math.round(detailsPaiement.details.cheque) }}€</div>
-                    </div>
-
-                    <div v-if="detailsPaiement.details.exoneration > 0" class="grid grid-cols-3 w-full text-xs bg-white rounded-md p-1.5 shadow-sm">
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-base">✋</span>
-                            <span class="font-semibold text-gray-700">Exonération</span>
-                        </div>
-                        <div class="inline-flex items-center justify-center"></div>
-                        <div class="inline-flex items-center justify-end font-medium text-gray-800">{{ Math.round(detailsPaiement.details.exoneration) }}€</div>
-                    </div>
+            <div v-if="detailsPaiement?.details" class="rounded-xl border border-[#E6EFF5] divide-y divide-[#E6EFF5] font-nunito text-xs">
+                <div v-if="detailsPaiement.details.espece > 0" class="flex items-center justify-between px-3 py-2">
+                    <span class="flex items-center gap-2">
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-gray-100 text-gray-500 shrink-0">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24" v-html="typesIcons['espece']"></svg>
+                        </span>
+                        <span class="text-xs font-medium text-gray-700">Espèces</span>
+                    </span>
+                    <span class="font-medium text-gray-800 tabular-nums">{{ Math.round(detailsPaiement.details.espece) }}€</span>
                 </div>
-
-                <div class="flex items-center justify-between text-xs border-t border-gray-300 pt-2 bg-white rounded-md p-1.5 shadow-sm">
-                    <div class="font-semibold text-gray-800">Payé</div>
-                    <div class="font-bold text-green-600">{{ Math.round(montantPaye) }}€</div>
+                <div v-if="detailsPaiement.details.carte > 0" class="flex items-center justify-between px-3 py-2">
+                    <span class="flex items-center gap-2">
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-gray-100 text-gray-500 shrink-0">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24" v-html="typesIcons['carte']"></svg>
+                        </span>
+                        <span class="text-xs font-medium text-gray-700">Carte</span>
+                    </span>
+                    <span class="font-medium text-gray-800 tabular-nums">{{ Math.round(detailsPaiement.details.carte) }}€</span>
                 </div>
-            </div>
-
-            <div class="my-2 border border-gray-200 mx-2"></div>
-
-            <div class="flex items-center justify-between text-base mx-2 bg-gradient-to-r from-gray-100 to-gray-50 p-2 rounded-lg shadow-sm">
-                <div class="font-bold text-gray-800">Reste à payer</div>
-                <div :class="[
-          'font-bold text-lg',
-          resteAPayer === 0 ? 'text-green-600' : resteAPayer < 0 ? 'text-orange-500' : 'text-red-600'
-        ]">
-                    {{ Math.round(resteAPayer) }}€
+                <div v-if="detailsPaiement.details.cheque > 0" class="flex items-center justify-between px-3 py-2">
+                    <span class="flex items-center gap-2">
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-gray-100 text-gray-500 shrink-0">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24" v-html="typesIcons['cheque']"></svg>
+                        </span>
+                        <span class="text-xs font-medium text-gray-700">Chèques</span>
+                        <span class="text-gray-500">× {{ detailsPaiement.details.cheques.length }}</span>
+                    </span>
+                    <span class="font-medium text-gray-800 tabular-nums">{{ Math.round(detailsPaiement.details.cheque) }}€</span>
+                </div>
+                <div v-if="detailsPaiement.details.exoneration > 0" class="flex items-center justify-between px-3 py-2">
+                    <span class="flex items-center gap-2">
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-gray-100 text-gray-500 shrink-0">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24" v-html="typesIcons['exoneration']"></svg>
+                        </span>
+                        <span class="text-xs font-medium text-gray-700">Exonération</span>
+                    </span>
+                    <span class="font-medium text-gray-800 tabular-nums">{{ Math.round(detailsPaiement.details.exoneration) }}€</span>
                 </div>
             </div>
         </section>
@@ -1037,24 +1100,20 @@ const resetNewForm = () => {
             </div>
         </div>
     </div>
-    <div class="grid grid-cols-1 lg:grid-cols-3 mt-5 px-5 font-montserrat w-full gap-3 items-start">
-        <section class="lg:col-span-1 lg:col-start-3 bg-white rounded-lg p-3 self-start shadow-sm order-1 lg:order-2">
-            <div class="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="size-4 mr-1.5 mb-0.5" viewBox="0 0 24 24"><!-- Icon from MingCute Icon by MingCute Design - https://github.com/Richard9394/MingCute/blob/main/LICENSE -->
-                    <g fill="none">
-                        <path d="m12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.018-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z" />
-                        <path fill="currentColor" d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2m0 2a8 8 0 1 0 0 16a8 8 0 0 0 0-16m-.01 6c.558 0 1.01.452 1.01 1.01v5.124A1 1 0 0 1 12.5 18h-.49A1.01 1.01 0 0 1 11 16.99V12a1 1 0 1 1 0-2zM12 7a1 1 0 1 1 0 2a1 1 0 0 1 0-2" />
-                    </g>
-                </svg>
-                <h2 class="font-bold text-base text-gray-800 font-montserrat">Infos</h2>
-            </div>
-            <div class="my-3 px-1.5 text-xs">
-                Pour rappel, veuillez préciser aux personnes inscrites :
-                <ul class="list-disc pl-4 mt-1.5">
-                    <li><strong>Aucun remboursement</strong> ne sera effectué.</li>
-                    <li>Merci de vérifier que chaque chèque est correctement rempli : <strong>ordre</strong> et <strong>signature</strong>.</li>
-                </ul>
-            </div>
-        </section>
-    </div>
 </template>
+<style scoped>
+.panel-in {
+    animation: panel-in 0.22s ease-out;
+}
+
+@keyframes panel-in {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>

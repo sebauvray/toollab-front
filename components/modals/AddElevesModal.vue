@@ -67,84 +67,80 @@ const genderOptions = [
 </script>
 
 <template>
-    <div v-if="isOpen" class="fixed inset-0 font-nunito bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-2xl px-6 pt-5 pb-8 w-[95vw] max-w-[70rem] max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="text-lg font-bold mx-auto">Ajouter des élèves</h2>
+    <div v-if="isOpen" class="fixed inset-0 font-nunito bg-black/50 flex items-center justify-center z-50 p-3">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[88vh] flex flex-col">
+            <div class="px-5 pt-4 pb-3 border-b border-[#E6EFF5] flex items-center justify-between shrink-0">
+                <h2 class="text-base font-bold text-default font-montserrat">Ajouter des élèves</h2>
                 <button
-                    @click="$emit('close')"
-                    class="text-gray-500 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-50"
+                    @click="handleClose"
+                    class="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-50"
                     aria-label="Fermer">
                     <Cross class="size-4"/>
                 </button>
             </div>
-            <div class="w-full h-px border rounded-xl bg-gray-200"></div>
 
-            <div v-if="error" class="bg-red-100 text-red-800 p-2 rounded mt-3 mb-1.5">
-                {{ error }}
-            </div>
+            <div class="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+                <div v-if="error" class="bg-red-50 text-red-700 ring-1 ring-red-200 px-3 py-2 rounded-lg text-xs">
+                    {{ error }}
+                </div>
 
-            <div v-for="(student, index) in students" :key="index" class="mt-6">
-                <div class="flex flex-wrap gap-3 items-center">
-                    <div class="flex-1">
-                        <InputText
-                            v-model="student.lastname"
-                            placeholder="Nom"
-                            required
-                            aria-label="Nom de l'élève"/>
-                    </div>
-                    <div class="flex-1">
-                        <InputText
-                            v-model="student.firstname"
-                            placeholder="Prénom"
-                            required
-                            aria-label="Prénom de l'élève"/>
-                    </div>
-                    <div class="flex-1">
-                        <DatePicker
-                            v-model="student.birthdate"
-                            placeholder="Date de naissance"
-                            required
-                            aria-label="Date de naissance"/>
-                    </div>
-                    <div class="flex gap-3">
-                        <label v-for="option in genderOptions" :key="option.value" class="flex items-center gap-1.5">
-                            <input
-                                type="radio"
-                                v-model="student.gender"
-                                :value="option.value"
-                                :name="'gender-' + index"
-                                class="accent-default border-gray-300 focus:ring-accent-default size-4"
-                            >
-                            <span class="text-xs">{{ option.label }}</span>
-                        </label>
-                    </div>
-                    <div class="w-10 flex items-center justify-center">
-                        <button
-                            v-if="index > 0"
-                            @click="handleRemoveStudent(index)"
-                            class="text-gray-600 hover:text-gray-800 transition-colors"
-                            aria-label="Supprimer l'élève">
-                            <Trash class="size-4 hover:text-placeholder text-default"/>
-                        </button>
+                <div class="rounded-xl border border-[#E6EFF5] divide-y divide-[#E6EFF5]">
+                    <div v-for="(student, index) in students" :key="index" class="px-4 py-3">
+                        <div class="flex items-center justify-between mb-2.5">
+                            <h4 class="text-[11px] font-montserrat font-semibold text-gray-500">Élève {{ index + 1 }}</h4>
+                            <button
+                                v-if="students.length > 1"
+                                @click="handleRemoveStudent(index)"
+                                class="inline-flex items-center justify-center w-7 h-7 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                aria-label="Retirer cet élève">
+                                <Trash class="size-3.5"/>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-2.5 items-center">
+                            <InputText
+                                v-model="student.lastname"
+                                placeholder="Nom"
+                                required
+                                aria-label="Nom de l'élève"/>
+                            <InputText
+                                v-model="student.firstname"
+                                placeholder="Prénom"
+                                required
+                                aria-label="Prénom de l'élève"/>
+                            <DatePicker
+                                v-model="student.birthdate"
+                                placeholder="Date de naissance"
+                                required
+                                aria-label="Date de naissance"/>
+                            <div class="inline-flex rounded-lg border border-input-stroke overflow-hidden divide-x divide-input-stroke shrink-0">
+                                <button
+                                    v-for="option in genderOptions"
+                                    :key="option.value"
+                                    type="button"
+                                    @click="student.gender = option.value"
+                                    :class="[
+                                        'px-3 py-1.5 text-xs font-medium transition-colors',
+                                        student.gender === option.value ? 'bg-default text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+                                    ]"
+                                >{{ option.label }}</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="flex justify-center mt-5">
                 <button
                     @click="handleAddStudent"
-                    class="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-1.5"
+                    class="inline-flex items-center gap-x-1.5 px-3 py-1.5 border border-gray-300 rounded-lg text-gray-700 text-xs hover:bg-gray-50 transition-colors"
                     aria-label="Ajouter un nouvel élève">
-                    <PlusLight class="size-4"/>
-                    Ajouter un élève
+                    <PlusLight class="size-3.5"/>
+                    <span>Ajouter un autre élève</span>
                 </button>
             </div>
 
-            <div class="flex justify-center gap-x-2 mt-8">
-                <CancelButton @click="$emit('close')" :disabled="isLoading">Annuler</CancelButton>
+            <div class="px-5 py-3 border-t border-[#E6EFF5] flex items-center justify-end gap-x-1.5 shrink-0">
+                <CancelButton @click="handleClose" :disabled="isLoading">Annuler</CancelButton>
                 <SaveButton @click="handleSave" :disabled="isLoading">
-                    {{ isLoading ? 'Enregistrement...' : 'Enregistrer' }}
+                    {{ isLoading ? 'Enregistrement…' : `Enregistrer ${students.length > 1 ? students.length + ' élèves' : "l'élève"}` }}
                 </SaveButton>
             </div>
         </div>

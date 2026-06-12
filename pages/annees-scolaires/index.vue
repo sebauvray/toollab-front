@@ -5,6 +5,8 @@ import { useSchoolYear } from '~/composables/useSchoolYear'
 import { usePageTitle } from '~/composables/usePageTitle.js'
 import InputText from '~/components/form/InputText.vue'
 import PlusLight from '~/components/Icons/PlusLight.vue'
+import PageContainer from '~/components/layout/PageContainer.vue'
+import BreadCrumb from '~/components/navigation/BreadCrumb.vue'
 import schoolYearService from '~/services/schoolYear'
 import tarificationService from '~/services/tarification'
 
@@ -218,20 +220,21 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="p-6">
-    <div class="flex items-center justify-between mb-5">
-      <h1 class="text-lg font-bold text-default">Années scolaires</h1>
+  <PageContainer>
+    <BreadCrumb :custom-items="[{ name: 'Années scolaires', path: '/annees-scolaires' }]" />
+
+    <div class="flex items-center justify-end mb-3">
       <div class="flex items-center gap-x-1.5">
         <button
             v-if="hasArchivedYears"
             @click="router.push('/annees-scolaires/reconduire')"
-            class="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+            class="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-xs"
         >
           Reconduire des classes
         </button>
         <button
             @click="openCreate"
-            class="bg-default text-white px-3 py-1.5 text-sm rounded-lg hover:opacity-90 inline-flex items-center gap-x-1.5 transition-opacity"
+            class="bg-default text-white px-3 py-1.5 text-xs font-medium rounded-lg hover:opacity-90 inline-flex items-center gap-x-1.5 transition-opacity"
         >
           <PlusLight class="size-3.5"/>
           <span>Ouvrir une nouvelle année</span>
@@ -494,5 +497,5 @@ onMounted(async () => {
         </div>
       </div>
     </Teleport>
-  </div>
+  </PageContainer>
 </template>

@@ -5,6 +5,7 @@ import SaveButton from "~/components/form/SaveButton.vue";
 import CancelButton from "~/components/form/CancelButton.vue";
 import ToogleButton from "~/components/form/ToogleButton.vue";
 import DatePicker from "~/components/form/DatePicker.vue";
+import Cross from "~/components/Icons/Cross.vue";
 import familyService from '~/services/family';
 
 const props = defineProps({
@@ -87,77 +88,84 @@ watch(isEleve, (newValue) => {
 </script>
 
 <template>
-    <div v-if="isOpen" class="fixed inset-0 font-nunito bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-2xl px-6 pt-4 pb-5 w-[95vw] max-w-[50rem] max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="text-lg font-bold mx-auto">Ajouter un responsable</h2>
-                <button @click="$emit('close')"
-                        class="text-gray-500 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-50">
-                    <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
+    <div v-if="isOpen" class="fixed inset-0 font-nunito bg-black/50 flex items-center justify-center z-50 p-3">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[88vh] flex flex-col">
+            <div class="px-5 pt-4 pb-3 border-b border-[#E6EFF5] flex items-center justify-between shrink-0">
+                <h2 class="text-base font-bold text-default font-montserrat">Ajouter un responsable</h2>
+                <button
+                    @click="$emit('close')"
+                    class="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-50"
+                    aria-label="Fermer">
+                    <Cross class="size-4"/>
                 </button>
             </div>
-            <div class="w-full h-px border rounded-xl bg-gray-200"></div>
 
-            <div v-if="error" class="bg-red-100 text-red-800 p-2 rounded mt-3 mb-1.5">
-                {{ error }}
-            </div>
-
-            <div class="text-lg font-bold pl-1.5 text-default mt-8 mb-5">Responsable</div>
-            <div class="grid grid-cols-2 gap-5 ">
-                <InputText v-model="formData.lastname" placeholder="Nom"/>
-                <InputText v-model="formData.firstname" placeholder="Prénom"/>
-
-            </div>
-
-            <div class="grid grid-cols-2 gap-5 mt-8">
-                <div class="text-sm font-semibold pl-1 text-default">Contact</div>
-                <div class="text-sm font-semibold pl-1 text-default">Adresse</div>
-
-
-                <InputText v-model="formData.phone" placeholder="Numéro de téléphone"/>
-                <InputText v-model="formData.address" placeholder="Voie"/>
-                <InputText v-model="formData.email" placeholder="Email"/>
-                <InputText v-model="formData.zipcode" placeholder="Code postal"/>
-                <div></div>
-                <InputText v-model="formData.city" placeholder="Ville"/>
-
-
-            </div>
-
-            <div class="grid grid-cols-2 gap-5 mt-8">
-
-                <div class="flex items-center justify-start gap-x-3">
-                    <ToogleButton v-model="isEleve"/>
-                    <div class="text-xs text-default">Le responsable est aussi élève</div>
+            <div class="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+                <div v-if="error" class="bg-red-50 text-red-700 ring-1 ring-red-200 px-3 py-2 rounded-lg text-xs">
+                    {{ error }}
                 </div>
 
-                <div class="min-h-12">
-                    <DatePicker
-                        v-show="isEleve"
-                        v-model="formData.birthdate"
-                        placeholder="Date de naissance"
-                    />
+                <div>
+                    <h3 class="text-xs font-montserrat font-semibold text-gray-500 mb-2">Identité</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <InputText v-model="formData.lastname" placeholder="Nom"/>
+                        <InputText v-model="formData.firstname" placeholder="Prénom"/>
+                    </div>
+                </div>
 
-                    <div v-show="isEleve" class="flex gap-3 mt-3">
-                        <label v-for="option in genderOptions" :key="option.value" class="flex items-center gap-1.5">
-                            <input
-                                type="radio"
-                                v-model="formData.gender"
-                                :value="option.value"
-                                class="accent-default border-gray-300 focus:ring-accent-default size-4"
-                            >
-                            <span class="text-xs">{{ option.label }}</span>
-                        </label>
+                <div>
+                    <h3 class="text-xs font-montserrat font-semibold text-gray-500 mb-2">Contact</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <InputText v-model="formData.phone" placeholder="Numéro de téléphone"/>
+                        <InputText v-model="formData.email" placeholder="Email"/>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-xs font-montserrat font-semibold text-gray-500 mb-2">Adresse</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="col-span-2">
+                            <InputText v-model="formData.address" placeholder="Voie"/>
+                        </div>
+                        <InputText v-model="formData.zipcode" placeholder="Code postal"/>
+                        <InputText v-model="formData.city" placeholder="Ville"/>
+                    </div>
+                </div>
+
+                <div class="rounded-xl border border-[#E6EFF5] px-4 py-3">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <p class="text-xs font-montserrat font-semibold text-default">Le responsable est aussi élève</p>
+                            <p class="text-[11px] text-placeholder mt-0.5">Il pourra être inscrit dans une classe comme les autres élèves de la famille.</p>
+                        </div>
+                        <ToogleButton v-model="isEleve"/>
+                    </div>
+
+                    <div v-if="isEleve" class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-center mt-3 pt-3 border-t border-[#E6EFF5]">
+                        <DatePicker
+                            v-model="formData.birthdate"
+                            placeholder="Date de naissance"
+                        />
+                        <div class="inline-flex rounded-lg border border-input-stroke overflow-hidden divide-x divide-input-stroke">
+                            <button
+                                v-for="option in genderOptions"
+                                :key="option.value"
+                                type="button"
+                                @click="formData.gender = option.value"
+                                :class="[
+                                    'px-3 py-1.5 text-xs font-medium transition-colors',
+                                    formData.gender === option.value ? 'bg-default text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+                                ]"
+                            >{{ option.label }}</button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="flex justify-center gap-x-2 mt-8">
+            <div class="px-5 py-3 border-t border-[#E6EFF5] flex items-center justify-end gap-x-1.5 shrink-0">
                 <CancelButton @click="$emit('close')" :disabled="isSubmitting">Annuler</CancelButton>
                 <SaveButton @click="handleSave" :disabled="isSubmitting">
-                    {{ isSubmitting ? 'Création en cours...' : 'Enregistrer' }}
+                    {{ isSubmitting ? 'Création en cours…' : 'Enregistrer' }}
                 </SaveButton>
             </div>
         </div>

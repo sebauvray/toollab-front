@@ -1,9 +1,6 @@
 <script setup>
-import NotebookTLB from "~/components/Icons/Notebook-TLB.vue";
 import ClockTLB from "~/components/Icons/Clock-TLB.vue";
-import StudentTLB from "~/components/Icons/Student-TLB.vue";
 import { ref, computed, onMounted } from 'vue';
-import Valid from "~/components/Icons/Valid.vue";
 import {useRouter, useRoute, usePageTitle} from '#imports';
 import ConfirmationClasseModal from "~/components/modals/ConfirmationClasseModal.vue";
 import familyService from "~/services/family.js";
@@ -11,6 +8,7 @@ import classeService from "~/services/classe.js";
 import studentClassroomService from "~/services/studentClassroom.js";
 import userService from "~/services/user.js";
 import schoolService from "~/services/school.js";
+import paiementService from "~/services/paiement.js";
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 import { useSchoolYear } from "~/composables/useSchoolYear";
 
@@ -26,11 +24,11 @@ const breadcrumbItems = computed(() => [
 ]);
 const isModalOpen = ref(false);
 const selectedStudent = ref(null);
-const selectedClasses = ref(new Set());
 const isLoading = ref(true);
 const error = ref(null);
 const isSaving = ref(false);
 const loadingClassIndex = ref(null);
+const totalEstime = ref(null);
 
 const family = ref(null);
 const students = ref([]);
@@ -45,6 +43,20 @@ const user = ref(null);
 const currentSchoolId = computed(() => {
     return localStorage.getItem('current_school_id') || 1;
 });
+
+const GENDER_COLORS = { M: '#93C5FD', F: '#FDA4AF' };
+
+const studentInitials = (student) => {
+    return ((student.first_name?.[0] || '') + (student.last_name?.[0] || '')).toUpperCase();
+};
+
+const studentColor = (student) => GENDER_COLORS[student.gender] || '#9CA3AF';
+
+const studentClassCount = (studentId) => studentClasses.value[studentId]?.size || 0;
+
+const enrolledStudentsCount = computed(() =>
+    students.value.filter(s => studentClassCount(s.id) > 0).length
+);
 
 const groupedClasses = computed(() => {
     const groups = {};
@@ -128,10 +140,16 @@ const shouldShowClass = (classe) => {
     }
 };
 
-const getAvailableSpotsColor = (spots) => {
-    if (spots >= 11) return 'text-green-500';
-    if (spots >= 6 && spots <= 10) return 'text-orange-500';
-    return 'text-red-500';
+const fillRatio = (classe) => {
+    const size = parseInt(classe.size) || 0;
+    if (!size) return 0;
+    return Math.min(1, (size - classe.available_spots) / size);
+};
+
+const capacityBarColor = (classe) => {
+    if (classe.available_spots <= 0) return 'bg-red-400';
+    if (classe.available_spots <= 5) return 'bg-amber-400';
+    return 'bg-green-500';
 };
 
 const canClickClass = (classe) => {
@@ -140,6 +158,11 @@ const canClickClass = (classe) => {
     const alreadyIn = studentClasses.value[studentId]?.has(classIndex);
 
     return classe.available_spots > 0 || alreadyIn;
+};
+
+const isEnrolled = (classe) => {
+    const classIndex = classes.value.findIndex(c => c.id === classe.id);
+    return studentClasses.value[selectedStudent.value?.id]?.has(classIndex);
 };
 
 const fetchFamilyData = async () => {
@@ -205,20 +228,22 @@ const fetchEnrollments = async () => {
     }
 };
 
+const fetchTarif = async () => {
+    try {
+        const response = await paiementService.getDetailsPaiement(route.params.id);
+        if (response.status === 'success') {
+            totalEstime.value = response.data?.montant_total ?? null;
+        }
+    } catch (err) {
+        totalEstime.value = null;
+    }
+};
+
 const allStudentsHaveClasses = computed(() => {
     return students.value.every(student =>
         studentClasses.value[student.id] && studentClasses.value[student.id].size > 0
     );
 });
-
-const hasClassOfType = (studentId, type) => {
-    const studentClassSet = studentClasses.value[studentId];
-    if (!studentClassSet) return false;
-
-    return Array.from(studentClassSet).some(classIndex =>
-        classes.value[classIndex] && classes.value[classIndex].type === type
-    );
-};
 
 const isClassSelectable = (index) => {
     return !!selectedStudent.value && !!classes.value[index];
@@ -269,6 +294,7 @@ const toggleClass = async (index, classe) => {
         studentClasses.value = {...studentClasses.value};
 
         await fetchClasses();
+        fetchTarif();
 
     } catch (err) {
         console.error('Erreur lors de la modification de l\'inscription:', err);
@@ -285,10 +311,6 @@ const toggleClass = async (index, classe) => {
 
 const selectStudent = (student) => {
     selectedStudent.value = student;
-};
-
-const hasSelectedClasses = (studentId) => {
-    return studentClasses.value[studentId] && studentClasses.value[studentId].size > 0;
 };
 
 const handlePaymentNavigation = () => {
@@ -319,6 +341,7 @@ onMounted(async () => {
     await fetchFamilyData();
     await fetchClasses();
     await fetchEnrollments();
+    fetchTarif();
     isLoading.value = false;
 });
 
@@ -353,141 +376,182 @@ definePageMeta({
         {{ error }}
     </div>
 
-    <div v-else class="grid grid-cols-4 mt-4 px-4 font-montserrat w-full gap-x-3">
+    <div v-else class="grid grid-cols-1 lg:grid-cols-4 mt-4 px-4 pb-6 font-montserrat w-full gap-3 items-start">
         <BreadCrumb :custom-items="breadcrumbItems" />
 
-        <section class="bg-white col-span-3 rounded-xl border px-4 py-3">
-            <div class="flex justify-between mb-4">
-                <h2 class="font-bold text-base text-gray-800">{{ selectedStudent?.first_name }} {{ selectedStudent?.last_name }}</h2>
+        <section class="lg:col-span-3 bg-white rounded-2xl border p-4">
+            <div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+                <h2 class="font-bold text-base text-gray-800">Choix des classes</h2>
+                <p class="text-[11px] text-placeholder font-nunito">
+                    Une classe par cursus — choisir une autre classe du même cursus remplace l'inscription.
+                </p>
             </div>
-            <div v-for="(classGroup, cursus) in groupedClasses" :key="cursus" class="mb-5">
-                <div class="h-px bg-gray-100 w-full mb-3"></div>
-                <h3 class="text-sm font-semibold text-gray-800 mb-1.5 flex items-center gap-1.5">
-                    <span class="text-[10px] uppercase tracking-wide bg-gray-700 text-white px-1.5 py-0.5 rounded">Cursus</span>
-                    {{ cursus }}
-                </h3>
-                <div class="inline-flex items-center gap-x-1.5 mb-3">
-                    <span class="size-2 rounded-full bg-green-tlb"></span>
-                    <span class="font-medium text-[11px] text-gray-600">
-                        {{ classGroup.filter(c => c.available_spots > 0 && shouldShowClass(c)).length }} classe{{ classGroup.filter(c => c.available_spots > 0 && shouldShowClass(c)).length > 1 ? 's' : '' }} disponible{{ classGroup.filter(c => c.available_spots > 0 && shouldShowClass(c)).length > 1 ? 's' : '' }}
+
+            <div class="flex gap-2 overflow-x-auto pb-1 mb-4">
+                <button
+                    v-for="student in students"
+                    :key="student.id"
+                    type="button"
+                    @click="selectStudent(student)"
+                    class="flex items-center gap-2.5 pl-2 pr-3.5 py-2 rounded-xl border transition-all shrink-0"
+                    :class="selectedStudent?.id === student.id
+                        ? 'border-default bg-white shadow-sm'
+                        : 'border-[#E6EFF5] bg-gray-blue/60 hover:border-gray-300'"
+                >
+                    <span
+                        class="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
+                        :style="{ backgroundColor: studentColor(student) }"
+                    >{{ studentInitials(student) }}</span>
+                    <span class="text-left min-w-0">
+                        <span
+                            class="block text-sm font-semibold leading-tight truncate max-w-[9rem]"
+                            :class="selectedStudent?.id === student.id ? 'text-default' : 'text-gray-600'"
+                        >{{ student.first_name }}</span>
+                        <span class="flex items-center gap-1 text-[11px] font-nunito leading-tight" :class="studentClassCount(student.id) ? 'text-green-600' : 'text-placeholder'">
+                            <span class="w-1.5 h-1.5 rounded-full" :class="studentClassCount(student.id) ? 'bg-green-500' : 'bg-gray-300'"></span>
+                            {{ studentClassCount(student.id) ? `${studentClassCount(student.id)} classe${studentClassCount(student.id) > 1 ? 's' : ''}` : 'Non inscrit' }}
+                        </span>
+                    </span>
+                </button>
+            </div>
+
+            <div v-for="(classGroup, cursus) in groupedClasses" :key="cursus" class="mb-5 last:mb-0">
+                <div class="flex items-baseline justify-between mb-2">
+                    <h3 class="text-sm font-semibold text-default">{{ cursus }}</h3>
+                    <span class="text-[11px] text-placeholder font-nunito">
+                        {{ classGroup.filter(c => c.available_spots > 0).length }} classe{{ classGroup.filter(c => c.available_spots > 0).length > 1 ? 's' : '' }} avec des places
                     </span>
                 </div>
-                <div class="grid grid-cols-3 gap-2 font-nunito">
+
+                <div class="rounded-xl border border-[#E6EFF5] divide-y divide-[#E6EFF5] font-nunito overflow-hidden">
                     <div
-                        v-for="(classe, index) in classGroup"
+                        v-for="classe in classGroup"
                         :key="classe.id"
                         @click="!isReadOnly && canClickClass(classe) && toggleClass(classes.findIndex(c => c.id === classe.id), classe)"
-                        :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
-                        class="flex flex-col rounded-lg select-none p-2.5 transition-all duration-150 relative border-2"
+                        class="relative flex items-center gap-3 px-3.5 py-2.5 transition-colors"
                         :class="{
-                            'bg-green-50 border-green-500 ring-1 ring-green-200': studentClasses[selectedStudent?.id]?.has(classes.findIndex(c => c.id === classe.id)),
-                            'bg-gray-50 border-gray-200 hover:border-gray-300': !studentClasses[selectedStudent?.id]?.has(classes.findIndex(c => c.id === classe.id)),
+                            'bg-green-50/60': isEnrolled(classe),
+                            'hover:bg-gray-50': !isEnrolled(classe) && !isReadOnly && canClickClass(classe) && !isSaving,
                             'cursor-pointer': !isReadOnly && canClickClass(classe) && !isSaving,
-                            'opacity-50 cursor-not-allowed': isReadOnly || !canClickClass(classe),
-                            'opacity-75': isSaving
-                        }">
-                        <div v-if="loadingClassIndex === index"
-                             class="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center rounded-lg z-10">
-                            <div class="animate-spin rounded-full size-5 border-b-2 border-green-600"></div>
-                        </div>
-
+                            'opacity-45 cursor-not-allowed': isReadOnly || !canClickClass(classe),
+                        }"
+                    >
                         <div
-                            v-if="studentClasses[selectedStudent?.id]?.has(classes.findIndex(c => c.id === classe.id))"
-                            class="absolute top-1.5 right-1.5 size-5 rounded-full bg-green-600 text-white flex items-center justify-center shadow-sm"
+                            v-if="loadingClassIndex === classes.findIndex(c => c.id === classe.id)"
+                            class="absolute inset-0 bg-white/70 flex items-center justify-center z-10"
                         >
-                            <svg class="size-3" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M16.704 5.29a1 1 0 010 1.42l-8 8a1 1 0 01-1.42 0l-4-4a1 1 0 011.42-1.42L8 12.59l7.29-7.3a1 1 0 011.41 0z" clip-rule="evenodd" />
-                            </svg>
+                            <div class="animate-spin rounded-full size-4 border-b-2 border-default"></div>
                         </div>
 
-                        <div class="flex items-center gap-x-2">
-                            <div class="bg-gray-tlb/10 p-1 rounded">
-                                <NotebookTLB
-                                    :class="{
-                                        'text-[#93C5FD]': classe.gender === 'Hommes',
-                                        'text-[#FDA4AF]': classe.gender === 'Femmes',
-                                        'text-[#FCD34D]': classe.gender === 'Enfants'
-                                    }"
-                                    class="size-5"
-                                />
-                            </div>
+                        <span
+                            class="w-4 h-4 rounded-full shrink-0 transition-all"
+                            :class="isEnrolled(classe) ? 'border-[5px] border-green-600 bg-white' : 'border border-gray-300 bg-white'"
+                        ></span>
 
-                            <div class="flex flex-col min-w-0">
-                                <div class="font-bold uppercase text-gray-900 text-sm truncate">{{ classe.name }}</div>
-                                <div class="text-gray-tlb text-[11px] truncate">{{ classe.level?.name || 'Sans niveau' }}</div>
-                            </div>
-                        </div>
+                        <span
+                            class="w-2 h-2 rounded-full shrink-0"
+                            :style="{ backgroundColor: { Hommes: '#93C5FD', Femmes: '#FDA4AF', Enfants: '#FCD34D' }[classe.gender] || '#9CA3AF' }"
+                            :title="classe.gender"
+                        ></span>
 
-                        <div v-if="classe.schedules && classe.schedules.length > 0" class="mt-2 space-y-1">
-                            <div v-for="(schedule, scheduleIndex) in classe.schedules" :key="scheduleIndex" class="pl-1.5">
-                                <div class="inline-flex items-center gap-x-1 text-[11px] text-gray-700">
-                                    <ClockTLB class="size-3 text-gray-500" />
-                                    <span>{{ schedule.day }}</span>
-                                    <span class="text-gray-500">{{ schedule.formatted_time }}</span>
-                                </div>
-                                <div v-if="schedule.teacher || schedule.teacher_name" class="inline-flex items-center gap-x-1 text-[11px] text-gray-600 ml-3.5">
-                                    <span>{{ schedule.teacher ? `${schedule.teacher.first_name} ${schedule.teacher.last_name}` : schedule.teacher_name }}</span>
-                                </div>
-                            </div>
-                        </div>
+                        <span class="w-32 shrink-0 min-w-0">
+                            <span class="block font-montserrat font-bold text-sm text-default truncate">{{ classe.name }}</span>
+                            <span v-if="classe.level?.name" class="block text-[11px] text-placeholder truncate">{{ classe.level.name }}</span>
+                        </span>
 
-                        <div class="text-[11px] font-semibold mt-auto pt-2"
-                             :class="getAvailableSpotsColor(classe.available_spots)">
-                            {{ classe.available_spots }} place{{ classe.available_spots > 1 ? 's' : '' }} dispo{{ classe.available_spots > 1 ? 's' : '' }}
-                        </div>
+                        <span class="flex-1 min-w-0 text-xs text-gray-600">
+                            <span
+                                v-for="(schedule, i) in classe.schedules"
+                                :key="i"
+                                class="inline-flex items-center gap-1 mr-3"
+                            >
+                                <ClockTLB class="size-3 text-gray-400 shrink-0" />
+                                <span class="font-medium text-gray-700">{{ schedule.day }}</span>
+                                <span class="text-gray-500">{{ schedule.formatted_time }}</span>
+                                <span v-if="schedule.teacher || schedule.teacher_name" class="text-placeholder truncate">
+                                    · {{ schedule.teacher ? `${schedule.teacher.first_name} ${schedule.teacher.last_name}` : schedule.teacher_name }}
+                                </span>
+                            </span>
+                        </span>
+
+                        <span v-if="isEnrolled(classe)" class="shrink-0 px-2 py-0.5 rounded-full text-[11px] bg-green-100 text-green-700 ring-1 ring-green-300 font-medium">
+                            Inscrit ✓
+                        </span>
+                        <span v-else-if="classe.available_spots <= 0" class="shrink-0 px-2 py-0.5 rounded-md text-[11px] bg-gray-100 text-gray-400">
+                            Complète
+                        </span>
+
+                        <span class="shrink-0 flex items-center gap-2 w-24 justify-end">
+                            <span class="text-[11px] text-gray-500 tabular-nums">{{ classe.student_count }}/{{ classe.size }}</span>
+                            <span class="w-12 h-1 rounded-full bg-gray-100 overflow-hidden">
+                                <span
+                                    class="block h-full rounded-full transition-all"
+                                    :class="capacityBarColor(classe)"
+                                    :style="{ width: (fillRatio(classe) * 100) + '%' }"
+                                ></span>
+                            </span>
+                        </span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="flex flex-col gap-y-3 w-full sticky top-4 h-fit">
-            <div class="bg-white rounded-lg w-full border p-3">
-                <h2 class="font-semibold text-sm text-gray-800 mb-3">Liste d'élèves</h2>
-                <div class="flex flex-col gap-1">
-                    <button
-                        v-for="student in students"
-                        :key="student.id"
-                        type="button"
-                        @click="selectStudent(student)"
-                        class="px-2 py-1.5 rounded-md flex items-center justify-between text-sm transition-colors text-left"
-                        :class="selectedStudent?.id === student.id
-                            ? 'bg-primary/10 text-primary font-medium'
-                            : 'hover:bg-gray-50 text-gray-700'"
-                    >
-                        <span class="truncate">{{ student.first_name }} {{ student.last_name }}</span>
-                        <Valid v-if="hasSelectedClasses(student.id)" class="size-4 text-green-600 shrink-0" />
-                    </button>
-                </div>
-            </div>
+        <section class="bg-white rounded-2xl border p-4 w-full sticky top-4 h-fit font-nunito">
+            <h2 class="font-montserrat font-bold text-sm text-gray-800 mb-3">Récapitulatif</h2>
 
-            <div class="bg-white rounded-lg w-full border p-3 font-nunito flex flex-col justify-between min-h-72">
-                <div>
-                    <h2 class="font-semibold text-sm font-montserrat text-gray-800 mb-3">Récapitulatif</h2>
-                    <div class="flex flex-col gap-1">
-                        <template v-for="student in students" :key="student.id">
-                            <div
-                                v-for="classIndex in Array.from(studentClasses[student.id] || [])"
-                                :key="`${student.id}-${classIndex}`"
-                                class="py-1.5 border-b border-gray-100 flex justify-between items-center gap-2 text-xs last:border-b-0"
-                            >
-                                <div class="font-medium text-gray-800 truncate">{{ student.first_name }} {{ student.last_name }}</div>
-                                <div class="text-gray-600 truncate text-right">{{ classes[classIndex]?.name }} · {{ classes[classIndex].cursus }}</div>
-                            </div>
-                        </template>
-                        <div v-if="!students.some(s => (studentClasses[s.id] || new Set()).size > 0)" class="py-4 text-center text-xs text-gray-400">
-                            Aucune classe sélectionnée
+            <div class="space-y-3">
+                <div v-for="student in students" :key="student.id">
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0"
+                            :style="{ backgroundColor: studentColor(student) }"
+                        >{{ studentInitials(student) }}</span>
+                        <span class="text-xs font-montserrat font-semibold text-default truncate">{{ student.first_name }} {{ student.last_name }}</span>
+                    </div>
+                    <div v-if="studentClassCount(student.id)" class="mt-1 space-y-0.5">
+                        <div
+                            v-for="classIndex in Array.from(studentClasses[student.id] || [])"
+                            :key="classIndex"
+                            class="flex items-center justify-between pl-7 pr-1 text-xs"
+                        >
+                            <span class="text-gray-600 truncate">{{ classes[classIndex]?.cursus }}</span>
+                            <span class="font-semibold text-gray-800 shrink-0">{{ classes[classIndex]?.name }}</span>
                         </div>
                     </div>
+                    <p v-else class="pl-7 text-[11px] text-placeholder mt-0.5">Aucune classe choisie</p>
                 </div>
-
-                <button
-                    @click="handlePaymentNavigation"
-                    class="bg-yellow-tlb text-default py-2 w-full text-center rounded-md hover:opacity-90 font-semibold text-sm mt-4"
-                    :disabled="isSaving"
-                >
-                    Paiement
-                </button>
             </div>
+
+            <div class="my-3 border-t border-[#E6EFF5]"></div>
+
+            <div class="flex items-center justify-between mb-1.5 text-xs">
+                <span class="text-gray-500">Élèves inscrits</span>
+                <span class="font-semibold text-default tabular-nums">{{ enrolledStudentsCount }}/{{ students.length }}</span>
+            </div>
+            <div class="h-1.5 rounded-full bg-gray-100 overflow-hidden mb-3">
+                <div
+                    class="h-full rounded-full transition-all duration-500 ease-out"
+                    :class="enrolledStudentsCount === students.length ? 'bg-green-500' : 'bg-amber-400'"
+                    :style="{ width: (students.length ? (enrolledStudentsCount / students.length) * 100 : 0) + '%' }"
+                ></div>
+            </div>
+
+            <div v-if="totalEstime !== null && totalEstime > 0" class="flex items-baseline justify-between mb-3">
+                <span class="text-xs text-gray-500">Total annuel</span>
+                <span class="font-montserrat font-bold text-base text-default tabular-nums">{{ Math.round(totalEstime) }}€</span>
+            </div>
+
+            <button
+                @click="handlePaymentNavigation"
+                :disabled="isSaving"
+                class="w-full inline-flex items-center justify-center gap-x-1.5 bg-default text-white py-2 rounded-lg hover:opacity-90 font-montserrat font-semibold text-sm transition-opacity disabled:opacity-50"
+            >
+                <span>Continuer vers le paiement</span>
+                <svg class="size-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 5.5L20 12l-6.5 6.5M20 12H4"/></svg>
+            </button>
+            <p v-if="!allStudentsHaveClasses" class="mt-2 text-center text-[11px] text-amber-600">
+                {{ students.length - enrolledStudentsCount }} élève{{ students.length - enrolledStudentsCount > 1 ? 's' : '' }} sans classe pour l'instant
+            </p>
         </section>
 
         <ConfirmationClasseModal
