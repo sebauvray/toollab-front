@@ -17,7 +17,7 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                montserrat: ['Montserrat Alternates', 'sans-serif'],
+                montserrat: ['Montserrat', 'sans-serif'],
                 nunito: ['Nunito', 'sans-serif'],
             },
             colors: {
