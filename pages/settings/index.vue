@@ -1,5 +1,5 @@
 <script setup>
-import {ref, onMounted, computed} from 'vue'
+import {ref, onMounted, computed, markRaw} from 'vue'
 import {useAuth} from '~/composables/useAuth'
 import PageContainer from '~/components/layout/PageContainer.vue'
 import BreadCrumb from '~/components/navigation/BreadCrumb.vue'
@@ -8,6 +8,8 @@ import InputSelect from "~/components/form/InputSelect.vue"
 import SaveButton from "~/components/form/SaveButton.vue"
 import {usePageTitle} from "~/composables/usePageTitle.js"
 import UserList from "~/components/settings/UserList.vue"
+import Setting from "~/components/Icons/Setting.vue"
+import NotebookTLB from "~/components/Icons/Notebook-TLB.vue"
 import userService from '~/services/user'
 import schoolService from '~/services/school'
 import staffService from '~/services/staff'
@@ -73,8 +75,36 @@ const newUserForm = ref({
 })
 
 const roles = [
-  {value: 'admin', label: 'Administrateur'},
-  {value: 'registar', label: 'Responsable des inscriptions'}
+  {
+    value: 'admin',
+    label: 'Administrateur',
+    tagline: 'Pilote l\'établissement au quotidien.',
+    icon: markRaw(Setting),
+    chipClass: 'bg-blue-50 text-blue-700 ring-blue-200',
+    dotClass: 'bg-blue-500',
+    ringActive: 'ring-blue-300 bg-blue-50/40',
+    iconWrap: 'bg-blue-50 text-blue-600 ring-blue-100',
+    permissions: [
+      'Modifier les informations de l\'école',
+      'Gérer le personnel et les rôles',
+      'Accéder à la facturation et aux paiements'
+    ]
+  },
+  {
+    value: 'registar',
+    label: 'Responsable des inscriptions',
+    tagline: 'Gère les familles, les élèves et leurs inscriptions.',
+    icon: markRaw(NotebookTLB),
+    chipClass: 'bg-green-50 text-green-700 ring-green-200',
+    dotClass: 'bg-green-500',
+    ringActive: 'ring-green-300 bg-green-50/40',
+    iconWrap: 'bg-green-50 text-green-600 ring-green-100',
+    permissions: [
+      'Inscrire un élève à un cursus',
+      'Créer et éditer une fiche famille',
+      'Suivre les paiements des familles'
+    ]
+  }
 ]
 
 const checkUserRoles = async () => {
@@ -409,25 +439,69 @@ onMounted(async () => {
 
         <div class="bg-white rounded-2xl border p-5">
           <h2 class="text-sm font-semibold text-default font-montserrat mb-1.5">Ajouter un utilisateur</h2>
-          <p class="text-xs text-placeholder mb-4 max-w-3xl">
+          <p class="text-xs text-placeholder mb-5 max-w-3xl">
             Créez un compte administrateur ou un responsable des inscriptions pour votre établissement.
             Un email d'invitation sera envoyé à l'utilisateur pour définir son mot de passe. Pour les professeurs, utilisez l'onglet dédié.
           </p>
 
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <InputText v-model="newUserForm.last_name" placeholder="Nom" required />
             <InputText v-model="newUserForm.first_name" placeholder="Prénom" required />
             <InputText v-model="newUserForm.email" placeholder="Email" type="email" required />
-            <div class="relative">
-              <select
-                  v-model="newUserForm.role"
-                  class="w-full pl-2 pr-8 py-1.5 text-sm border border-input-stroke rounded-lg bg-white transition-colors duration-200 focus:ring-0 focus:outline-none focus:border-default appearance-none"
+          </div>
+
+          <div class="mt-6">
+            <div class="text-[11px] uppercase tracking-wide text-placeholder mb-2.5 font-montserrat">Rôle attribué</div>
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <button
+                  v-for="role in roles"
+                  :key="role.value"
+                  type="button"
+                  @click="newUserForm.role = role.value"
+                  :class="[
+                    'group relative text-left rounded-2xl border p-4 transition-all duration-150 focus:outline-none ring-1 ring-transparent',
+                    newUserForm.role === role.value
+                      ? `border-transparent ${role.ringActive} ring-2 shadow-sm`
+                      : 'border-[#E6EFF5] hover:border-gray-300 hover:bg-gray-50/60'
+                  ]"
               >
-                <option v-for="role in roles" :key="role.value" :value="role.value">{{ role.label }}</option>
-              </select>
-              <svg class="size-4 text-gray-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-              </svg>
+                <div class="flex items-start gap-3">
+                  <div :class="['shrink-0 size-9 rounded-xl flex items-center justify-center ring-1', role.iconWrap]">
+                    <component :is="role.icon" class="size-5" />
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm font-semibold text-default font-montserrat truncate">{{ role.label }}</span>
+                      <span :class="['inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium ring-1', role.chipClass]">
+                        <span class="h-1 w-1 rounded-full" :class="role.dotClass"></span>
+                        {{ role.value === 'admin' ? 'Admin' : 'Inscriptions' }}
+                      </span>
+                    </div>
+                    <p class="text-[11px] text-placeholder mt-0.5 leading-snug">{{ role.tagline }}</p>
+                  </div>
+                  <div
+                      :class="[
+                        'shrink-0 size-4 rounded-full border flex items-center justify-center transition-colors mt-0.5',
+                        newUserForm.role === role.value
+                          ? (role.value === 'admin' ? 'bg-blue-500 border-blue-500' : 'bg-green-500 border-green-500')
+                          : 'border-gray-300 bg-white'
+                      ]"
+                  >
+                    <svg v-if="newUserForm.role === role.value" class="size-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+
+                <ul class="mt-3 pl-12 space-y-1">
+                  <li v-for="perm in role.permissions" :key="perm" class="flex items-start gap-1.5 text-[11px] text-default/80 leading-snug">
+                    <svg class="size-3 mt-0.5 shrink-0" :class="role.value === 'admin' ? 'text-blue-500' : 'text-green-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>{{ perm }}</span>
+                  </li>
+                </ul>
+              </button>
             </div>
           </div>
 
