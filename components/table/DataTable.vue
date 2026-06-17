@@ -17,10 +17,14 @@ const props = defineProps({
   loading: {
     type: Boolean,
     default: false
+  },
+  sort: {
+    type: Object,
+    default: null
   }
 })
 
-const emit = defineEmits(['page-change', 'per-page-change'])
+const emit = defineEmits(['page-change', 'per-page-change', 'sort-change'])
 
 const perPageOptions = [10, 25, 50, 100]
 
@@ -32,6 +36,18 @@ const handlePageChange = (page) => {
   if (page === props.pagination.currentPage) return
   if (page < 1 || page > props.pagination.totalPages) return
   emit('page-change', page)
+}
+
+const handleSortChange = (column) => {
+  if (!column.sortable) return
+
+  const sortKey = column.sortKey || column.key
+  const direction = props.sort?.key === sortKey && props.sort?.direction === 'asc' ? 'desc' : 'asc'
+
+  emit('sort-change', {
+    key: sortKey,
+    direction
+  })
 }
 
 const displayedPages = computed(() => {
@@ -88,7 +104,27 @@ const isLastRow = (index) => {
           :key="column.key"
           :class="`col-span-${column.width || 1} inline-flex items-center justify-start`"
       >
-        {{ column.label }}
+        <button
+            v-if="column.sortable"
+            type="button"
+            class="inline-flex items-center gap-1 text-left hover:text-default transition-colors"
+            @click="handleSortChange(column)"
+        >
+          <span>{{ column.label }}</span>
+          <span class="inline-flex h-3 w-3 items-center justify-center">
+            <span
+                class="inline-block h-0 w-0 border-x-[4px] border-x-transparent"
+                :class="props.sort?.key === (column.sortKey || column.key) && props.sort?.direction === 'asc'
+                  ? 'border-b-[6px] border-b-gray-900'
+                  : props.sort?.key === (column.sortKey || column.key) && props.sort?.direction === 'desc'
+                    ? 'border-t-[6px] border-t-gray-900'
+                    : 'border-t-[6px] border-t-gray-300'"
+            />
+          </span>
+        </button>
+        <template v-else>
+          {{ column.label }}
+        </template>
       </div>
     </div>
 

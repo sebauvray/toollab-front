@@ -28,7 +28,7 @@ export default {
             const payload = {
                 name: classData.name,
                 cursus_id: classData.cursus_id,
-                level_id: classData.level_id || classData.levelId,
+                level_id: classData.level_id ?? classData.levelId ?? null,
                 gender: classData.gender,
                 size: parseInt(classData.size),
                 school_id: classData.school_id || schoolId,
@@ -55,7 +55,7 @@ export default {
             const payload = {
                 name: classData.name,
                 cursus_id: classData.cursus_id,
-                level_id: classData.level_id || classData.levelId,
+                level_id: classData.level_id ?? classData.levelId ?? null,
                 gender: classData.gender,
                 size: parseInt(classData.size),
                 years: classData.years || new Date().getFullYear(),

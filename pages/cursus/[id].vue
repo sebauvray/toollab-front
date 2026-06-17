@@ -249,7 +249,7 @@ const handleAddClass = async (newClass) => {
     const classData = {
       name: newClass.name,
       cursus_id: cursus.value.id,
-      level_id: newClass.levelId,
+      level_id: cursus.value.progression === 'levels' ? newClass.levelId : null,
       gender: newClass.gender,
       size: parseInt(newClass.size),
       type: cursus.value.name,
@@ -289,7 +289,7 @@ const handleUpdateClass = async (updatedClass) => {
     const classData = {
       name: updatedClass.name,
       cursus_id: cursus.value.id,
-      level_id: updatedClass.levelId,
+      level_id: cursus.value.progression === 'levels' ? updatedClass.levelId : null,
       gender: updatedClass.gender,
       size: parseInt(updatedClass.size),
       type: cursus.value.name,

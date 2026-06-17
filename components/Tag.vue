@@ -14,7 +14,7 @@ defineProps({
     type: String,
     required: false,
     default: '',
-    validator: (value) => ['', 'paid', 'pending', 'incomplete', 'exempted'].includes(value)
+    validator: (value) => ['', 'paid', 'pending', 'incomplete', 'exempted', 'no_enrollment'].includes(value)
   }
 })
 
@@ -22,13 +22,15 @@ const statusClasses = {
   paid: 'bg-green-200/20 border-green-500 text-green-500',
   pending: 'bg-orange-200/20 border-orange-500 text-orange-500',
   incomplete: 'bg-red-200/20 border-red-500 text-red-500',
-  exempted: 'bg-indigo-200/20 border-indigo-500 text-indigo-500'
+  exempted: 'bg-indigo-200/20 border-indigo-500 text-indigo-500',
+  no_enrollment: 'bg-gray-200/30 border-gray-400 text-gray-500'
 }
 
 const statusLabels = {
   paid: 'Payé',
   pending: 'Partiellement payé',
   incomplete: 'Incomplet',
-  exempted: 'Exonéré'
+  exempted: 'Exonéré',
+  no_enrollment: 'Aucune inscription'
 }
 </script>

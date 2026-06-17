@@ -32,6 +32,13 @@ const OUTCOMES = [
   {value: 'fin_cursus', label: 'Fin de cursus', dot: 'bg-blue-500', head: 'text-blue-700', cellSel: 'bg-blue-100 text-blue-700 ring-1 ring-blue-300', cellHover: 'hover:bg-blue-50 hover:text-blue-400'},
   {value: 'exclusion', label: 'Exclusion', dot: 'bg-red-500', head: 'text-red-700', cellSel: 'bg-red-100 text-red-700 ring-1 ring-red-300', cellHover: 'hover:bg-red-50 hover:text-red-400'}
 ]
+const isContinuousCursus = computed(() => classroom.value?.cursus?.progression === 'continu')
+const availableOutcomes = computed(() => {
+  if (isContinuousCursus.value) {
+    return OUTCOMES.filter(o => !['passage', 'redoublement'].includes(o.value))
+  }
+  return OUTCOMES
+})
 const canEditOutcomes = computed(() => outcomesOpen.value && isMainTeacher.value && !yearClosed.value)
 const decidedCount = computed(() => students.value.filter(s => s.outcome).length)
 
@@ -53,6 +60,7 @@ const queueSaveOutcomes = () => {
 }
 const setOutcome = (s, val) => {
   if (!canEditOutcomes.value) return
+  if (!availableOutcomes.value.some(o => o.value === val)) return
   s.outcome = s.outcome === val ? '' : val
   queueSaveOutcomes()
 }
@@ -382,10 +390,17 @@ onMounted(() => fetchData())
           <svg class="size-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <span>Vous n'êtes pas le professeur principal de cette classe : vous pouvez suivre les décisions de fin d'année, mais leur saisie est réservée au professeur principal.</span>
         </div>
+        <div
+            v-if="isContinuousCursus"
+            class="mb-3 flex items-start gap-2 rounded-lg bg-blue-50 ring-1 ring-blue-200 px-3 py-2 text-xs text-blue-800"
+        >
+          <svg class="size-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Cette classe appartient à un cursus continu : les décisions Passage et Redoublement ne sont pas disponibles.</span>
+        </div>
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
             <span class="text-placeholder">{{ canEditOutcomes ? 'Clique la colonne voulue pour décider :' : 'Décisions de fin d\'année :' }}</span>
-            <span v-for="o in OUTCOMES" :key="o.value" class="inline-flex items-center gap-1.5">
+            <span v-for="o in availableOutcomes" :key="o.value" class="inline-flex items-center gap-1.5">
               <span class="h-2.5 w-2.5 rounded-full" :class="o.dot"></span>{{ o.label }}
             </span>
           </div>
@@ -400,14 +415,14 @@ onMounted(() => fetchData())
                 <th class="sticky left-0 z-10 bg-white text-left font-semibold text-gray-700 px-3 py-2 min-w-[11rem] border-r border-[#E6EFF5] font-montserrat">
                   Élève <span class="font-normal text-placeholder">· {{ decidedCount }}/{{ students.length }}</span>
                 </th>
-                <th v-for="o in OUTCOMES" :key="o.value" :class="['px-3 py-2 text-center font-semibold border-l border-[#E6EFF5] whitespace-nowrap', o.head]">{{ o.label }}</th>
+                <th v-for="o in availableOutcomes" :key="o.value" :class="['px-3 py-2 text-center font-semibold border-l border-[#E6EFF5] whitespace-nowrap', o.head]">{{ o.label }}</th>
                 <th class="px-2 py-2 text-center font-semibold text-gray-700 border-l border-[#E6EFF5]">Note</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="s in students" :key="s.student_id" class="border-b border-[#E6EFF5] last:border-b-0 hover:bg-gray-50">
                 <td class="sticky left-0 z-10 bg-white px-3 py-1.5 font-medium text-gray-900 border-r border-[#E6EFF5] whitespace-nowrap font-montserrat">{{ s.last_name }} {{ s.first_name }}</td>
-                <td v-for="o in OUTCOMES" :key="o.value" class="px-1.5 py-1.5 border-l border-[#E6EFF5]">
+                <td v-for="o in availableOutcomes" :key="o.value" class="px-1.5 py-1.5 border-l border-[#E6EFF5]">
                   <button
                       type="button"
                       @click="setOutcome(s, o.value)"

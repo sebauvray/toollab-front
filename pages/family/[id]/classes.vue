@@ -45,6 +45,13 @@ const currentSchoolId = computed(() => {
 });
 
 const GENDER_COLORS = { M: '#93C5FD', F: '#FDA4AF' };
+const CLASS_GENDER_COLORS = {
+    Hommes: '#93C5FD',
+    Femmes: '#FDA4AF',
+    Enfants: '#FCD34D',
+    Mixte: '#86EFAC'
+};
+const CLASS_GENDER_LEGEND = Object.entries(CLASS_GENDER_COLORS).map(([label, color]) => ({ label, color }));
 
 const studentInitials = (student) => {
     return ((student.first_name?.[0] || '') + (student.last_name?.[0] || '')).toUpperCase();
@@ -130,7 +137,7 @@ const shouldShowClass = (classe) => {
         const studentGender = selectedStudent.value.gender;
         const classGender = classe.gender;
 
-        if (classGender === 'Enfants') return true;
+        if (classGender === 'Enfants' || classGender === 'Mixte') return true;
         if (studentGender === 'M') return classGender === 'Hommes';
         if (studentGender === 'F') return classGender === 'Femmes';
 
@@ -387,6 +394,21 @@ definePageMeta({
                 </p>
             </div>
 
+            <div class="flex flex-wrap items-center gap-3 mb-4 text-[11px] text-gray-500 font-nunito">
+                <span class="font-medium text-gray-600">Légende</span>
+                <span
+                    v-for="item in CLASS_GENDER_LEGEND"
+                    :key="item.label"
+                    class="inline-flex items-center gap-1.5"
+                >
+                    <span
+                        class="w-2 h-2 rounded-full shrink-0"
+                        :style="{ backgroundColor: item.color }"
+                    ></span>
+                    {{ item.label }}
+                </span>
+            </div>
+
             <div class="flex gap-2 overflow-x-auto pb-1 mb-4">
                 <button
                     v-for="student in students"
@@ -450,7 +472,7 @@ definePageMeta({
 
                         <span
                             class="w-2 h-2 rounded-full shrink-0"
-                            :style="{ backgroundColor: { Hommes: '#93C5FD', Femmes: '#FDA4AF', Enfants: '#FCD34D' }[classe.gender] || '#9CA3AF' }"
+                            :style="{ backgroundColor: CLASS_GENDER_COLORS[classe.gender] || '#9CA3AF' }"
                             :title="classe.gender"
                         ></span>
 

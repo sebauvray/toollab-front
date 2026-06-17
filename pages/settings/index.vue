@@ -10,6 +10,7 @@ import {usePageTitle} from "~/composables/usePageTitle.js"
 import UserList from "~/components/settings/UserList.vue"
 import Setting from "~/components/Icons/Setting.vue"
 import NotebookTLB from "~/components/Icons/Notebook-TLB.vue"
+import TeacherTLB from "~/components/Icons/Teacher-TLB.vue"
 import userService from '~/services/user'
 import schoolService from '~/services/school'
 import staffService from '~/services/staff'
@@ -104,8 +105,30 @@ const roles = [
       'Créer et éditer une fiche famille',
       'Suivre les paiements des familles'
     ]
+  },
+  {
+    value: 'teacher',
+    label: 'Professeur',
+    tagline: 'Accède à ses classes, son planning et ses émargements.',
+    icon: markRaw(TeacherTLB),
+    chipClass: 'bg-amber-50 text-amber-700 ring-amber-200',
+    dotClass: 'bg-amber-500',
+    ringActive: 'ring-amber-300 bg-amber-50/40',
+    iconWrap: 'bg-amber-50 text-amber-600 ring-amber-100',
+    permissions: [
+      'Consulter ses classes',
+      'Faire l\'appel et suivre les présences',
+      'Saisir les décisions si professeur principal'
+    ]
   }
 ]
+
+const canManageUsers = computed(() => isDirector.value || isAdmin.value)
+const availableRoles = computed(() => {
+  if (isDirector.value) return roles
+  if (isAdmin.value) return roles.filter(role => ['registar', 'teacher'].includes(role.value))
+  return []
+})
 
 const checkUserRoles = async () => {
   try {
@@ -137,6 +160,10 @@ const checkUserRoles = async () => {
       isAdmin.value = true;
       const schoolResponse = await schoolService.getSchool(currentSchoolId);
       school.value = schoolResponse;
+    }
+
+    if (availableRoles.value.length && !availableRoles.value.some(role => role.value === newUserForm.value.role)) {
+      newUserForm.value.role = availableRoles.value[0].value
     }
   } catch (error) {
     console.error('Erreur lors de la vérification du rôle:', error);
@@ -280,6 +307,11 @@ const handleCreateUser = async () => {
       return
     }
 
+    if (!availableRoles.value.some(role => role.value === newUserForm.value.role)) {
+      message.value = {type: 'error', text: 'Vous ne pouvez pas attribuer ce rôle'}
+      return
+    }
+
     const response = await staffService.createStaffUser({
       first_name: newUserForm.value.first_name,
       last_name: newUserForm.value.last_name,
@@ -301,7 +333,7 @@ const handleCreateUser = async () => {
       first_name: '',
       last_name: '',
       email: '',
-      role: 'admin'
+      role: availableRoles.value[0]?.value || 'registar'
     }
 
   } catch (error) {
@@ -352,7 +384,7 @@ onMounted(async () => {
             :class="['px-3 py-2 text-xs font-medium -mb-px border-b-2 transition-colors whitespace-nowrap font-montserrat', activeTab === 'school' ? 'border-default text-default' : 'border-transparent text-placeholder hover:text-default']"
         >Mon établissement</button>
         <button
-            v-if="isDirector"
+            v-if="canManageUsers"
             @click="activeTab = 'users'"
             :class="['px-3 py-2 text-xs font-medium -mb-px border-b-2 transition-colors whitespace-nowrap font-montserrat', activeTab === 'users' ? 'border-default text-default' : 'border-transparent text-placeholder hover:text-default']"
         >Utilisateurs</button>
@@ -431,7 +463,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div v-if="activeTab === 'users' && isDirector && school" class="space-y-5">
+      <div v-if="activeTab === 'users' && canManageUsers && school" class="space-y-5">
         <div>
           <h2 class="text-sm font-semibold text-default font-montserrat mb-3">Liste des membres du personnel</h2>
           <UserList :school-id="school.id" ref="userListRef" @update="checkUserRoles" />
@@ -440,8 +472,8 @@ onMounted(async () => {
         <div class="bg-white rounded-2xl border p-5">
           <h2 class="text-sm font-semibold text-default font-montserrat mb-1.5">Ajouter un utilisateur</h2>
           <p class="text-xs text-placeholder mb-5 max-w-3xl">
-            Créez un compte administrateur ou un responsable des inscriptions pour votre établissement.
-            Un email d'invitation sera envoyé à l'utilisateur pour définir son mot de passe. Pour les professeurs, utilisez l'onglet dédié.
+            Ajoutez un membre du personnel à votre établissement.
+            Un email d'invitation sera envoyé à l'utilisateur pour définir son mot de passe.
           </p>
 
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -454,7 +486,7 @@ onMounted(async () => {
             <div class="text-[11px] uppercase tracking-wide text-placeholder mb-2.5 font-montserrat">Rôle attribué</div>
             <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
               <button
-                  v-for="role in roles"
+                  v-for="role in availableRoles"
                   :key="role.value"
                   type="button"
                   @click="newUserForm.role = role.value"
@@ -474,7 +506,7 @@ onMounted(async () => {
                       <span class="text-sm font-semibold text-default font-montserrat truncate">{{ role.label }}</span>
                       <span :class="['inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium ring-1', role.chipClass]">
                         <span class="h-1 w-1 rounded-full" :class="role.dotClass"></span>
-                        {{ role.value === 'admin' ? 'Admin' : 'Inscriptions' }}
+                        {{ role.value === 'admin' ? 'Admin' : role.value === 'teacher' ? 'Professeur' : 'Inscriptions' }}
                       </span>
                     </div>
                     <p class="text-[11px] text-placeholder mt-0.5 leading-snug">{{ role.tagline }}</p>
@@ -483,7 +515,7 @@ onMounted(async () => {
                       :class="[
                         'shrink-0 size-4 rounded-full border flex items-center justify-center transition-colors mt-0.5',
                         newUserForm.role === role.value
-                          ? (role.value === 'admin' ? 'bg-blue-500 border-blue-500' : 'bg-green-500 border-green-500')
+                          ? `${role.dotClass} border-transparent`
                           : 'border-gray-300 bg-white'
                       ]"
                   >
@@ -495,7 +527,7 @@ onMounted(async () => {
 
                 <ul class="mt-3 pl-12 space-y-1">
                   <li v-for="perm in role.permissions" :key="perm" class="flex items-start gap-1.5 text-[11px] text-default/80 leading-snug">
-                    <svg class="size-3 mt-0.5 shrink-0" :class="role.value === 'admin' ? 'text-blue-500' : 'text-green-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                    <svg class="size-3 mt-0.5 shrink-0" :class="role.value === 'admin' ? 'text-blue-500' : role.value === 'teacher' ? 'text-amber-500' : 'text-green-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                     <span>{{ perm }}</span>

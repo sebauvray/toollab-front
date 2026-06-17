@@ -21,7 +21,7 @@
           <h3 class="text-xs font-montserrat font-semibold text-gray-500 mb-2">Informations</h3>
           <div class="grid grid-cols-2 gap-3">
             <InputText v-model="editClass.name" placeholder="Nom de la classe"/>
-            <InputSelect v-model="editClass.levelId" :options="levelOptions" placeholder="Niveau"/>
+            <InputSelect v-if="hasLevels" v-model="editClass.levelId" :options="levelOptions" placeholder="Niveau"/>
             <SelectGenre v-model="editClass.gender" placeholder="Genre"/>
             <InputNumber v-model="editClass.size" placeholder="Effectif maximum" :min="1" :max="100"/>
             <div class="col-span-2">
@@ -198,7 +198,7 @@ const editClass = ref({
   name: '',
   gender: '',
   size: '',
-  levelId: 1,
+  levelId: null,
   telegram_link: '',
   schedules: []
 })
@@ -249,6 +249,8 @@ const levelOptions = computed(() => {
   }))
 })
 
+const hasLevels = computed(() => levelOptions.value.length > 0)
+
 watch(() => props.classData, (newClassData) => {
   if (newClassData && props.isOpen) {
     editClass.value = {
@@ -256,7 +258,7 @@ watch(() => props.classData, (newClassData) => {
       name: newClassData.name || '',
       gender: newClassData.gender || '',
       size: newClassData.size ? newClassData.size.toString() : '',
-      levelId: newClassData.level?.id || newClassData.level_id || 1,
+      levelId: newClassData.level?.id || newClassData.level_id || levelOptions.value[0]?.value || null,
       telegram_link: newClassData.telegram_link || '',
       schedules: newClassData.schedules ? [...newClassData.schedules] : []
     }

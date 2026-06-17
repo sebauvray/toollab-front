@@ -33,7 +33,7 @@ const newClass = ref({
   name: '',
   gender: '',
   size: '',
-  levelId: 1,
+  levelId: null,
   telegram_link: '',
   schedules: []
 })
@@ -82,6 +82,14 @@ const levelOptions = computed(() => {
     value: level.id,
     label: level.name
   }))
+})
+
+const hasLevels = computed(() => levelOptions.value.length > 0)
+
+watch(() => props.isOpen, (isOpen) => {
+  if (isOpen) {
+    newClass.value.levelId = levelOptions.value[0]?.value ?? null
+  }
 })
 
 const distinctTeacherIds = computed(() => {
@@ -169,7 +177,7 @@ const handleSave = () => {
       name: '',
       gender: '',
       size: '',
-      levelId: 1,
+      levelId: levelOptions.value[0]?.value ?? null,
       telegram_link: '',
       schedules: []
     }
@@ -208,7 +216,7 @@ const handleSave = () => {
           <h3 class="text-xs font-montserrat font-semibold text-gray-500 mb-2">Informations</h3>
           <div class="grid grid-cols-2 gap-3">
             <InputText v-model="newClass.name" placeholder="Nom de la classe"/>
-            <InputSelect v-model="newClass.levelId" :options="levelOptions" placeholder="Niveau"/>
+            <InputSelect v-if="hasLevels" v-model="newClass.levelId" :options="levelOptions" placeholder="Niveau"/>
             <SelectGenre v-model="newClass.gender" placeholder="Genre"/>
             <InputNumber v-model="newClass.size" placeholder="Effectif maximum" :min="1" :max="100"/>
             <div class="col-span-2">

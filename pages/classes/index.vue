@@ -159,8 +159,28 @@ onMounted(() => {
       <p class="text-red-600">{{ error }}</p>
     </div>
 
-    <div v-else-if="classes.length === 0" class="text-center py-10">
-      <p class="text-gray-500">Aucune classe trouvée</p>
+    <div v-else-if="classes.length === 0" class="py-12">
+      <div class="mx-auto max-w-xl bg-white border border-[#E6EFF5] rounded-2xl px-6 py-7 text-center shadow-sm">
+        <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-default/10 text-default">
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6.5A2.5 2.5 0 0 1 6.5 4H20v14H6.5A2.5 2.5 0 0 0 4 20.5v-14Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 8h8M8 11h6" />
+          </svg>
+        </div>
+
+        <h2 class="text-lg font-montserrat font-bold text-default mb-2">Aucune classe pour le moment</h2>
+        <p class="text-sm text-gray-600 font-nunito leading-6 mb-5">
+          Les classes sont créées depuis un cursus. Commence par créer un cursus, ajoute ses niveaux, puis tu pourras y ajouter les classes.
+        </p>
+
+        <NuxtLink
+            to="/cursus"
+            class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-default text-white text-sm font-medium hover:opacity-90 transition-opacity"
+        >
+          Aller aux cursus
+          <span aria-hidden="true">→</span>
+        </NuxtLink>
+      </div>
     </div>
 
     <div v-else>

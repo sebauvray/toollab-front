@@ -1,7 +1,8 @@
 <script setup>
 import PlusLight from "~/components/Icons/PlusLight.vue";
 import ResponsableTLB from "~/components/Icons/Responsable-TLB.vue";
-import { ref, onMounted, computed } from "vue";
+import Search from "~/components/Icons/Search.vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import AddResponsableModal from "~/components/modals/AddResponsableModal.vue";
 import Tag from "~/components/Tag.vue";
 import familyService from "~/services/family.js";
@@ -28,6 +29,13 @@ const showAddResponsableModal = ref(false);
 const families = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
+const searchQuery = ref('');
+const searchTimeout = ref(null);
+const sort = ref({
+    key: 'created_at',
+    direction: 'desc'
+});
+const paymentStatus = ref('all');
 const pagination = ref({
     currentPage: 1,
     totalPages: 1,
@@ -38,9 +46,9 @@ const pagination = ref({
 const { loadPerPage, savePerPage } = useTablePerPage('families_per_page');
 
 const columns = [
-    { key: 'nom', label: 'Nom du responsable', width: '7' },
-    { key: 'nombreEleves', label: 'Nombre d\'élèves', width: '3' },
-    { key: 'status', label: 'Règlement', width: '2' }
+    { key: 'nom', label: 'Nom du responsable', width: '7', sortable: true },
+    { key: 'nombreEleves', label: 'Nombre d\'élèves', width: '3', sortKey: 'nombreEleves', sortable: true },
+    { key: 'status', label: 'Règlement', width: '2', sortable: true }
 ];
 
 const breadcrumbItems = computed(() => [
@@ -52,10 +60,22 @@ const fetchFamilies = async (page = 1) => {
         isLoading.value = true;
         error.value = null;
 
-        const response = await familyService.getFamilies({
+        const params = {
             page: page,
-            per_page: pagination.value.perPage
-        });
+            per_page: pagination.value.perPage,
+            sort_by: sort.value.key,
+            sort_direction: sort.value.direction
+        };
+
+        if (searchQuery.value.trim()) {
+            params.search = searchQuery.value.trim();
+        }
+
+        if (paymentStatus.value !== 'all') {
+            params.payment_status = paymentStatus.value;
+        }
+
+        const response = await familyService.getFamilies(params);
 
         if (response.status === 'success') {
             families.value = response.data.items;
@@ -85,6 +105,28 @@ const handlePerPageChange = (perPage) => {
     savePerPage(perPage);
     pagination.value.perPage = perPage;
     fetchFamilies(1);
+};
+
+const handleSortChange = (nextSort) => {
+    sort.value = nextSort;
+    fetchFamilies(1);
+};
+
+const handleStatusFilterChange = (event) => {
+    paymentStatus.value = event.target.value;
+    fetchFamilies(1);
+};
+
+const handleSearch = (event) => {
+    searchQuery.value = event.target.value;
+
+    if (searchTimeout.value) {
+        clearTimeout(searchTimeout.value);
+    }
+
+    searchTimeout.value = setTimeout(() => {
+        fetchFamilies(1);
+    }, 300);
 };
 
 const canExport = ref(false);
@@ -123,6 +165,12 @@ onMounted(() => {
     pagination.value.perPage = loadPerPage();
     fetchFamilies();
 });
+
+onUnmounted(() => {
+    if (searchTimeout.value) {
+        clearTimeout(searchTimeout.value);
+    }
+});
 </script>
 
 <template>
@@ -135,16 +183,44 @@ onMounted(() => {
             @save="handleAddResponsable"
         />
 
-        <div class="flex items-center gap-2 ml-auto w-fit">
-            <ExportButton v-if="canExport" :loading="exportingStudents" @click="exportStudents" />
-            <button
-                @click="showAddResponsableModal = true"
-                :disabled="isReadOnly"
-                :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
-                class="bg-default text-white px-3 py-1.5 text-sm w-fit rounded-lg hover:opacity-90 inline-flex items-center justify-between gap-x-1.5 disabled:opacity-40 disabled:cursor-not-allowed">
-                <PlusLight class="size-3.5"/>
-                <span>Créer une famille</span>
-            </button>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <div class="relative w-full sm:w-[28rem] font-nunito">
+                <Search
+                    class="absolute left-5 top-1/2 transform -translate-y-1/2 size-4 text-placeholder"
+                />
+                <input
+                    type="text"
+                    placeholder="Rechercher un responsable..."
+                    :value="searchQuery"
+                    @input="handleSearch"
+                    class="w-full placeholder:text-placeholder border focus:ring-1 focus:ring-primary focus:outline-none border-input-stroke bg-white rounded-10 pl-12 py-2"
+                />
+            </div>
+
+            <select
+                :value="paymentStatus"
+                @change="handleStatusFilterChange"
+                class="w-full sm:w-52 border border-input-stroke bg-white rounded-10 px-3 py-2 text-sm font-nunito focus:ring-1 focus:ring-primary focus:outline-none"
+            >
+                <option value="all">Tous les règlements</option>
+                <option value="no_enrollment">Aucune inscription</option>
+                <option value="incomplete">Incomplet</option>
+                <option value="pending">Partiellement payé</option>
+                <option value="paid">Payé</option>
+                <option value="exempted">Exonéré</option>
+            </select>
+
+            <div class="flex items-center gap-2 w-fit">
+                <ExportButton v-if="canExport" :loading="exportingStudents" @click="exportStudents" />
+                <button
+                    @click="showAddResponsableModal = true"
+                    :disabled="isReadOnly"
+                    :title="isReadOnly ? 'Année scolaire en lecture seule' : ''"
+                    class="bg-default text-white px-3 py-1.5 text-sm w-fit rounded-lg hover:opacity-90 inline-flex items-center justify-between gap-x-1.5 disabled:opacity-40 disabled:cursor-not-allowed">
+                    <PlusLight class="size-3.5"/>
+                    <span>Créer une famille</span>
+                </button>
+            </div>
         </div>
 
         <div v-if="error" class="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded relative">
@@ -156,8 +232,10 @@ onMounted(() => {
             :items="families"
             :pagination="pagination"
             :loading="isLoading"
+            :sort="sort"
             @page-change="handlePageChange"
             @per-page-change="handlePerPageChange"
+            @sort-change="handleSortChange"
         >
             <template #default="{ item, isLastRow }">
                 <NuxtLink
