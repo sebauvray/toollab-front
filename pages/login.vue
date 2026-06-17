@@ -7,6 +7,7 @@ import { useAuth } from '~/composables/useAuth'
 import { useRouter, useRoute } from '#imports'
 import authService from '~/services/auth'
 import schoolService from '~/services/school'
+import userService from '~/services/user'
 
 useHead({
   title: 'Connexion'
@@ -54,17 +55,25 @@ const handleSubmit = async () => {
       localStorage.removeItem('current_school_role')
     }
 
-    const schools = await schoolService.getSchools()
     const isSuperAdmin = !!loginResponse?.user?.is_super_admin
     const redirectPath = route.query.redirect
 
-    if (Array.isArray(schools) && schools.length === 1) {
-      localStorage.setItem('current_school_id', String(schools[0].id))
-      router.push(redirectPath || '/')
-    } else if (Array.isArray(schools) && schools.length > 1) {
-      router.push({ path: '/select-school', query: redirectPath ? { redirect: redirectPath } : {} })
-    } else if (isSuperAdmin) {
+    let mySchools = []
+    if (isSuperAdmin) {
+      const rolesResponse = await userService.getUserRoles(loginResponse.user.id)
+      mySchools = (rolesResponse?.roles?.schools || []).map((r) => ({ id: r.context.id }))
+    } else {
+      const schools = await schoolService.getSchools()
+      mySchools = Array.isArray(schools) ? schools : []
+    }
+
+    if (isSuperAdmin && mySchools.length === 0) {
       router.push('/admin')
+    } else if (mySchools.length === 1) {
+      localStorage.setItem('current_school_id', String(mySchools[0].id))
+      router.push(redirectPath || '/')
+    } else if (mySchools.length > 1) {
+      router.push({ path: '/select-school', query: redirectPath ? { redirect: redirectPath } : {} })
     } else {
       formError.value = 'Votre compte n\'est associé à aucune école. Contactez votre administrateur.'
       await authService.logout()

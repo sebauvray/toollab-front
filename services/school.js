@@ -29,6 +29,8 @@ export default {
             for (const [key, value] of Object.entries(schoolData)) {
                 if (key === 'logo' && value instanceof File) {
                     formData.append('logo', value)
+                } else if (typeof value === 'boolean') {
+                    formData.append(key, value ? '1' : '0')
                 } else if (value !== null && value !== undefined) {
                     formData.append(key, value)
                 }
@@ -54,6 +56,8 @@ export default {
             for (const [key, value] of Object.entries(schoolData)) {
                 if (key === 'logo' && value instanceof File) {
                     formData.append('logo', value)
+                } else if (typeof value === 'boolean') {
+                    formData.append(key, value ? '1' : '0')
                 } else if (value !== null && value !== undefined) {
                     formData.append(key, value)
                 }
