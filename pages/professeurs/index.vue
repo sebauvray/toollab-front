@@ -158,7 +158,7 @@ const handleRemove = async () => {
     await staffService.removeUserRole({
       user_id: teacherToRemove.value.id,
       school_id: schoolId.value,
-      role_name: 'Professeur'
+      role_name: 'teacher'
     })
     setFlashMessage({type: 'success', message: 'Professeur retiré'})
     await fetchTeachers()

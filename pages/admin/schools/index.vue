@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from '#imports'
 import schoolService from '~/services/school'
 
 definePageMeta({
@@ -9,6 +10,7 @@ definePageMeta({
 
 usePageTitle('Admin · Écoles')
 
+const router = useRouter()
 const schools = ref([])
 const isLoading = ref(true)
 const errorMsg = ref('')
@@ -63,14 +65,21 @@ onMounted(fetchSchools)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="school in schools" :key="school.id" class="border-b last:border-b-0 hover:bg-gray-50">
+          <tr
+            v-for="school in schools"
+            :key="school.id"
+            tabindex="0"
+            class="border-b last:border-b-0 hover:bg-gray-50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-default"
+            @click="router.push(`/admin/schools/${school.id}`)"
+            @keydown.enter="router.push(`/admin/schools/${school.id}`)"
+          >
             <td class="px-5 py-3">
               <div class="flex items-center gap-2">
                 <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs">
                   {{ school.name?.charAt(0)?.toUpperCase() }}
                 </div>
                 <div>
-                  <div class="font-semibold">{{ school.name }}</div>
+                  <div class="font-semibold text-default hover:underline">{{ school.name }}</div>
                   <div class="text-xs text-gray-500">ID #{{ school.id }}</div>
                 </div>
               </div>

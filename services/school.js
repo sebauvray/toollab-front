@@ -65,7 +65,8 @@ export default {
 
             const response = await apiClient.post(`/api/schools/${id}`, formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data'
+                    'Content-Type': 'multipart/form-data',
+                    'X-School-Id': String(id)
                 }
             })
             return response.data
