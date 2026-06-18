@@ -4,6 +4,12 @@ import AuthGuard from '~/components/auth/AuthGuard.vue'
 import SearchInput from "~/components/form/SearchInput.vue"
 import {useAuth} from '~/composables/useAuth'
 import userService from '~/services/user'
+import {
+  getSchoolRoles,
+  isTeacherOnly,
+  readCurrentSchoolRoles,
+  writeCurrentSchoolRoles
+} from '~/utils/schoolRoles'
 
 usePageTitle('Accueil')
 useSeoMeta({
@@ -24,11 +30,12 @@ const resolved = ref(false)
 const isTeacher = ref(false)
 
 if (process.client) {
-  const cachedRole = localStorage.getItem('current_school_role')
-  if (cachedRole === 'Professeur') {
+  const hasRoleCache = localStorage.getItem('current_school_roles') !== null
+  const cachedRoles = readCurrentSchoolRoles()
+  if (hasRoleCache && isTeacherOnly(cachedRoles)) {
     isTeacher.value = true
     navigateTo('/professeur/classes')
-  } else if (cachedRole) {
+  } else if (hasRoleCache) {
     resolved.value = true
   }
 }
@@ -39,10 +46,10 @@ onMounted(async () => {
     const schoolId = parseInt(localStorage.getItem('current_school_id') || '0', 10)
     if (!schoolId) return
     const response = await userService.getUserRoles(user.value.id)
-    const current = response.roles?.schools?.find(s => s.context?.id === schoolId)
-    if (current?.role === 'Professeur') {
+    const currentRoles = getSchoolRoles(response.roles?.schools || [], schoolId)
+    writeCurrentSchoolRoles(currentRoles)
+    if (isTeacherOnly(currentRoles)) {
       isTeacher.value = true
-      localStorage.setItem('current_school_role', 'Professeur')
       navigateTo('/professeur/classes')
       return
     }

@@ -1,4 +1,5 @@
 import { useApi } from './api'
+import { clearCurrentSchoolRoles } from '~/utils/schoolRoles'
 
 export default {
     async login(credentials) {
@@ -28,6 +29,9 @@ export default {
         } finally {
             localStorage.removeItem('auth.token')
             localStorage.removeItem('auth.user')
+            localStorage.removeItem('current_school_id')
+            localStorage.removeItem('current_school_year_id')
+            clearCurrentSchoolRoles()
             delete axios.defaults.headers.common['Authorization']
         }
     },

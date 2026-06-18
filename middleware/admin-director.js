@@ -1,4 +1,5 @@
 import userService from '~/services/user'
+import { getRoleSlug } from '~/utils/schoolRoles'
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
     if (process.server) return
@@ -33,7 +34,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
         const hasAccess = userRoles.schools?.some(schoolRole =>
             schoolRole.context.id === parseInt(schoolId) &&
-            (schoolRole.role === 'Directeur' || schoolRole.role === 'Administrateur')
+            ['director', 'admin'].includes(getRoleSlug(schoolRole))
         )
 
         if (!hasAccess) {

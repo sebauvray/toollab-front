@@ -8,6 +8,7 @@ import { useRouter, useRoute } from '#imports'
 import authService from '~/services/auth'
 import schoolService from '~/services/school'
 import userService from '~/services/user'
+import { clearCurrentSchoolRoles, getSchoolRoles, writeCurrentSchoolRoles } from '~/utils/schoolRoles'
 
 useHead({
   title: 'Connexion'
@@ -52,16 +53,18 @@ const handleSubmit = async () => {
 
     if (process.client) {
       localStorage.removeItem('current_school_id')
-      localStorage.removeItem('current_school_role')
+      clearCurrentSchoolRoles()
     }
 
     const isSuperAdmin = !!loginResponse?.user?.is_super_admin
     const redirectPath = route.query.redirect
+    const rolesResponse = await userService.getUserRoles(loginResponse.user.id)
+    const schoolRoleEntries = rolesResponse?.roles?.schools || []
 
     let mySchools = []
     if (isSuperAdmin) {
-      const rolesResponse = await userService.getUserRoles(loginResponse.user.id)
-      mySchools = (rolesResponse?.roles?.schools || []).map((r) => ({ id: r.context.id }))
+      const schoolIds = [...new Set(schoolRoleEntries.map(role => Number(role.context.id)))]
+      mySchools = schoolIds.map(id => ({ id }))
     } else {
       const schools = await schoolService.getSchools()
       mySchools = Array.isArray(schools) ? schools : []
@@ -71,6 +74,7 @@ const handleSubmit = async () => {
       router.push('/admin')
     } else if (mySchools.length === 1) {
       localStorage.setItem('current_school_id', String(mySchools[0].id))
+      writeCurrentSchoolRoles(getSchoolRoles(schoolRoleEntries, mySchools[0].id))
       router.push(redirectPath || '/')
     } else if (mySchools.length > 1) {
       router.push({ path: '/select-school', query: redirectPath ? { redirect: redirectPath } : {} })

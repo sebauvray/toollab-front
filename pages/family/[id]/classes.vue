@@ -12,6 +12,7 @@ import paiementService from "~/services/paiement.js";
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 import { useSchoolYear } from "~/composables/useSchoolYear";
 import { getCurrentSchoolId } from "~/utils/schoolContext";
+import { groupSchoolRoles, hasAnyRole } from "~/utils/schoolRoles";
 
 const { isReadOnly } = useSchoolYear();
 
@@ -83,8 +84,8 @@ const groupedClasses = computed(() => {
 
 const checkAdminAccess = () => {
     if (selectedSchool.value && schools.value.length > 0) {
-        const currentSchoolRole = schools.value.find(s => s.id === selectedSchool.value.id);
-        hasAdminAccess.value = currentSchoolRole?.role === 'Directeur' || currentSchoolRole?.role === 'Administrateur';
+        const currentSchool = schools.value.find(s => s.id === selectedSchool.value.id);
+        hasAdminAccess.value = hasAnyRole(currentSchool?.roles || [], ['director', 'admin']);
     }
 };
 
@@ -95,12 +96,13 @@ const loadUserSchools = async () => {
             const userRoles = response.roles;
 
             if (userRoles.schools && userRoles.schools.length > 0) {
-                const schoolPromises = userRoles.schools.map(async (schoolRole) => {
-                    const schoolData = await schoolService.getSchool(schoolRole.context.id);
+                const rolesBySchool = groupSchoolRoles(userRoles.schools);
+                const schoolPromises = Object.entries(rolesBySchool).map(async ([schoolId, roles]) => {
+                    const schoolData = await schoolService.getSchool(schoolId);
                     return {
                         id: schoolData.id,
                         name: schoolData.name,
-                        role: schoolRole.role
+                        roles
                     };
                 });
 

@@ -16,6 +16,14 @@ import userService from '~/services/user';
 import schoolService from '~/services/school';
 import { useSchoolYear } from '~/composables/useSchoolYear';
 import { useAuth } from '~/composables/useAuth';
+import {
+  clearCurrentSchoolRoles,
+  groupSchoolRoles,
+  hasAnyRole,
+  isTeacherOnly,
+  SCHOOL_ROLES_UPDATED_EVENT,
+  writeCurrentSchoolRoles
+} from '~/utils/schoolRoles';
 
 const router = useRouter();
 const { logout } = useAuth();
@@ -29,8 +37,6 @@ const schools = ref([]);
 const selectedSchool = ref(null);
 const showAccountMenu = ref(false);
 const accountMenuRef = ref(null);
-const hasAdminAccess = ref(false);
-const isTeacher = ref(false);
 const isSidebarCollapsed = ref(false);
 
 const initials = computed(() => {
@@ -64,29 +70,15 @@ const logoUrl = computed(() => {
 });
 
 const isSuperAdmin = computed(() => !!user.value?.is_super_admin);
+const currentRoles = computed(() => selectedSchool.value?.roles || []);
+const hasAdminAccess = computed(() => isSuperAdmin.value || hasAnyRole(currentRoles.value, ['director', 'admin']));
+const hasTeachingAccess = computed(() => hasAnyRole(currentRoles.value, ['teacher']));
+const hasGeneralAccess = computed(() => isSuperAdmin.value || !isTeacherOnly(currentRoles.value));
 
 const currentRole = computed(() => {
   if (isSuperAdmin.value) return 'Super-admin';
-  if (!selectedSchool.value) return '';
-  return schools.value.find(s => s.id === selectedSchool.value.id)?.role || '';
+  return currentRoles.value.map(role => role.label).join(' · ');
 });
-
-const checkAdminAccess = () => {
-  if (isSuperAdmin.value) {
-    hasAdminAccess.value = true;
-    isTeacher.value = false;
-    if (process.client) localStorage.setItem('current_school_role', 'Super-admin');
-    return;
-  }
-  if (selectedSchool.value && schools.value.length > 0) {
-    const currentSchoolRole = schools.value.find(s => s.id === selectedSchool.value.id);
-    if (currentSchoolRole) {
-      hasAdminAccess.value = currentSchoolRole.role === 'Directeur' || currentSchoolRole.role === 'Administrateur';
-      isTeacher.value = currentSchoolRole.role === 'Professeur';
-      if (process.client && currentSchoolRole.role) localStorage.setItem('current_school_role', currentSchoolRole.role);
-    }
-  }
-};
 
 const loadUserSchools = async () => {
   try {
@@ -95,18 +87,13 @@ const loadUserSchools = async () => {
       userService.getUserRoles(user.value.id),
     ]);
 
-    const roleMap = {};
-    if (rolesResponse?.roles?.schools) {
-      rolesResponse.roles.schools.forEach((r) => {
-        roleMap[r.context.id] = r.role;
-      });
-    }
+    const roleMap = groupSchoolRoles(rolesResponse?.roles?.schools || []);
 
     schools.value = (allSchools || []).map((s) => ({
       id: s.id,
       name: s.name,
       logo: s.logo || null,
-      role: roleMap[s.id] || (isSuperAdmin.value ? 'Super-admin' : null),
+      roles: roleMap[s.id] || [],
     }));
 
     const savedSchoolId = localStorage.getItem('current_school_id');
@@ -123,9 +110,8 @@ const loadUserSchools = async () => {
       localStorage.setItem('current_school_id', String(schools.value[0].id));
     }
 
-    checkAdminAccess();
-
     if (selectedSchool.value) {
+      writeCurrentSchoolRoles(selectedSchool.value.roles);
       try {
         await loadYears();
       } catch (e) {
@@ -142,8 +128,8 @@ const selectSchool = (school) => {
   if (selectedSchool.value?.id === school.id) return;
   selectedSchool.value = school;
   localStorage.setItem('current_school_id', String(school.id));
+  writeCurrentSchoolRoles(school.roles);
   resetYears();
-  checkAdminAccess();
   if (process.client) {
     window.location.reload();
   }
@@ -157,7 +143,7 @@ const selectYear = (yearId) => {
 const goToAdmin = () => {
   showAccountMenu.value = false;
   localStorage.removeItem('current_school_id');
-  localStorage.removeItem('current_school_role');
+  clearCurrentSchoolRoles();
   router.push('/admin');
 };
 
@@ -188,6 +174,21 @@ const handleClickOutside = (event) => {
   }
 };
 
+const handleSchoolRolesUpdated = (event) => {
+  const updatedSchoolId = Number(event.detail?.schoolId);
+  const updatedRoles = Array.isArray(event.detail?.roles) ? event.detail.roles : [];
+  if (!updatedSchoolId) return;
+
+  schools.value = schools.value.map(school =>
+      school.id === updatedSchoolId ? {...school, roles: updatedRoles} : school
+  );
+
+  if (selectedSchool.value?.id === updatedSchoolId) {
+    selectedSchool.value = {...selectedSchool.value, roles: updatedRoles};
+    writeCurrentSchoolRoles(updatedRoles);
+  }
+};
+
 onMounted(async () => {
   if (process.client) {
     const userJson = localStorage.getItem('auth.user');
@@ -202,6 +203,7 @@ onMounted(async () => {
 
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
+    window.addEventListener(SCHOOL_ROLES_UPDATED_EVENT, handleSchoolRolesUpdated);
     document.addEventListener('click', handleClickOutside);
   }
 });
@@ -209,6 +211,7 @@ onMounted(async () => {
 onUnmounted(() => {
   if (process.client) {
     window.removeEventListener('resize', checkScreenSize);
+    window.removeEventListener(SCHOOL_ROLES_UPDATED_EVENT, handleSchoolRolesUpdated);
     document.removeEventListener('click', handleClickOutside);
   }
 });
@@ -223,15 +226,15 @@ onUnmounted(() => {
         <LogoText v-else class="w-36" />
       </div>
       <nav class="inline-flex flex-col gap-y-1.5 mt-1.5 flex-1">
-        <NavLink v-if="!isTeacher" to="/" :icon="Home" text="Accueil" :collapsed="isSidebarCollapsed" />
-        <NavLink v-if="!isTeacher" to="/family" :icon="FamilyTLB" text="Familles" :collapsed="isSidebarCollapsed" />
+        <NavLink v-if="hasGeneralAccess" to="/" :icon="Home" text="Accueil" :collapsed="isSidebarCollapsed" />
+        <NavLink v-if="hasGeneralAccess" to="/family" :icon="FamilyTLB" text="Familles" :collapsed="isSidebarCollapsed" />
         <NavLink v-if="hasAdminAccess" to="/cursus" :icon="Cursus" text="Cursus" :collapsed="isSidebarCollapsed" />
         <NavLink v-if="hasAdminAccess" to="/classes" :icon="StudentTLB" text="Classes" :collapsed="isSidebarCollapsed" />
         <NavLink v-if="hasAdminAccess" to="/professeurs" :icon="TeacherTLB" text="Professeurs" :collapsed="isSidebarCollapsed" />
         <NavLink v-if="hasAdminAccess" to="/tarification" :icon="CurrencyEuro" text="Tarification" :collapsed="isSidebarCollapsed" />
         <NavLink v-if="hasAdminAccess" to="/statistiques" :icon="ChartBar" text="Statistiques" :collapsed="isSidebarCollapsed" />
-        <NavLink v-if="isTeacher" to="/professeur/classes" :icon="StudentTLB" text="Mes classes" :collapsed="isSidebarCollapsed" />
-        <NavLink v-if="isTeacher" to="/professeur/planning" :icon="Cursus" text="Mon planning" :collapsed="isSidebarCollapsed" />
+        <NavLink v-if="hasTeachingAccess" to="/professeur/classes" :icon="StudentTLB" text="Mes classes" :collapsed="isSidebarCollapsed" />
+        <NavLink v-if="hasTeachingAccess" to="/professeur/planning" :icon="Cursus" text="Mon planning" :collapsed="isSidebarCollapsed" />
       </nav>
 
       <div class="mb-3" :class="isSidebarCollapsed ? 'px-1.5' : 'px-3'">
@@ -310,10 +313,9 @@ onUnmounted(() => {
                 </div>
                 <div class="flex-1 min-w-0 text-left">
                   <div class="text-sm text-gray-800 truncate">{{ school.name }}</div>
-                  <div
-                      class="text-xs truncate"
-                      :class="school.role === 'Super-admin' ? 'text-gray-400 italic' : 'text-gray-500'"
-                  >{{ school.role || '—' }}</div>
+                  <div class="text-xs truncate text-gray-500">
+                    {{ school.roles.length ? school.roles.map(role => role.label).join(' · ') : (isSuperAdmin ? 'Super-admin' : '—') }}
+                  </div>
                 </div>
                 <svg
                     v-if="selectedSchool?.id === school.id"

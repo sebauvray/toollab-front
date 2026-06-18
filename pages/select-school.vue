@@ -4,6 +4,8 @@ import { useRouter, useRoute } from '#imports'
 import LogoText from "~/components/Icons/LogoText.vue"
 import schoolService from '~/services/school'
 import authService from '~/services/auth'
+import userService from '~/services/user'
+import { clearCurrentSchoolRoles, groupSchoolRoles, writeCurrentSchoolRoles } from '~/utils/schoolRoles'
 
 definePageMeta({
   layout: 'default',
@@ -19,6 +21,7 @@ const schools = ref([])
 const isLoading = ref(true)
 const errorMsg = ref('')
 const user = ref(null)
+const schoolRoles = ref({})
 
 const isSuperAdmin = computed(() => !!user.value?.is_super_admin)
 
@@ -26,7 +29,12 @@ onMounted(async () => {
   if (process.client) {
     try {
       user.value = JSON.parse(localStorage.getItem('auth.user') || 'null')
-      schools.value = await schoolService.getSchools()
+      const [allSchools, rolesResponse] = await Promise.all([
+        schoolService.getSchools(),
+        userService.getUserRoles(user.value.id)
+      ])
+      schools.value = allSchools || []
+      schoolRoles.value = groupSchoolRoles(rolesResponse?.roles?.schools || [])
     } catch (e) {
       console.error(e)
       errorMsg.value = 'Erreur lors du chargement des écoles.'
@@ -38,12 +46,14 @@ onMounted(async () => {
 
 const selectSchool = (school) => {
   localStorage.setItem('current_school_id', String(school.id))
+  writeCurrentSchoolRoles(schoolRoles.value[school.id] || [])
   const redirect = route.query.redirect || '/'
   router.push(redirect)
 }
 
 const goToAdmin = () => {
   localStorage.removeItem('current_school_id')
+  clearCurrentSchoolRoles()
   router.push('/admin')
 }
 
@@ -93,6 +103,9 @@ const handleLogout = async () => {
           <div>
             <div class="font-semibold">{{ school.name }}</div>
             <div class="text-xs text-gray-500">{{ school.city || school.country || '' }}</div>
+            <div v-if="schoolRoles[school.id]?.length" class="text-xs text-gray-500">
+              {{ schoolRoles[school.id].map(role => role.label).join(' · ') }}
+            </div>
           </div>
         </button>
 

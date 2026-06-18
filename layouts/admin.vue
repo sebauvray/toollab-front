@@ -5,6 +5,7 @@ import LogoText from "~/components/Icons/LogoText.vue"
 import Logo from "~/components/Icons/Logo.vue"
 import UserDropdown from "~/components/UserDropdown.vue"
 import schoolService from '~/services/school'
+import { clearCurrentSchoolRoles } from '~/utils/schoolRoles'
 
 const router = useRouter()
 const user = ref(null)
@@ -23,6 +24,7 @@ onMounted(async () => {
     try {
       user.value = JSON.parse(localStorage.getItem('auth.user') || 'null')
       localStorage.removeItem('current_school_id')
+      clearCurrentSchoolRoles()
       const all = await schoolService.getSchools()
       userSchools.value = all || []
     } catch (e) {

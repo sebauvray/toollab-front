@@ -1,4 +1,5 @@
 import * as axiosModule from 'axios'
+import { clearCurrentSchoolRoles } from '~/utils/schoolRoles'
 const axios = axiosModule.default || axiosModule
 
 const apiClient = axios.create({
@@ -44,6 +45,9 @@ export function setupInterceptors() {
             if (error.response && error.response.status === 401 && localStorage.getItem('auth.token')) {
                 localStorage.removeItem('auth.token')
                 localStorage.removeItem('auth.user')
+                localStorage.removeItem('current_school_id')
+                localStorage.removeItem('current_school_year_id')
+                clearCurrentSchoolRoles()
 
                 if (process.client) {
                     window.location.href = '/login'

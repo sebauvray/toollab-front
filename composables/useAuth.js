@@ -1,5 +1,6 @@
 import { ref, readonly } from 'vue'
 import authService from '~/services/auth'
+import { clearCurrentSchoolRoles } from '~/utils/schoolRoles'
 
 const user = ref(null)
 const isAuthenticated = ref(false)
@@ -13,6 +14,8 @@ function syncFromStorage() {
     } catch (e) {
         localStorage.removeItem('auth.user')
         localStorage.removeItem('auth.token')
+        localStorage.removeItem('current_school_id')
+        clearCurrentSchoolRoles()
         user.value = null
         isAuthenticated.value = false
     }

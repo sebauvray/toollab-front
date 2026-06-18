@@ -1,3 +1,5 @@
+import { isTeacherOnly, readCurrentSchoolRoles } from '~/utils/schoolRoles'
+
 export default defineNuxtRouteMiddleware((to) => {
     const publicPages = ['/login', '/contact', '/forgot-password', '/reset-password', '/set-password'];
     const requiresAuth = !publicPages.includes(to.path);
@@ -5,6 +7,12 @@ export default defineNuxtRouteMiddleware((to) => {
     if (process.client) {
         const token = localStorage.getItem('auth.token');
         const isAuthenticated = !!token;
+        let isSuperAdmin = false;
+        try {
+            isSuperAdmin = !!JSON.parse(localStorage.getItem('auth.user') || 'null')?.is_super_admin;
+        } catch {
+            isSuperAdmin = false;
+        }
 
         if (requiresAuth && !isAuthenticated) {
             return navigateTo('/login');
@@ -33,11 +41,12 @@ export default defineNuxtRouteMiddleware((to) => {
             }
         }
 
-        const isTeacher = localStorage.getItem('current_school_role') === 'Professeur';
+        const hasRoleCache = localStorage.getItem('current_school_roles') !== null;
+        const isTeacher = hasRoleCache && isTeacherOnly(readCurrentSchoolRoles());
         const teacherAllowed = to.path.startsWith('/professeur')
             || to.path === '/settings'
             || noSchoolNeeded.includes(to.path);
-        if (isAuthenticated && isTeacher && !teacherAllowed) {
+        if (isAuthenticated && !isSuperAdmin && isTeacher && !teacherAllowed) {
             return navigateTo('/professeur/classes');
         }
     }

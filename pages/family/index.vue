@@ -13,6 +13,7 @@ import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 import {usePageTitle} from "~/composables/usePageTitle.js";
 import { useSchoolYear } from "~/composables/useSchoolYear";
 import { saveExport } from "~/utils/download";
+import { hasAnyRole, readCurrentSchoolRoles } from "~/utils/schoolRoles";
 
 const { isReadOnly } = useSchoolYear();
 
@@ -159,8 +160,9 @@ const handleAddResponsable = async (newResponsable) => {
 
 onMounted(() => {
     if (process.client) {
-        const role = localStorage.getItem('current_school_role');
-        canExport.value = ['Directeur', 'Administrateur', 'Super-admin'].includes(role);
+        const storedUser = JSON.parse(localStorage.getItem('auth.user') || 'null');
+        canExport.value = !!storedUser?.is_super_admin
+            || hasAnyRole(readCurrentSchoolRoles(), ['director', 'admin']);
     }
     pagination.value.perPage = loadPerPage();
     fetchFamilies();
