@@ -1,13 +1,23 @@
 <script setup>
-import { ref, onMounted, defineProps, defineEmits } from 'vue'
+import { ref, computed, nextTick, onMounted, onBeforeUnmount, defineProps, defineEmits } from 'vue'
 import staffService from '~/services/staff'
-import Trash from "~/components/Icons/Trash.vue"
 import ConfirmationModal from "~/components/modals/ConfirmationModal.vue";
+import RoleCard from "~/components/settings/RoleCard.vue";
+import Cross from "~/components/Icons/Cross.vue";
+import { STAFF_ROLE_CARD_BY_VALUE } from "~/utils/staffRoleCards";
 
 const props = defineProps({
   schoolId: {
     type: Number,
     required: true
+  },
+  assignableRoles: {
+    type: Array,
+    default: () => []
+  },
+  currentUserId: {
+    type: Number,
+    default: null
   }
 })
 
@@ -18,6 +28,13 @@ const isLoading = ref(true)
 const message = ref({ type: '', text: '' })
 const showConfirmModal = ref(false)
 const selectedUserForRemoval = ref(null)
+const addingRoleKey = ref('')
+
+const isBrowser = ref(false)
+const showManageModal = ref(false)
+const managingUserId = ref(null)
+const showRemoveFromSchoolModal = ref(false)
+const isRemovingFromSchool = ref(false)
 
 const roleLabels = {
   'director': 'Directeur',
@@ -41,13 +58,24 @@ const roleDot = {
   teacher: 'bg-amber-500'
 }
 
+// Cartes de rôle proposées à la gestion (intersection assignableRoles ∩ définitions partagées).
+const manageableRoleCards = computed(() =>
+    props.assignableRoles
+        .map(role => STAFF_ROLE_CARD_BY_VALUE[role])
+        .filter(Boolean)
+)
+
+const managingUser = computed(() =>
+    users.value.find(u => u.user.id === managingUserId.value) || null
+)
+
 const fetchUsers = async () => {
   try {
     isLoading.value = true
     const response = await staffService.getSchoolUsers(props.schoolId)
 
     const filteredData = response.filter(item =>
-        ['director', 'admin', 'registar'].includes(item.role)
+        ['director', 'admin', 'registar', 'teacher'].includes(item.role)
     )
 
     const userMap = new Map()
@@ -76,6 +104,116 @@ const fetchUsers = async () => {
   }
 }
 
+const canRemoveRole = (user, role) =>
+    user.user.id !== props.currentUserId
+    && props.assignableRoles.includes(role)
+
+// Dans la modale : une carte cochée (rôle détenu) n'est désactivable que si on peut retirer le rôle.
+// On ne peut pas retirer son propre rôle ; un rôle non encore détenu reste toujours attribuable.
+const isRoleCardDisabled = (user, role) =>
+    user.roles.includes(role) && !canRemoveRole(user, role)
+
+const openManageModal = (user) => {
+  managingUserId.value = user.user.id
+  showManageModal.value = true
+  message.value = { type: '', text: '' }
+  updateOverflow()
+}
+
+const closeManageModal = () => {
+  showManageModal.value = false
+  managingUserId.value = null
+  updateOverflow()
+}
+
+const toggleRole = (user, role) => {
+  if (user.roles.includes(role)) {
+    openRemoveRoleModal(user.user.id, role)
+  } else {
+    addRole(user, role)
+  }
+}
+
+const canRemoveFromSchool = computed(() =>
+    !!managingUser.value && managingUser.value.user.id !== props.currentUserId
+)
+
+const openRemoveFromSchoolModal = () => {
+  showRemoveFromSchoolModal.value = true
+}
+
+const closeRemoveFromSchoolModal = () => {
+  showRemoveFromSchoolModal.value = false
+  nextTick(updateOverflow)
+}
+
+const removeFromSchool = async () => {
+  if (!managingUser.value) return
+  const userId = managingUser.value.user.id
+
+  try {
+    isRemovingFromSchool.value = true
+    await staffService.removeUserFromSchool({
+      user_id: userId,
+      school_id: props.schoolId
+    })
+
+    await fetchUsers()
+    emit('update')
+
+    const { setFlashMessage } = useFlashMessage()
+    setFlashMessage({
+      type: 'success',
+      message: 'L\'utilisateur a été retiré de l\'établissement'
+    })
+
+    closeManageModal()
+  } catch (error) {
+    console.error('Erreur lors du retrait de l\'utilisateur:', error)
+    message.value = {
+      type: 'error',
+      text: error.response?.data?.message || 'Une erreur est survenue lors du retrait de l\'utilisateur'
+    }
+    // On ferme la modale de gestion pour rendre visible la bannière d'erreur (ex. accès refusé).
+    closeManageModal()
+  } finally {
+    isRemovingFromSchool.value = false
+    showRemoveFromSchoolModal.value = false
+    nextTick(updateOverflow)
+  }
+}
+
+const addRole = async (user, role) => {
+  const key = `${user.user.id}:${role}`
+  addingRoleKey.value = key
+  message.value = {type: '', text: ''}
+
+  try {
+    const response = await staffService.addUserRole({
+      user_id: user.user.id,
+      school_id: props.schoolId,
+      role
+    })
+
+    await fetchUsers()
+    emit('update')
+
+    const {setFlashMessage} = useFlashMessage()
+    setFlashMessage({
+      type: 'success',
+      message: response.message || 'Le rôle a été ajouté avec succès'
+    })
+  } catch (error) {
+    console.error('Erreur lors de l’ajout du rôle:', error)
+    message.value = {
+      type: 'error',
+      text: error.response?.data?.message || 'Une erreur est survenue lors de l’ajout du rôle'
+    }
+  } finally {
+    addingRoleKey.value = ''
+  }
+}
+
 const openRemoveRoleModal = (userId, roleName) => {
   selectedUserForRemoval.value = { userId, roleName };
   showConfirmModal.value = true;
@@ -84,6 +222,9 @@ const openRemoveRoleModal = (userId, roleName) => {
 const closeConfirmModal = () => {
   showConfirmModal.value = false;
   selectedUserForRemoval.value = null;
+  // La ConfirmationModal réinitialise le scroll du body en se fermant : on le re-verrouille
+  // si la modale de gestion des rôles est toujours ouverte derrière.
+  nextTick(updateOverflow)
 }
 
 const removeRole = async () => {
@@ -115,8 +256,20 @@ const removeRole = async () => {
   }
 }
 
+const updateOverflow = () => {
+  if (!isBrowser.value) return
+  document.body.style.overflow = showManageModal.value ? 'hidden' : 'auto'
+}
+
 onMounted(() => {
+  isBrowser.value = true
   fetchUsers()
+})
+
+onBeforeUnmount(() => {
+  if (isBrowser.value) {
+    document.body.style.overflow = 'auto'
+  }
 })
 
 defineExpose({
@@ -148,6 +301,7 @@ defineExpose({
               <th class="px-4 py-2 text-left font-semibold text-gray-600">Nom</th>
               <th class="px-4 py-2 text-left font-semibold text-gray-600">Email</th>
               <th class="px-4 py-2 text-left font-semibold text-gray-600">Rôles</th>
+              <th class="px-4 py-2 text-right font-semibold text-gray-600"></th>
             </tr>
           </thead>
           <tbody class="divide-y divide-[#E6EFF5]">
@@ -167,21 +321,82 @@ defineExpose({
                   >
                     <span class="h-1.5 w-1.5 rounded-full" :class="roleDot[role] || 'bg-gray-400'"></span>
                     {{ roleLabels[role] }}
-                    <button
-                        v-if="role !== 'director'"
-                        @click="openRemoveRoleModal(user.user.id, role)"
-                        class="ml-0.5 opacity-60 hover:opacity-100 hover:text-red-600 focus:outline-none transition-opacity"
-                        title="Supprimer ce rôle"
-                    >
-                      <Trash class="size-3" />
-                    </button>
                   </span>
                 </div>
+              </td>
+              <td class="px-4 py-2.5 text-right whitespace-nowrap">
+                <button
+                    v-if="manageableRoleCards.length"
+                    type="button"
+                    class="inline-flex items-center px-2.5 py-1 rounded-lg border border-gray-200 bg-white text-[11px] text-gray-600 hover:border-default hover:text-default transition-colors"
+                    @click="openManageModal(user)"
+                >
+                  Gérer les rôles
+                </button>
               </td>
             </tr>
           </tbody>
         </table>
     </div>
+
+    <!-- Modale de gestion des rôles (multi-sélection, cartes iso création) -->
+    <Teleport to="body" v-if="isBrowser && showManageModal && managingUser">
+      <div class="fixed inset-0 z-40 bg-black/50 flex items-center justify-center p-3" @click.self="closeManageModal">
+        <div
+            class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col font-nunito"
+            role="dialog"
+            aria-modal="true"
+        >
+          <div class="px-5 pt-4 pb-3 border-b border-[#E6EFF5] flex items-center justify-between">
+            <h3 class="text-base font-bold text-default font-montserrat">
+              Gérer les rôles — {{ managingUser.user.first_name }} {{ managingUser.user.last_name }}
+            </h3>
+            <button
+                @click="closeManageModal"
+                class="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-50"
+                aria-label="Fermer"
+            >
+              <Cross class="size-4" />
+            </button>
+          </div>
+
+          <div class="px-5 py-4 overflow-y-auto">
+            <p class="text-xs text-placeholder mb-4">
+              Cochez les rôles à attribuer à cet utilisateur. Le retrait d'un rôle demande une confirmation.
+            </p>
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <RoleCard
+                  v-for="role in manageableRoleCards"
+                  :key="role.value"
+                  :role="role"
+                  :selected="managingUser.roles.includes(role.value)"
+                  :disabled="isRoleCardDisabled(managingUser, role.value) || addingRoleKey === `${managingUser.user.id}:${role.value}`"
+                  indicator="check"
+                  @select="toggleRole(managingUser, role.value)"
+              />
+            </div>
+          </div>
+
+          <div class="px-5 py-3 border-t border-[#E6EFF5] flex items-center justify-between gap-2">
+            <button
+                v-if="canRemoveFromSchool"
+                type="button"
+                @click="openRemoveFromSchoolModal"
+                class="px-3 py-1.5 text-xs rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+            >
+              Retirer de l'établissement
+            </button>
+            <span v-else></span>
+            <button
+                @click="closeManageModal"
+                class="px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
 
     <ConfirmationModal
         :is-open="showConfirmModal"
@@ -190,6 +405,15 @@ defineExpose({
         confirm-button-text="Supprimer"
         @confirm="removeRole"
         @cancel="closeConfirmModal"
+    />
+
+    <ConfirmationModal
+        :is-open="showRemoveFromSchoolModal"
+        title="Retirer de l'établissement"
+        message="Retirer cet utilisateur de l'établissement ? Il perdra tous ses rôles ici, mais son compte ne sera pas supprimé."
+        confirm-button-text="Retirer"
+        @confirm="removeFromSchool"
+        @cancel="closeRemoveFromSchoolModal"
     />
   </div>
 </template>

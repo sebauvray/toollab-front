@@ -1,5 +1,5 @@
 <script setup>
-import {ref, onMounted, computed, markRaw} from 'vue'
+import {ref, onMounted, computed} from 'vue'
 import {useAuth} from '~/composables/useAuth'
 import PageContainer from '~/components/layout/PageContainer.vue'
 import BreadCrumb from '~/components/navigation/BreadCrumb.vue'
@@ -8,13 +8,18 @@ import InputSelect from "~/components/form/InputSelect.vue"
 import SaveButton from "~/components/form/SaveButton.vue"
 import {usePageTitle} from "~/composables/usePageTitle.js"
 import UserList from "~/components/settings/UserList.vue"
-import Setting from "~/components/Icons/Setting.vue"
-import NotebookTLB from "~/components/Icons/Notebook-TLB.vue"
-import TeacherTLB from "~/components/Icons/Teacher-TLB.vue"
+import RoleCard from "~/components/settings/RoleCard.vue"
+import { STAFF_ROLE_CARDS } from "~/utils/staffRoleCards"
 import userService from '~/services/user'
 import schoolService from '~/services/school'
 import staffService from '~/services/staff'
 import { getErrorMessage } from '~/utils/errors'
+import {
+  getSchoolRoles,
+  hasAnyRole,
+  SCHOOL_ROLES_UPDATED_EVENT,
+  writeCurrentSchoolRoles
+} from '~/utils/schoolRoles'
 
 definePageMeta({
   layout: 'auth',
@@ -73,56 +78,10 @@ const newUserForm = ref({
   first_name: '',
   last_name: '',
   email: '',
-  role: 'registar'
+  roles: ['registar']
 })
 
-const roles = [
-  {
-    value: 'admin',
-    label: 'Administrateur',
-    tagline: 'Pilote l\'établissement au quotidien.',
-    icon: markRaw(Setting),
-    chipClass: 'bg-blue-50 text-blue-700 ring-blue-200',
-    dotClass: 'bg-blue-500',
-    ringActive: 'ring-blue-300 bg-blue-50/40',
-    iconWrap: 'bg-blue-50 text-blue-600 ring-blue-100',
-    permissions: [
-      'Modifier les informations de l\'école',
-      'Gérer le personnel et les rôles',
-      'Accéder à la facturation et aux paiements'
-    ]
-  },
-  {
-    value: 'registar',
-    label: 'Responsable des inscriptions',
-    tagline: 'Gère les familles, les élèves et leurs inscriptions.',
-    icon: markRaw(NotebookTLB),
-    chipClass: 'bg-green-50 text-green-700 ring-green-200',
-    dotClass: 'bg-green-500',
-    ringActive: 'ring-green-300 bg-green-50/40',
-    iconWrap: 'bg-green-50 text-green-600 ring-green-100',
-    permissions: [
-      'Inscrire un élève à un cursus',
-      'Créer et éditer une fiche famille',
-      'Suivre les paiements des familles'
-    ]
-  },
-  {
-    value: 'teacher',
-    label: 'Professeur',
-    tagline: 'Accède à ses classes, son planning et ses émargements.',
-    icon: markRaw(TeacherTLB),
-    chipClass: 'bg-amber-50 text-amber-700 ring-amber-200',
-    dotClass: 'bg-amber-500',
-    ringActive: 'ring-amber-300 bg-amber-50/40',
-    iconWrap: 'bg-amber-50 text-amber-600 ring-amber-100',
-    permissions: [
-      'Consulter ses classes',
-      'Faire l\'appel et suivre les présences',
-      'Saisir les décisions si professeur principal'
-    ]
-  }
-]
+const roles = STAFF_ROLE_CARDS
 
 const canManageUsers = computed(() => isDirector.value || isAdmin.value)
 const availableRoles = computed(() => {
@@ -130,6 +89,17 @@ const availableRoles = computed(() => {
   if (isAdmin.value) return roles.filter(role => ['registar', 'teacher'].includes(role.value))
   return []
 })
+
+const toggleNewUserRole = (roleValue) => {
+  const selected = newUserForm.value.roles
+  if (selected.includes(roleValue)) {
+    newUserForm.value.roles = selected.filter(role => role !== roleValue)
+  } else {
+    // On conserve l'ordre de availableRoles pour un comportement déterministe.
+    const order = availableRoles.value.map(role => role.value)
+    newUserForm.value.roles = order.filter(role => selected.includes(role) || role === roleValue)
+  }
+}
 
 const checkUserRoles = async () => {
   try {
@@ -143,28 +113,35 @@ const checkUserRoles = async () => {
     const response = await userService.getUserRoles(user.value.id);
     const userRoles = response.roles;
 
-    const currentSchoolRole = userRoles.schools?.find(
-        (r) => r.context?.id === currentSchoolId
-    );
-
     const isSuperAdmin = !!user.value?.is_super_admin;
-    const roleName = currentSchoolRole?.role?.toLowerCase();
-    const isDirectorHere = roleName === 'director' || roleName === 'directeur';
-    const isAdminHere = roleName === 'admin' || roleName === 'administrateur';
+    const currentRoles = getSchoolRoles(userRoles.schools || [], currentSchoolId);
+    const isDirectorHere = hasAnyRole(currentRoles, ['director']);
+    const isAdminHere = hasAnyRole(currentRoles, ['admin']);
+    writeCurrentSchoolRoles(currentRoles);
+    if (process.client) {
+      window.dispatchEvent(new CustomEvent(SCHOOL_ROLES_UPDATED_EVENT, {
+        detail: {schoolId: currentSchoolId, roles: currentRoles}
+      }));
+    }
+
+    isDirector.value = isDirectorHere || isSuperAdmin;
+    isAdmin.value = !isDirector.value && isAdminHere;
 
     if (isDirectorHere || isSuperAdmin) {
-      isDirector.value = true;
       const schoolResponse = await schoolService.getSchool(currentSchoolId);
       school.value = schoolResponse;
       populateSchoolForm();
     } else if (isAdminHere) {
-      isAdmin.value = true;
       const schoolResponse = await schoolService.getSchool(currentSchoolId);
       school.value = schoolResponse;
     }
 
-    if (availableRoles.value.length && !availableRoles.value.some(role => role.value === newUserForm.value.role)) {
-      newUserForm.value.role = availableRoles.value[0].value
+    if (availableRoles.value.length) {
+      const assignableValues = availableRoles.value.map(role => role.value)
+      newUserForm.value.roles = newUserForm.value.roles.filter(role => assignableValues.includes(role))
+      if (!newUserForm.value.roles.length) {
+        newUserForm.value.roles = [availableRoles.value[0].value]
+      }
     }
   } catch (error) {
     console.error('Erreur lors de la vérification du rôle:', error);
@@ -308,18 +285,46 @@ const handleCreateUser = async () => {
       return
     }
 
-    if (!availableRoles.value.some(role => role.value === newUserForm.value.role)) {
+    const assignableValues = availableRoles.value.map(role => role.value)
+    const selectedRoles = newUserForm.value.roles.filter(role => assignableValues.includes(role))
+
+    if (!selectedRoles.length) {
+      message.value = {type: 'error', text: 'Sélectionnez au moins un rôle'}
+      return
+    }
+
+    if (selectedRoles.length !== newUserForm.value.roles.length) {
       message.value = {type: 'error', text: 'Vous ne pouvez pas attribuer ce rôle'}
       return
     }
 
-    const response = await staffService.createStaffUser({
+    // L'endpoint de création ne gère qu'un rôle : on crée avec le premier,
+    // puis on ajoute les éventuels rôles supplémentaires sur l'utilisateur créé.
+    const [firstRole, ...otherRoles] = selectedRoles
+
+    await staffService.createStaffUser({
       first_name: newUserForm.value.first_name,
       last_name: newUserForm.value.last_name,
       email: newUserForm.value.email,
-      role: newUserForm.value.role,
+      role: firstRole,
       school_id: school.value.id
     });
+
+    if (otherRoles.length) {
+      const schoolUsers = await staffService.getSchoolUsers(school.value.id)
+      const createdEmail = newUserForm.value.email.trim().toLowerCase()
+      const createdEntry = schoolUsers.find(item => (item.user.email || '').toLowerCase() === createdEmail)
+
+      if (createdEntry) {
+        for (const role of otherRoles) {
+          await staffService.addUserRole({
+            user_id: createdEntry.user.id,
+            school_id: school.value.id,
+            role
+          })
+        }
+      }
+    }
 
     setFlashMessage({
       type: 'success',
@@ -334,7 +339,7 @@ const handleCreateUser = async () => {
       first_name: '',
       last_name: '',
       email: '',
-      role: availableRoles.value[0]?.value || 'registar'
+      roles: availableRoles.value.length ? [availableRoles.value[0].value] : ['registar']
     }
 
   } catch (error) {
@@ -467,7 +472,13 @@ onMounted(async () => {
       <div v-if="activeTab === 'users' && canManageUsers && school" class="space-y-5">
         <div>
           <h2 class="text-sm font-semibold text-default font-montserrat mb-3">Liste des membres du personnel</h2>
-          <UserList :school-id="school.id" ref="userListRef" @update="checkUserRoles" />
+          <UserList
+              :school-id="school.id"
+              :assignable-roles="availableRoles.map(role => role.value)"
+              :current-user-id="user?.id"
+              ref="userListRef"
+              @update="checkUserRoles"
+          />
         </div>
 
         <div class="bg-white rounded-2xl border p-5">
@@ -484,57 +495,16 @@ onMounted(async () => {
           </div>
 
           <div class="mt-6">
-            <div class="text-[11px] uppercase tracking-wide text-placeholder mb-2.5 font-montserrat">Rôle attribué</div>
+            <div class="text-[11px] uppercase tracking-wide text-placeholder mb-2.5 font-montserrat">Rôles attribués</div>
             <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <button
+              <RoleCard
                   v-for="role in availableRoles"
                   :key="role.value"
-                  type="button"
-                  @click="newUserForm.role = role.value"
-                  :class="[
-                    'group relative text-left rounded-2xl border p-4 transition-all duration-150 focus:outline-none ring-1 ring-transparent',
-                    newUserForm.role === role.value
-                      ? `border-transparent ${role.ringActive} ring-2 shadow-sm`
-                      : 'border-[#E6EFF5] hover:border-gray-300 hover:bg-gray-50/60'
-                  ]"
-              >
-                <div class="flex items-start gap-3">
-                  <div :class="['shrink-0 size-9 rounded-xl flex items-center justify-center ring-1', role.iconWrap]">
-                    <component :is="role.icon" class="size-5" />
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                      <span class="text-sm font-semibold text-default font-montserrat truncate">{{ role.label }}</span>
-                      <span :class="['inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium ring-1', role.chipClass]">
-                        <span class="h-1 w-1 rounded-full" :class="role.dotClass"></span>
-                        {{ role.value === 'admin' ? 'Admin' : role.value === 'teacher' ? 'Professeur' : 'Inscriptions' }}
-                      </span>
-                    </div>
-                    <p class="text-[11px] text-placeholder mt-0.5 leading-snug">{{ role.tagline }}</p>
-                  </div>
-                  <div
-                      :class="[
-                        'shrink-0 size-4 rounded-full border flex items-center justify-center transition-colors mt-0.5',
-                        newUserForm.role === role.value
-                          ? `${role.dotClass} border-transparent`
-                          : 'border-gray-300 bg-white'
-                      ]"
-                  >
-                    <svg v-if="newUserForm.role === role.value" class="size-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                </div>
-
-                <ul class="mt-3 pl-12 space-y-1">
-                  <li v-for="perm in role.permissions" :key="perm" class="flex items-start gap-1.5 text-[11px] text-default/80 leading-snug">
-                    <svg class="size-3 mt-0.5 shrink-0" :class="role.value === 'admin' ? 'text-blue-500' : role.value === 'teacher' ? 'text-amber-500' : 'text-green-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>{{ perm }}</span>
-                  </li>
-                </ul>
-              </button>
+                  :role="role"
+                  :selected="newUserForm.roles.includes(role.value)"
+                  indicator="check"
+                  @select="toggleNewUserRole(role.value)"
+              />
             </div>
           </div>
 
