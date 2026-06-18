@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from '#imports'
 import schoolService from '~/services/school'
 import InputText from "~/components/form/InputText.vue"
+import { getErrorMessage } from '~/utils/errors'
 
 definePageMeta({
   layout: 'admin',
@@ -34,21 +35,23 @@ const handleSubmit = async () => {
   errors.value = {}
   isSubmitting.value = true
   try {
-    await schoolService.createSchool(form.value)
+    const school = await schoolService.createSchool(form.value)
     setFlashMessage({
       type: 'success',
-      message: 'École créée. Un email d\'invitation a été envoyé au directeur.'
+      message: school.invitation_sent
+        ? 'École créée. Un email d\'invitation a été envoyé au directeur.'
+        : 'École créée. Le directeur existant a été rattaché à cette école.'
     })
     router.push('/admin/schools')
   } catch (e) {
     console.error(e)
     if (e.response?.status === 422) {
       errors.value = e.response.data?.errors || {}
-      setFlashMessage({ type: 'error', message: 'Veuillez corriger les erreurs.' })
+      setFlashMessage({ type: 'error', message: getErrorMessage(e, 'Veuillez corriger les erreurs.') })
     } else {
       setFlashMessage({
         type: 'error',
-        message: e.response?.data?.message || 'Erreur lors de la création.'
+        message: getErrorMessage(e, 'Erreur lors de la création.')
       })
     }
   } finally {

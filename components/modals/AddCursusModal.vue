@@ -1,13 +1,14 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import InputText from "~/components/form/InputText.vue"
 import InputNumber from "~/components/form/InputNumber.vue"
 import SaveButton from "~/components/form/SaveButton.vue"
 import CancelButton from "~/components/form/CancelButton.vue"
 import Cross from "~/components/Icons/Cross.vue"
 import ToogleCursus from "~/components/form/ToogleCursus.vue"
+import { getErrorMessage } from "~/utils/errors"
 
-defineProps({
+const props = defineProps({
   isOpen: {
     type: Boolean,
     required: true
@@ -17,6 +18,7 @@ defineProps({
 const emit = defineEmits(['close', 'save'])
 const isSubmitting = ref(false)
 const error = ref('')
+const fieldErrors = ref({})
 
 const currentCursus = ref({
   name: '',
@@ -24,25 +26,49 @@ const currentCursus = ref({
   progression: 'levels'
 })
 
-const handleSave = () => {
+const resetForm = () => {
+  currentCursus.value = {
+    name: '',
+    levels_count: 1,
+    progression: 'levels'
+  }
+  error.value = ''
+  fieldErrors.value = {}
+}
+
+const setFieldError = (field, message) => {
+  fieldErrors.value = {
+    ...fieldErrors.value,
+    [field]: [message]
+  }
+}
+
+const firstError = (field) => fieldErrors.value[field]?.[0] || ''
+
+const handleSave = async () => {
+  error.value = ''
+  fieldErrors.value = {}
+
   if (!currentCursus.value.name.trim()) {
-    error.value = 'Le nom du cursus est requis'
+    setFieldError('name', 'Le nom du cursus est requis.')
+    error.value = 'Veuillez corriger les champs indiqués.'
     return
   }
 
   if (currentCursus.value.progression === 'levels' && (!currentCursus.value.levels_count || currentCursus.value.levels_count < 1)) {
-    error.value = 'Le nombre de niveaux doit être au moins de 1'
+    setFieldError('levels_count', 'Le nombre de niveaux doit être au moins de 1.')
+    error.value = 'Veuillez corriger les champs indiqués.'
     return
   }
 
   if (currentCursus.value.progression === 'levels' && (!currentCursus.value.levels_count || currentCursus.value.levels_count > 20)) {
-        error.value = 'Le cursus ne peut pas avoir plus de 20 niveaux'
-        return
+    setFieldError('levels_count', 'Le cursus ne peut pas avoir plus de 20 niveaux.')
+    error.value = 'Veuillez corriger les champs indiqués.'
+    return
   }
 
   try {
     isSubmitting.value = true
-    error.value = ''
 
     const cursusToSave = {
       name: currentCursus.value.name,
@@ -50,23 +76,30 @@ const handleSave = () => {
       progression: currentCursus.value.progression
     }
 
-    emit('save', cursusToSave)
+    await new Promise((resolve, reject) => {
+      emit('save', cursusToSave, { resolve, reject })
+    })
 
-    currentCursus.value = {
-      name: '',
-      levels_count: 1,
-      progression: 'levels'
-    }
-
+    resetForm()
     emit('close')
-
   } catch (err) {
     console.error('Erreur lors de la création du cursus:', err)
-    error.value = 'Une erreur est survenue lors de la création du cursus'
+    fieldErrors.value = err.response?.data?.errors || {}
+    error.value = Object.keys(fieldErrors.value).length
+      ? 'Veuillez corriger les champs indiqués.'
+      : getErrorMessage(err, 'Une erreur est survenue lors de la création du cursus')
   } finally {
     isSubmitting.value = false
   }
 }
+
+watch(() => props.isOpen, (isOpen) => {
+  if (!isOpen) resetForm()
+  else {
+    error.value = ''
+    fieldErrors.value = {}
+  }
+})
 </script>
 
 <template>
@@ -95,6 +128,7 @@ const handleSave = () => {
               placeholder="Nom du cursus"
               required
           />
+          <p v-if="firstError('name')" class="text-xs text-red-600 mt-1">{{ firstError('name') }}</p>
         </div>
 
         <div>
@@ -109,6 +143,7 @@ const handleSave = () => {
                 :max="20"
             />
           </div>
+          <p v-if="firstError('levels_count')" class="text-xs text-red-600 mt-1">{{ firstError('levels_count') }}</p>
           <p class="text-[11px] text-placeholder mt-1.5">
             {{ currentCursus.progression === 'levels' ? 'Les élèves progressent de niveau en niveau d\'une année sur l\'autre.' : 'Cursus sans niveaux : les élèves restent dans le même groupe.' }}
           </p>

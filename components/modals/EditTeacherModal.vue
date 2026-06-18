@@ -2,6 +2,7 @@
 import {ref, watch} from 'vue'
 import Cross from '~/components/Icons/Cross.vue'
 import InputText from '~/components/form/InputText.vue'
+import { getErrorMessage } from '~/utils/errors'
 
 const props = defineProps({
   isOpen: {type: Boolean, required: true},
@@ -12,27 +13,60 @@ const emit = defineEmits(['close', 'save'])
 
 const form = ref({first_name: '', last_name: '', email: ''})
 const error = ref('')
+const fieldErrors = ref({})
 const isSubmitting = ref(false)
 
-watch(() => props.teacher, (t) => {
-  if (t) {
+const resetErrors = () => {
+  error.value = ''
+  fieldErrors.value = {}
+}
+
+const setFieldError = (field, message) => {
+  fieldErrors.value = {
+    ...fieldErrors.value,
+    [field]: [message]
+  }
+}
+
+const firstError = (...fields) => {
+  for (const field of fields) {
+    const message = fieldErrors.value[field]?.[0]
+    if (message) return message
+  }
+  return ''
+}
+
+watch(() => [props.teacher, props.isOpen], ([t, isOpen]) => {
+  if (t && isOpen) {
     form.value = {
       first_name: t.first_name || '',
       last_name: t.last_name || '',
       email: t.email || ''
     }
+    resetErrors()
   }
+  if (!isOpen) resetErrors()
 }, {immediate: true})
 
 const handleSubmit = async () => {
-  error.value = ''
+  resetErrors()
   if (!form.value.first_name || !form.value.last_name || !form.value.email) {
-    error.value = 'Tous les champs sont obligatoires'
+    if (!form.value.last_name) setFieldError('last_name', 'Le nom est requis.')
+    if (!form.value.first_name) setFieldError('first_name', 'Le prénom est requis.')
+    if (!form.value.email) setFieldError('email', 'L’email est requis.')
+    error.value = 'Veuillez corriger les champs indiqués.'
     return
   }
   try {
     isSubmitting.value = true
-    await emit('save', {...form.value})
+    await new Promise((resolve, reject) => {
+      emit('save', {...form.value}, { resolve, reject })
+    })
+  } catch (err) {
+    fieldErrors.value = err.response?.data?.errors || {}
+    error.value = Object.keys(fieldErrors.value).length
+        ? 'Veuillez corriger les champs indiqués.'
+        : getErrorMessage(err, 'Une erreur est survenue lors de la mise à jour du professeur')
   } finally {
     isSubmitting.value = false
   }
@@ -42,7 +76,12 @@ const setError = (msg) => {
   error.value = msg
 }
 
-defineExpose({setError})
+const setErrors = (errors = {}, fallback = 'Une erreur est survenue lors de la mise à jour du professeur') => {
+  fieldErrors.value = errors
+  error.value = Object.keys(errors).length ? 'Veuillez corriger les champs indiqués.' : fallback
+}
+
+defineExpose({setError, setErrors})
 </script>
 
 <template>
@@ -65,10 +104,19 @@ defineExpose({setError})
         </div>
 
         <div class="grid grid-cols-2 gap-3">
-          <InputText v-model="form.last_name" placeholder="Nom"/>
-          <InputText v-model="form.first_name" placeholder="Prénom"/>
+          <div>
+            <InputText v-model="form.last_name" placeholder="Nom"/>
+            <p v-if="firstError('last_name')" class="text-xs text-red-600 mt-1">{{ firstError('last_name') }}</p>
+          </div>
+          <div>
+            <InputText v-model="form.first_name" placeholder="Prénom"/>
+            <p v-if="firstError('first_name')" class="text-xs text-red-600 mt-1">{{ firstError('first_name') }}</p>
+          </div>
         </div>
-        <InputText v-model="form.email" placeholder="Email"/>
+        <div>
+          <InputText v-model="form.email" placeholder="Email"/>
+          <p v-if="firstError('email')" class="text-xs text-red-600 mt-1">{{ firstError('email') }}</p>
+        </div>
       </div>
 
       <div class="px-5 py-3 border-t border-[#E6EFF5] flex justify-end gap-x-1.5">

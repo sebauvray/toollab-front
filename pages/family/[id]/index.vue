@@ -324,7 +324,7 @@ const handleEditResponsable = async (updatedResponsable) => {
     }
 };
 
-const handleEditStudent = async (updatedStudent) => {
+const handleEditStudent = async (updatedStudent, callbacks = null) => {
     try {
         await familyService.updateStudent(route.params.id, updatedStudent.id, updatedStudent);
         await fetchFamilyDetails();
@@ -333,6 +333,7 @@ const handleEditStudent = async (updatedStudent) => {
             type: 'success',
             message: 'Élève mis à jour avec succès'
         });
+        callbacks?.resolve?.();
     } catch (err) {
         console.error("Erreur lors de la mise à jour de l'élève:", err);
         const {setFlashMessage} = useFlashMessage();
@@ -340,6 +341,7 @@ const handleEditStudent = async (updatedStudent) => {
             type: 'error',
             message: "Erreur lors de la mise à jour de l'élève"
         });
+        callbacks?.reject?.(err);
     }
 };
 

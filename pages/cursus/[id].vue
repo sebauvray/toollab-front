@@ -127,6 +127,8 @@ import ConfirmationModal from "~/components/modals/ConfirmationModal.vue";
 import PageContainer from "~/components/layout/PageContainer.vue";
 import cursusService from "~/services/cursus";
 import classeService from "~/services/classe";
+import { getCurrentSchoolId } from "~/utils/schoolContext";
+import { getErrorMessage } from "~/utils/errors";
 import {usePageTitle, useRoute} from '#imports';
 import { useSchoolYear } from "~/composables/useSchoolYear";
 
@@ -244,7 +246,7 @@ const handlePerPageChange = (perPage) => {
   fetchClasses(1);
 };
 
-const handleAddClass = async (newClass) => {
+const handleAddClass = async (newClass, callbacks = null) => {
   try {
     const classData = {
       name: newClass.name,
@@ -253,7 +255,7 @@ const handleAddClass = async (newClass) => {
       gender: newClass.gender,
       size: parseInt(newClass.size),
       type: cursus.value.name,
-      school_id: localStorage.getItem('current_school_id') || 1,
+      school_id: getCurrentSchoolId(),
       telegram_link: newClass.telegram_link,
       main_teacher_id: newClass.main_teacher_id || null,
       schedules: newClass.schedules || []
@@ -270,12 +272,15 @@ const handleAddClass = async (newClass) => {
 
       showAddClassModal.value = false;
       await fetchClasses();
+      callbacks?.resolve?.();
     } else {
       error.value = response.message || 'Une erreur est survenue lors de la création de la classe';
+      callbacks?.reject?.(new Error(error.value));
     }
   } catch (err) {
     console.error('Erreur lors de la création de la classe:', err);
-    error.value = 'Une erreur est survenue lors de la création de la classe';
+    error.value = getErrorMessage(err, 'Une erreur est survenue lors de la création de la classe');
+    callbacks?.reject?.(err);
   }
 };
 
@@ -284,7 +289,7 @@ const openUpdateModal = (classItem) => {
   showUpdateClassModal.value = true;
 };
 
-const handleUpdateClass = async (updatedClass) => {
+const handleUpdateClass = async (updatedClass, callbacks = null) => {
   try {
     const classData = {
       name: updatedClass.name,
@@ -310,12 +315,15 @@ const handleUpdateClass = async (updatedClass) => {
       showUpdateClassModal.value = false;
       selectedClass.value = null;
       await fetchClasses();
+      callbacks?.resolve?.();
     } else {
       error.value = response.message || 'Une erreur est survenue lors de la modification de la classe';
+      callbacks?.reject?.(new Error(error.value));
     }
   } catch (err) {
     console.error('Erreur lors de la modification de la classe:', err);
-    error.value = 'Une erreur est survenue lors de la modification de la classe';
+    error.value = getErrorMessage(err, 'Une erreur est survenue lors de la modification de la classe');
+    callbacks?.reject?.(err);
   }
 };
 
@@ -345,7 +353,7 @@ const handleDeleteClass = async () => {
     }
   } catch (err) {
     console.error('Erreur lors de la suppression de la classe:', err);
-    error.value = 'Une erreur est survenue lors de la suppression de la classe';
+    error.value = getErrorMessage(err, 'Une erreur est survenue lors de la suppression de la classe');
   }
 };
 

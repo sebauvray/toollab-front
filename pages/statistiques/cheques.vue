@@ -119,6 +119,8 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { statisticsService } from '~/services/statistics'
 import { saveExport } from '~/utils/download'
+import { getCurrentSchoolId } from '~/utils/schoolContext'
+import { getErrorMessage } from '~/utils/errors'
 import BreadCrumb from '~/components/navigation/BreadCrumb.vue'
 import DataTable from '~/components/table/DataTable.vue'
 import PageContainer from '~/components/layout/PageContainer.vue'
@@ -172,7 +174,7 @@ const formatCurrency = (amount) => {
 
 const loadAvailableBanks = async () => {
   try {
-    const schoolId = localStorage.getItem('current_school_id') || 1
+    const schoolId = getCurrentSchoolId()
     const response = await statisticsService.getAvailableBanks(schoolId)
     
     // La réponse contient directement le tableau dans response.data
@@ -193,7 +195,7 @@ const loadAvailableBanks = async () => {
 const loadCheques = async (page = 1) => {
   try {
     loading.value = true
-    const schoolId = localStorage.getItem('current_school_id') || 1
+    const schoolId = getCurrentSchoolId()
     
     const params = {
       page: page,
@@ -264,14 +266,14 @@ const exportCsv = async () => {
   }
   exportingCsv.value = true
   try {
-    const schoolId = localStorage.getItem('current_school_id') || 1
+    const schoolId = getCurrentSchoolId()
     const params = { payment_type: 'cheque' }
     if (searchTerm.value) params.search = searchTerm.value
     if (selectedBanks.value.length < availableBanks.value.length) params.banks = selectedBanks.value.join(',')
     const blob = await statisticsService.exportPayments(schoolId, params)
     saveExport(blob, 'cheques')
   } catch (e) {
-    setFlashMessage({ type: 'error', message: 'Échec de l\'export' })
+    setFlashMessage({ type: 'error', message: getErrorMessage(e, 'Échec de l\'export') })
   } finally {
     exportingCsv.value = false
   }

@@ -8,6 +8,7 @@ import classeService from '~/services/classe'
 import { useSchoolYear } from '~/composables/useSchoolYear'
 import { usePageTitle } from "~/composables/usePageTitle.js"
 import { saveExport } from '~/utils/download'
+import { getCurrentSchoolId } from '~/utils/schoolContext'
 
 definePageMeta({
   layout: 'auth',
@@ -60,7 +61,7 @@ const exportClasses = async () => {
 }
 
 const currentSchoolId = computed(() => {
-  return localStorage.getItem('current_school_id') || 1
+  return getCurrentSchoolId()
 })
 
 const fetchClasses = async () => {
@@ -77,7 +78,7 @@ const fetchClasses = async () => {
     }
   } catch (err) {
     console.error('Erreur lors du chargement des classes:', err)
-    error.value = 'Erreur lors du chargement des classes'
+    error.value = err.response?.data?.message || err.message || 'Erreur lors du chargement des classes'
   } finally {
     isLoading.value = false
   }

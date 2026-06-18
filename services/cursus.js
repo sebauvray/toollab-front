@@ -1,4 +1,5 @@
 import apiClient from './api'
+import { getCurrentSchoolId } from '~/utils/schoolContext'
 
 export default {
     async getCursus(params = {}) {
@@ -23,7 +24,7 @@ export default {
 
     async createCursus(cursusData) {
         try {
-            const schoolId = localStorage.getItem('current_school_id') || 1
+            const schoolId = getCurrentSchoolId()
             const payload = {
                 ...cursusData,
                 school_id: cursusData.school_id || schoolId

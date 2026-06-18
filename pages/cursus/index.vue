@@ -10,6 +10,7 @@ import ConfirmationModal from "~/components/modals/ConfirmationModal.vue";
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 import {usePageTitle} from "~/composables/usePageTitle.js";
 import { useSchoolYear } from "~/composables/useSchoolYear";
+import { getErrorMessage } from "~/utils/errors";
 
 const { isReadOnly } = useSchoolYear();
 
@@ -94,15 +95,14 @@ const handlePerPageChange = (perPage) => {
   fetchCursus(1)
 }
 
-const handleAddCursus = async (newCursus) => {
+const handleAddCursus = async (newCursus, deferred = null) => {
   try {
     isLoading.value = true
 
     const response = await cursusService.createCursus({
       name: newCursus.name,
       progression: newCursus.progression,
-      levels_count: newCursus.levels_count,
-      school_id: localStorage.getItem('current_school_id') || 1
+      levels_count: newCursus.levels_count
     })
 
     if (response.status === 'success') {
@@ -113,12 +113,15 @@ const handleAddCursus = async (newCursus) => {
       })
 
       await fetchCursus(pagination.value.currentPage)
+      deferred?.resolve()
     } else {
       error.value = response.message || 'Une erreur est survenue lors de la création du cursus'
+      deferred?.reject(new Error(error.value))
     }
   } catch (err) {
     console.error('Erreur lors de la création du cursus:', err)
-    error.value = 'Une erreur est survenue lors de la création du cursus'
+    error.value = getErrorMessage(err, 'Une erreur est survenue lors de la création du cursus')
+    deferred?.reject(err)
   } finally {
     isLoading.value = false
   }
@@ -148,7 +151,7 @@ const handleDeleteCursus = async () => {
     }
   } catch (err) {
     console.error('Erreur lors de la suppression du cursus:', err)
-    error.value = err.response?.data?.message || 'Une erreur est survenue lors de la suppression du cursus'
+    error.value = getErrorMessage(err, 'Une erreur est survenue lors de la suppression du cursus')
   } finally {
     isLoading.value = false
     showDeleteModal.value = false

@@ -250,6 +250,8 @@ import { ref, onMounted, nextTick } from 'vue'
 import { useAuth } from '~/composables/useAuth.js'
 import { usePageTitle } from '~/composables/usePageTitle.js'
 import { statisticsService } from '~/services/statistics.js'
+import { getCurrentSchoolId } from '~/utils/schoolContext'
+import { getErrorMessage } from '~/utils/errors'
 import Chart from 'chart.js/auto'
 import IconUsers from '~/components/Icons/IconUsers.vue'
 import IconMoney from '~/components/Icons/IconMoney.vue'
@@ -293,7 +295,7 @@ const loadStatistics = async () => {
     isLoading.value = true
     errorMessage.value = ''
     
-    const schoolId = localStorage.getItem('current_school_id') || 1
+    const schoolId = getCurrentSchoolId()
     
     const [overviewResponse, unpaidResponse] = await Promise.all([
       statisticsService.getOverview(schoolId),
@@ -312,7 +314,7 @@ const loadStatistics = async () => {
       createFillRateChart()
     }, 100)
   } catch (error) {
-    errorMessage.value = error.response?.data?.message || 'Erreur lors du chargement des statistiques'
+    errorMessage.value = getErrorMessage(error, 'Erreur lors du chargement des statistiques')
   } finally {
     isLoading.value = false
   }

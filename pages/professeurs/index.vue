@@ -122,18 +122,23 @@ const closeEditModal = () => {
   teacherToEdit.value = null
 }
 
-const handleEditSave = async (data) => {
-  if (!teacherToEdit.value) return
+const handleEditSave = async (data, callbacks = null) => {
+  if (!teacherToEdit.value) {
+    callbacks?.reject?.(new Error('Aucun professeur sélectionné'))
+    return
+  }
   try {
     await userService.updateUser(teacherToEdit.value.id, data)
     setFlashMessage({type: 'success', message: 'Professeur mis à jour'})
     closeEditModal()
     await fetchTeachers()
+    callbacks?.resolve?.()
   } catch (err) {
     const msg = err.response?.data?.message
         || err.response?.data?.errors?.email?.[0]
         || 'Erreur lors de la mise à jour'
-    editModalRef.value?.setError(msg)
+    editModalRef.value?.setErrors(err.response?.data?.errors || {}, msg)
+    callbacks?.reject?.(err)
   }
 }
 

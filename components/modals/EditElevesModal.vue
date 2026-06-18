@@ -5,6 +5,7 @@ import SaveButton from "~/components/form/SaveButton.vue"
 import CancelButton from "~/components/form/CancelButton.vue"
 import DatePicker from "~/components/form/DatePicker.vue"
 import Cross from "~/components/Icons/Cross.vue"
+import { getErrorMessage } from "~/utils/errors"
 
 const props = defineProps({
     isOpen: {
@@ -19,6 +20,8 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'save'])
 const isLoading = ref(false)
+const error = ref('')
+const fieldErrors = ref({})
 
 const genderOptions = [
     { value: 'M', label: 'Homme' },
@@ -26,23 +29,63 @@ const genderOptions = [
 ]
 
 const editStudent = ref({})
+
+const resetErrors = () => {
+    error.value = ''
+    fieldErrors.value = {}
+}
+
+const setFieldError = (field, message) => {
+    fieldErrors.value = {
+        ...fieldErrors.value,
+        [field]: [message]
+    }
+}
+
+const firstError = (...fields) => {
+    for (const field of fields) {
+        const message = fieldErrors.value[field]?.[0]
+        if (message) return message
+    }
+    return ''
+}
+
 watch(
     () => [props.student, props.isOpen],
     ([newStudent, open]) => {
         if (open && newStudent) {
             editStudent.value = { ...newStudent };
+            resetErrors()
         }
+        if (!open) resetErrors()
     },
     { immediate: true }
 );
 
 const handleSave = async () => {
     try {
+        resetErrors()
+        if (!editStudent.value.last_name) setFieldError('last_name', 'Le nom est requis.')
+        if (!editStudent.value.first_name) setFieldError('first_name', 'Le prénom est requis.')
+        if (!editStudent.value.birthdate) setFieldError('birthdate', 'La date de naissance est requise.')
+        if (!editStudent.value.gender) setFieldError('gender', 'Le genre est requis.')
+
+        if (Object.keys(fieldErrors.value).length) {
+            error.value = 'Veuillez corriger les champs indiqués.'
+            return
+        }
+
         isLoading.value = true
-        emit('save', { ...editStudent.value })
+        await new Promise((resolve, reject) => {
+            emit('save', { ...editStudent.value }, { resolve, reject })
+        })
         emit('close')
-    } catch (error) {
-        console.error('Error saving student:', error)
+    } catch (err) {
+        console.error('Erreur lors de la modification de l’élève:', err)
+        fieldErrors.value = err.response?.data?.errors || {}
+        error.value = Object.keys(fieldErrors.value).length
+            ? 'Veuillez corriger les champs indiqués.'
+            : getErrorMessage(err, 'Une erreur est survenue lors de la modification de l’élève')
     } finally {
         isLoading.value = false
     }
@@ -62,34 +105,50 @@ const handleSave = async () => {
                 </button>
             </div>
 
-            <div class="px-5 py-4">
+            <div class="px-5 py-4 space-y-3">
+                <div v-if="error" class="bg-red-50 text-red-700 ring-1 ring-red-200 px-3 py-2 rounded-lg text-xs">
+                    {{ error }}
+                </div>
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <InputText
-                        v-model="editStudent.last_name"
-                        placeholder="Nom"
-                        required
-                        aria-label="Nom de l'élève"/>
-                    <InputText
-                        v-model="editStudent.first_name"
-                        placeholder="Prénom"
-                        required
-                        aria-label="Prénom de l'élève"/>
-                    <DatePicker
-                        v-model="editStudent.birthdate"
-                        placeholder="Date de naissance"
-                        required
-                        aria-label="Date de naissance"/>
-                    <div class="inline-flex rounded-lg border border-input-stroke overflow-hidden divide-x divide-input-stroke w-fit self-center">
-                        <button
-                            v-for="option in genderOptions"
-                            :key="option.value"
-                            type="button"
-                            @click="editStudent.gender = option.value"
-                            :class="[
-                                'px-3 py-1.5 text-xs font-medium transition-colors',
-                                editStudent.gender === option.value ? 'bg-default text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
-                            ]"
-                        >{{ option.label }}</button>
+                    <div>
+                        <InputText
+                            v-model="editStudent.last_name"
+                            placeholder="Nom"
+                            required
+                            aria-label="Nom de l'élève"/>
+                        <p v-if="firstError('last_name', 'lastname')" class="text-xs text-red-600 mt-1">{{ firstError('last_name', 'lastname') }}</p>
+                    </div>
+                    <div>
+                        <InputText
+                            v-model="editStudent.first_name"
+                            placeholder="Prénom"
+                            required
+                            aria-label="Prénom de l'élève"/>
+                        <p v-if="firstError('first_name', 'firstname')" class="text-xs text-red-600 mt-1">{{ firstError('first_name', 'firstname') }}</p>
+                    </div>
+                    <div>
+                        <DatePicker
+                            v-model="editStudent.birthdate"
+                            placeholder="Date de naissance"
+                            required
+                            aria-label="Date de naissance"/>
+                        <p v-if="firstError('birthdate')" class="text-xs text-red-600 mt-1">{{ firstError('birthdate') }}</p>
+                    </div>
+                    <div>
+                        <div class="inline-flex rounded-lg border border-input-stroke overflow-hidden divide-x divide-input-stroke w-fit">
+                            <button
+                                v-for="option in genderOptions"
+                                :key="option.value"
+                                type="button"
+                                @click="editStudent.gender = option.value"
+                                :class="[
+                                    'px-3 py-1.5 text-xs font-medium transition-colors',
+                                    editStudent.gender === option.value ? 'bg-default text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+                                ]"
+                            >{{ option.label }}</button>
+                        </div>
+                        <p v-if="firstError('gender')" class="text-xs text-red-600 mt-1">{{ firstError('gender') }}</p>
                     </div>
                 </div>
             </div>

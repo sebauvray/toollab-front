@@ -20,12 +20,25 @@
         <div>
           <h3 class="text-xs font-montserrat font-semibold text-gray-500 mb-2">Informations</h3>
           <div class="grid grid-cols-2 gap-3">
-            <InputText v-model="editClass.name" placeholder="Nom de la classe"/>
-            <InputSelect v-if="hasLevels" v-model="editClass.levelId" :options="levelOptions" placeholder="Niveau"/>
-            <SelectGenre v-model="editClass.gender" placeholder="Genre"/>
-            <InputNumber v-model="editClass.size" placeholder="Effectif maximum" :min="1" :max="100"/>
+            <div>
+              <InputText v-model="editClass.name" placeholder="Nom de la classe"/>
+              <p v-if="firstError('name')" class="text-xs text-red-600 mt-1">{{ firstError('name') }}</p>
+            </div>
+            <div v-if="hasLevels">
+              <InputSelect v-model="editClass.levelId" :options="levelOptions" placeholder="Niveau"/>
+              <p v-if="firstError('level_id', 'levelId')" class="text-xs text-red-600 mt-1">{{ firstError('level_id', 'levelId') }}</p>
+            </div>
+            <div>
+              <SelectGenre v-model="editClass.gender" placeholder="Genre"/>
+              <p v-if="firstError('gender')" class="text-xs text-red-600 mt-1">{{ firstError('gender') }}</p>
+            </div>
+            <div>
+              <InputNumber v-model="editClass.size" placeholder="Effectif maximum" :min="1" :max="100"/>
+              <p v-if="firstError('size')" class="text-xs text-red-600 mt-1">{{ firstError('size') }}</p>
+            </div>
             <div class="col-span-2">
               <InputText v-model="editClass.telegram_link" placeholder="Lien du groupe de classe"/>
+              <p v-if="firstError('telegram_link')" class="text-xs text-red-600 mt-1">{{ firstError('telegram_link') }}</p>
             </div>
           </div>
         </div>
@@ -33,20 +46,29 @@
         <div>
           <h3 class="text-xs font-montserrat font-semibold text-gray-500 mb-2">Créneaux</h3>
           <div class="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-2 items-center">
-            <SelectDay v-model="newSchedule.day" placeholder="Jour"/>
+            <div>
+              <SelectDay v-model="newSchedule.day" placeholder="Jour"/>
+              <p v-if="firstError('schedule_day')" class="text-xs text-red-600 mt-1">{{ firstError('schedule_day') }}</p>
+            </div>
             <InputSelect v-model="newSchedule.teacher_id" :options="teacherOptions" placeholder="Professeur"/>
-            <input
+            <div>
+              <input
                 v-model="newSchedule.start_time"
                 type="time"
                 title="Heure de début"
                 class="px-2 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default"
-            />
-            <input
+              />
+              <p v-if="firstError('schedule_start_time')" class="text-xs text-red-600 mt-1">{{ firstError('schedule_start_time') }}</p>
+            </div>
+            <div>
+              <input
                 v-model="newSchedule.end_time"
                 type="time"
                 title="Heure de fin"
                 class="px-2 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default"
-            />
+              />
+              <p v-if="firstError('schedule_end_time')" class="text-xs text-red-600 mt-1">{{ firstError('schedule_end_time') }}</p>
+            </div>
             <button
                 @click="addSchedule"
                 class="px-3 py-1.5 text-xs bg-default text-white rounded-lg hover:opacity-90"
@@ -168,6 +190,7 @@ import InputNumber from '~/components/form/InputNumber.vue'
 import SelectGenre from '~/components/form/SelectGenre.vue'
 import SelectDay from "~/components/form/SelectDay.vue";
 import userService from '~/services/user'
+import { getErrorMessage } from '~/utils/errors'
 
 const props = defineProps({
   isOpen: {
@@ -191,6 +214,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'update'])
 
 const error = ref('')
+const fieldErrors = ref({})
 const isSubmitting = ref(false)
 
 const editClass = ref({
@@ -239,7 +263,11 @@ const fetchTeachers = async () => {
 }
 
 watch(() => props.isOpen, (isOpen) => {
-  if (isOpen) fetchTeachers()
+  if (isOpen) {
+    fetchTeachers()
+    error.value = ''
+    fieldErrors.value = {}
+  }
 }, {immediate: true})
 
 const levelOptions = computed(() => {
@@ -263,8 +291,25 @@ watch(() => props.classData, (newClassData) => {
       schedules: newClassData.schedules ? [...newClassData.schedules] : []
     }
     mainTeacherId.value = newClassData.main_teacher_id || null
+    error.value = ''
+    fieldErrors.value = {}
   }
 }, { immediate: true })
+
+const setFieldError = (field, message) => {
+  fieldErrors.value = {
+    ...fieldErrors.value,
+    [field]: [message]
+  }
+}
+
+const firstError = (...fields) => {
+  for (const field of fields) {
+    const message = fieldErrors.value[field]?.[0]
+    if (message) return message
+  }
+  return ''
+}
 
 const distinctTeacherIds = computed(() => {
   const seen = []
@@ -291,8 +336,12 @@ watch(distinctTeacherIds, (ids) => {
 })
 
 const addSchedule = () => {
+  fieldErrors.value = {}
   if (!newSchedule.value.day || !newSchedule.value.start_time || !newSchedule.value.end_time) {
-    error.value = 'Jour, heure de début et heure de fin sont requis'
+    if (!newSchedule.value.day) setFieldError('schedule_day', 'Le jour est requis.')
+    if (!newSchedule.value.start_time) setFieldError('schedule_start_time', 'L’heure de début est requise.')
+    if (!newSchedule.value.end_time) setFieldError('schedule_end_time', 'L’heure de fin est requise.')
+    error.value = 'Veuillez corriger les champs indiqués.'
     return
   }
 
@@ -335,7 +384,7 @@ const startEditSchedule = (index) => {
 const validateEditSchedule = () => {
   const s = editClass.value.schedules[editingScheduleIndex.value]
   if (!s || !s.day || !s.start_time || !s.end_time) {
-    error.value = 'Jour, heure de début et heure de fin sont requis'
+    error.value = 'Chaque créneau doit avoir un jour, une heure de début et une heure de fin.'
     return
   }
   editingScheduleIndex.value = -1
@@ -362,15 +411,20 @@ const getScheduleTeacherLabel = (schedule) => {
   return schedule.teacher_name || 'Aucun professeur'
 }
 
-const handleUpdate = () => {
+const handleUpdate = async () => {
+  error.value = ''
+  fieldErrors.value = {}
+
   if (!editClass.value.name || !editClass.value.gender || !editClass.value.size) {
-    error.value = 'Nom, genre et effectif maximum sont requis'
+    if (!editClass.value.name) setFieldError('name', 'Le nom de la classe est requis.')
+    if (!editClass.value.gender) setFieldError('gender', 'Le genre est requis.')
+    if (!editClass.value.size) setFieldError('size', 'L’effectif maximum est requis.')
+    error.value = 'Veuillez corriger les champs indiqués.'
     return
   }
 
   try {
     isSubmitting.value = true
-    error.value = ''
 
     const classData = {
       ...editClass.value,
@@ -378,10 +432,15 @@ const handleUpdate = () => {
       main_teacher_id: mainTeacherId.value
     }
 
-    emit('update', classData)
+    await new Promise((resolve, reject) => {
+      emit('update', classData, { resolve, reject })
+    })
   } catch (err) {
     console.error('Erreur lors de la modification de la classe:', err)
-    error.value = 'Une erreur est survenue lors de la modification de la classe'
+    fieldErrors.value = err.response?.data?.errors || {}
+    error.value = Object.keys(fieldErrors.value).length
+        ? 'Veuillez corriger les champs indiqués.'
+        : getErrorMessage(err, 'Une erreur est survenue lors de la modification de la classe')
   } finally {
     isSubmitting.value = false
   }

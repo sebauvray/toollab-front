@@ -7,6 +7,7 @@ import ToogleButton from "~/components/form/ToogleButton.vue";
 import DatePicker from "~/components/form/DatePicker.vue";
 import Cross from "~/components/Icons/Cross.vue";
 import familyService from '~/services/family';
+import { getErrorMessage } from '~/utils/errors';
 
 const props = defineProps({
     isOpen: {
@@ -23,6 +24,7 @@ const isEleve = ref(false);
 const emit = defineEmits(['close', 'save'])
 const isSubmitting = ref(false);
 const error = ref('');
+const fieldErrors = ref({});
 
 const genderOptions = [
     {value: 'M', label: 'Homme'},
@@ -42,10 +44,29 @@ const formData = ref({
     gender: '',
 })
 
+const resetForm = () => {
+    formData.value = {
+        firstname: '',
+        lastname: '',
+        phone: '',
+        email: '',
+        address: '',
+        zipcode: '',
+        city: '',
+        birthdate: '',
+        is_student: false,
+        gender: '',
+    };
+    isEleve.value = false;
+    error.value = '';
+    fieldErrors.value = {};
+}
+
 const handleSave = async () => {
     try {
         isSubmitting.value = true;
         error.value = '';
+        fieldErrors.value = {};
 
         const payload = {
             ...formData.value,
@@ -54,16 +75,7 @@ const handleSave = async () => {
 
         const response = await familyService.addResponsibleToFamily(props.familyId, payload);
 
-        formData.value = {
-            firstname: '',
-            lastname: '',
-            phone: '',
-            email: '',
-            address: '',
-            zipcode: '',
-            city: '',
-            birthdate: ''
-        };
+        resetForm();
 
         emit('save', response.data);
         emit('close');
@@ -75,15 +87,29 @@ const handleSave = async () => {
         });
 
     } catch (err) {
-        error.value = err.response?.data?.message || 'Une erreur est survenue lors de l\'ajout du responsable';
+        fieldErrors.value = err.response?.data?.errors || {};
+        error.value = Object.keys(fieldErrors.value).length
+            ? 'Veuillez corriger les champs indiqués.'
+            : getErrorMessage(err, 'Une erreur est survenue lors de l\'ajout du responsable');
         console.error('Erreur lors de l\'ajout du responsable:', err);
     } finally {
         isSubmitting.value = false;
     }
 }
 
+const firstError = (field) => fieldErrors.value[field]?.[0] || '';
+
 watch(isEleve, (newValue) => {
     formData.value.is_student = newValue;
+});
+
+watch(() => props.isOpen, (isOpen) => {
+    if (!isOpen) {
+        resetForm();
+    } else {
+        error.value = '';
+        fieldErrors.value = {};
+    }
 });
 </script>
 
@@ -108,16 +134,28 @@ watch(isEleve, (newValue) => {
                 <div>
                     <h3 class="text-xs font-montserrat font-semibold text-gray-500 mb-2">Identité</h3>
                     <div class="grid grid-cols-2 gap-3">
-                        <InputText v-model="formData.lastname" placeholder="Nom"/>
-                        <InputText v-model="formData.firstname" placeholder="Prénom"/>
+                        <div>
+                            <InputText v-model="formData.lastname" placeholder="Nom"/>
+                            <p v-if="firstError('lastname')" class="text-xs text-red-600 mt-1">{{ firstError('lastname') }}</p>
+                        </div>
+                        <div>
+                            <InputText v-model="formData.firstname" placeholder="Prénom"/>
+                            <p v-if="firstError('firstname')" class="text-xs text-red-600 mt-1">{{ firstError('firstname') }}</p>
+                        </div>
                     </div>
                 </div>
 
                 <div>
                     <h3 class="text-xs font-montserrat font-semibold text-gray-500 mb-2">Contact</h3>
                     <div class="grid grid-cols-2 gap-3">
-                        <InputText v-model="formData.phone" placeholder="Numéro de téléphone"/>
-                        <InputText v-model="formData.email" placeholder="Email"/>
+                        <div>
+                            <InputText v-model="formData.phone" placeholder="Numéro de téléphone"/>
+                            <p v-if="firstError('phone')" class="text-xs text-red-600 mt-1">{{ firstError('phone') }}</p>
+                        </div>
+                        <div>
+                            <InputText v-model="formData.email" placeholder="Email"/>
+                            <p v-if="firstError('email')" class="text-xs text-red-600 mt-1">{{ firstError('email') }}</p>
+                        </div>
                     </div>
                 </div>
 
@@ -126,9 +164,16 @@ watch(isEleve, (newValue) => {
                     <div class="grid grid-cols-2 gap-3">
                         <div class="col-span-2">
                             <InputText v-model="formData.address" placeholder="Voie"/>
+                            <p v-if="firstError('address')" class="text-xs text-red-600 mt-1">{{ firstError('address') }}</p>
                         </div>
-                        <InputText v-model="formData.zipcode" placeholder="Code postal"/>
-                        <InputText v-model="formData.city" placeholder="Ville"/>
+                        <div>
+                            <InputText v-model="formData.zipcode" placeholder="Code postal"/>
+                            <p v-if="firstError('zipcode')" class="text-xs text-red-600 mt-1">{{ firstError('zipcode') }}</p>
+                        </div>
+                        <div>
+                            <InputText v-model="formData.city" placeholder="Ville"/>
+                            <p v-if="firstError('city')" class="text-xs text-red-600 mt-1">{{ firstError('city') }}</p>
+                        </div>
                     </div>
                 </div>
 
@@ -146,18 +191,22 @@ watch(isEleve, (newValue) => {
                             v-model="formData.birthdate"
                             placeholder="Date de naissance"
                         />
-                        <div class="inline-flex rounded-lg border border-input-stroke overflow-hidden divide-x divide-input-stroke">
-                            <button
-                                v-for="option in genderOptions"
-                                :key="option.value"
-                                type="button"
-                                @click="formData.gender = option.value"
-                                :class="[
-                                    'px-3 py-1.5 text-xs font-medium transition-colors',
-                                    formData.gender === option.value ? 'bg-default text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
-                                ]"
-                            >{{ option.label }}</button>
+                        <div>
+                            <div class="inline-flex rounded-lg border border-input-stroke overflow-hidden divide-x divide-input-stroke">
+                                <button
+                                    v-for="option in genderOptions"
+                                    :key="option.value"
+                                    type="button"
+                                    @click="formData.gender = option.value"
+                                    :class="[
+                                        'px-3 py-1.5 text-xs font-medium transition-colors',
+                                        formData.gender === option.value ? 'bg-default text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+                                    ]"
+                                >{{ option.label }}</button>
+                            </div>
+                            <p v-if="firstError('gender')" class="text-xs text-red-600 mt-1">{{ firstError('gender') }}</p>
                         </div>
+                        <p v-if="firstError('birthdate')" class="text-xs text-red-600 sm:col-span-2">{{ firstError('birthdate') }}</p>
                     </div>
                 </div>
             </div>

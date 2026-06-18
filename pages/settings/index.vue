@@ -14,6 +14,7 @@ import TeacherTLB from "~/components/Icons/Teacher-TLB.vue"
 import userService from '~/services/user'
 import schoolService from '~/services/school'
 import staffService from '~/services/staff'
+import { getErrorMessage } from '~/utils/errors'
 
 definePageMeta({
   layout: 'auth',
@@ -224,7 +225,7 @@ const handleUpdateUser = async () => {
     console.error('Erreur lors de la mise à jour du profil:', error)
     message.value = {
       type: 'error',
-      text:  'Une erreur est survenue lors de la mise à jour'
+      text: getErrorMessage(error, 'Une erreur est survenue lors de la mise à jour')
     }
   }
 }
@@ -259,7 +260,7 @@ const handleUpdatePassword = async () => {
     console.error('Erreur lors de la mise à jour du mot de passe:', error)
     message.value = {
       type: 'error',
-      text:  'Une erreur est survenue lors de la mise à jour du mot de passe'
+      text: getErrorMessage(error, 'Une erreur est survenue lors de la mise à jour du mot de passe')
     }
   }
 }
@@ -291,7 +292,7 @@ const handleUpdateSchool = async () => {
     console.error('Erreur lors de la mise à jour de l\'école:', error)
     message.value = {
       type: 'error',
-      text: error.response?.data?.message || error.response?.data?.error || 'Une erreur est survenue lors de la mise à jour de l\'école'
+      text: getErrorMessage(error, 'Une erreur est survenue lors de la mise à jour de l\'école')
     }
   }
 }
@@ -340,7 +341,7 @@ const handleCreateUser = async () => {
     console.error('Erreur lors de la création de l\'utilisateur:', error)
     message.value = {
       type: 'error',
-      text:  'Une erreur est survenue lors de la création de l\'utilisateur'
+      text: getErrorMessage(error, 'Une erreur est survenue lors de la création de l\'utilisateur')
     }
   }
 }

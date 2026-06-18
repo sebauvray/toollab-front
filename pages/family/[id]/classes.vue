@@ -11,6 +11,7 @@ import schoolService from "~/services/school.js";
 import paiementService from "~/services/paiement.js";
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 import { useSchoolYear } from "~/composables/useSchoolYear";
+import { getCurrentSchoolId } from "~/utils/schoolContext";
 
 const { isReadOnly } = useSchoolYear();
 
@@ -41,7 +42,7 @@ const selectedSchool = ref(null);
 const user = ref(null);
 
 const currentSchoolId = computed(() => {
-    return localStorage.getItem('current_school_id') || 1;
+    return getCurrentSchoolId();
 });
 
 const GENDER_COLORS = { M: '#93C5FD', F: '#FDA4AF' };
@@ -208,7 +209,7 @@ const fetchClasses = async () => {
         }
     } catch (err) {
         console.error('Erreur lors de la récupération des classes:', err);
-        error.value = 'Erreur lors du chargement des classes';
+        error.value = err.response?.data?.message || err.message || 'Erreur lors du chargement des classes';
     }
 };
 

@@ -127,7 +127,7 @@ const openEditModal = async () => {
   }
 }
 
-const handleUpdateClass = async (updatedClass) => {
+const handleUpdateClass = async (updatedClass, callbacks = null) => {
   try {
     const response = await classeService.updateClass(updatedClass.id, {
       name: updatedClass.name,
@@ -146,11 +146,14 @@ const handleUpdateClass = async (updatedClass) => {
       showEditModal.value = false
       editClassData.value = null
       await fetchData()
+      callbacks?.resolve?.()
     } else {
       setFlashMessage({ type: 'error', message: response.message || 'Erreur lors de la modification' })
+      callbacks?.reject?.(new Error(response.message || 'Erreur lors de la modification'))
     }
   } catch (e) {
     setFlashMessage({ type: 'error', message: e?.response?.data?.message || 'Erreur lors de la modification' })
+    callbacks?.reject?.(e)
   }
 }
 

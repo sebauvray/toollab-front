@@ -1,5 +1,5 @@
 <script setup>
-import {ref} from 'vue'
+import {ref, watch} from 'vue'
 import InputText from "~/components/form/InputText.vue"
 import SaveButton from "~/components/form/SaveButton.vue"
 import CancelButton from "~/components/form/CancelButton.vue"
@@ -7,8 +7,9 @@ import DatePicker from "~/components/form/DatePicker.vue"
 import PlusLight from "~/components/Icons/PlusLight.vue";
 import Cross from "~/components/Icons/Cross.vue";
 import Trash from "~/components/Icons/Trash.vue";
+import { getErrorMessage } from "~/utils/errors";
 
-defineProps({
+const props = defineProps({
     isOpen: {
         type: Boolean,
         required: true
@@ -18,6 +19,7 @@ defineProps({
 const emit = defineEmits(['close', 'save'])
 const isLoading = ref(false)
 const error = ref('');
+const fieldErrors = ref({})
 
 const getEmptyStudent = () => ({
     firstname: '',
@@ -27,6 +29,53 @@ const getEmptyStudent = () => ({
 })
 
 const students = ref([getEmptyStudent()])
+
+const resetErrors = () => {
+    error.value = ''
+    fieldErrors.value = {}
+}
+
+const resetForm = () => {
+    students.value = [getEmptyStudent()]
+    resetErrors()
+}
+
+const setFieldError = (field, message) => {
+    fieldErrors.value = {
+        ...fieldErrors.value,
+        [field]: [message]
+    }
+}
+
+const firstError = (...fields) => {
+    for (const field of fields) {
+        const message = fieldErrors.value[field]?.[0]
+        if (message) return message
+    }
+    return ''
+}
+
+const validateStudents = () => {
+    resetErrors()
+    students.value.forEach((student, index) => {
+        if (!student.lastname) setFieldError(`students.${index}.lastname`, 'Le nom est requis.')
+        if (!student.firstname) setFieldError(`students.${index}.firstname`, 'Le prénom est requis.')
+        if (!student.birthdate) setFieldError(`students.${index}.birthdate`, 'La date de naissance est requise.')
+        if (!student.gender) setFieldError(`students.${index}.gender`, 'Le genre est requis.')
+    })
+
+    if (Object.keys(fieldErrors.value).length) {
+        error.value = 'Veuillez corriger les champs indiqués.'
+        return false
+    }
+
+    return true
+}
+
+watch(() => props.isOpen, (isOpen) => {
+    if (isOpen) resetForm()
+    else resetErrors()
+})
 
 const handleAddStudent = () => {
     students.value.push(getEmptyStudent())
@@ -38,25 +87,28 @@ const handleRemoveStudent = (index) => {
 
 const handleSave = async () => {
     try {
-        error.value = '';
+        if (!validateStudents()) return
+
         isLoading.value = true;
 
         await new Promise((resolve, reject) => {
             emit('save', [...students.value], { resolve, reject })
         });
 
-        students.value = [getEmptyStudent()];
         handleClose();
 
     } catch (err) {
-        error.value = err.response?.data?.message || err.message || 'Une erreur est survenue';
+        fieldErrors.value = err.response?.data?.errors || {}
+        error.value = Object.keys(fieldErrors.value).length
+            ? 'Veuillez corriger les champs indiqués.'
+            : getErrorMessage(err, 'Une erreur est survenue lors de l’ajout des élèves');
     } finally {
         isLoading.value = false;
     }
 }
 
 const handleClose = () => {
-    error.value = '';
+    resetForm()
     emit('close');
 }
 
@@ -96,33 +148,53 @@ const genderOptions = [
                                 <Trash class="size-3.5"/>
                             </button>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-2.5 items-center">
-                            <InputText
-                                v-model="student.lastname"
-                                placeholder="Nom"
-                                required
-                                aria-label="Nom de l'élève"/>
-                            <InputText
-                                v-model="student.firstname"
-                                placeholder="Prénom"
-                                required
-                                aria-label="Prénom de l'élève"/>
-                            <DatePicker
-                                v-model="student.birthdate"
-                                placeholder="Date de naissance"
-                                required
-                                aria-label="Date de naissance"/>
-                            <div class="inline-flex rounded-lg border border-input-stroke overflow-hidden divide-x divide-input-stroke shrink-0">
-                                <button
-                                    v-for="option in genderOptions"
-                                    :key="option.value"
-                                    type="button"
-                                    @click="student.gender = option.value"
-                                    :class="[
-                                        'px-3 py-1.5 text-xs font-medium transition-colors',
-                                        student.gender === option.value ? 'bg-default text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
-                                    ]"
-                                >{{ option.label }}</button>
+                        <div class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-2.5 items-start">
+                            <div>
+                                <InputText
+                                    v-model="student.lastname"
+                                    placeholder="Nom"
+                                    required
+                                    aria-label="Nom de l'élève"/>
+                                <p v-if="firstError(`students.${index}.lastname`, `students.${index}.last_name`)" class="text-xs text-red-600 mt-1">
+                                    {{ firstError(`students.${index}.lastname`, `students.${index}.last_name`) }}
+                                </p>
+                            </div>
+                            <div>
+                                <InputText
+                                    v-model="student.firstname"
+                                    placeholder="Prénom"
+                                    required
+                                    aria-label="Prénom de l'élève"/>
+                                <p v-if="firstError(`students.${index}.firstname`, `students.${index}.first_name`)" class="text-xs text-red-600 mt-1">
+                                    {{ firstError(`students.${index}.firstname`, `students.${index}.first_name`) }}
+                                </p>
+                            </div>
+                            <div>
+                                <DatePicker
+                                    v-model="student.birthdate"
+                                    placeholder="Date de naissance"
+                                    required
+                                    aria-label="Date de naissance"/>
+                                <p v-if="firstError(`students.${index}.birthdate`)" class="text-xs text-red-600 mt-1">
+                                    {{ firstError(`students.${index}.birthdate`) }}
+                                </p>
+                            </div>
+                            <div>
+                                <div class="inline-flex rounded-lg border border-input-stroke overflow-hidden divide-x divide-input-stroke shrink-0">
+                                    <button
+                                        v-for="option in genderOptions"
+                                        :key="option.value"
+                                        type="button"
+                                        @click="student.gender = option.value"
+                                        :class="[
+                                            'px-3 py-1.5 text-xs font-medium transition-colors',
+                                            student.gender === option.value ? 'bg-default text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+                                        ]"
+                                    >{{ option.label }}</button>
+                                </div>
+                                <p v-if="firstError(`students.${index}.gender`)" class="text-xs text-red-600 mt-1">
+                                    {{ firstError(`students.${index}.gender`) }}
+                                </p>
                             </div>
                         </div>
                     </div>
