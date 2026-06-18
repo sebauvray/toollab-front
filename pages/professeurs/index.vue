@@ -10,9 +10,15 @@ import Edit from '~/components/Icons/Edit.vue'
 import Trash from '~/components/Icons/Trash.vue'
 import {usePageTitle} from '~/composables/usePageTitle.js'
 import {useSchoolYear} from '~/composables/useSchoolYear'
+import {useAuth} from '~/composables/useAuth'
 import userService from '~/services/user'
 import staffService from '~/services/staff'
 import scheduleService from '~/services/schedule'
+import {
+  getSchoolRoles,
+  SCHOOL_ROLES_UPDATED_EVENT,
+  writeCurrentSchoolRoles
+} from '~/utils/schoolRoles'
 
 definePageMeta({
   layout: 'auth',
@@ -25,6 +31,7 @@ usePageTitle('Professeurs')
 const breadcrumbItems = [{name: 'Professeurs', path: '/professeurs'}]
 
 const {isReadOnly, currentYear} = useSchoolYear()
+const {user} = useAuth()
 const {setFlashMessage} = useFlashMessage()
 
 const activeTab = ref('list')
@@ -33,6 +40,8 @@ const schedules = ref([])
 const isLoadingTeachers = ref(true)
 const isLoadingSchedules = ref(false)
 const isSubmitting = ref(false)
+const isAddingSelf = ref(false)
+const selfAssignError = ref('')
 const selectedTeacherFilter = ref('')
 
 const inviteForm = ref({first_name: '', last_name: '', email: ''})
@@ -48,6 +57,10 @@ const schoolId = computed(() => {
   if (process.client) return parseInt(localStorage.getItem('current_school_id') || '0', 10)
   return 0
 })
+
+const isCurrentUserTeacher = computed(() =>
+    !!user.value && teachers.value.some(teacher => teacher.id === user.value.id)
+)
 
 const fetchTeachers = async () => {
   try {
@@ -109,6 +122,40 @@ const handleInvite = async () => {
     inviteError.value = err.response?.data?.message || 'Erreur lors de l\'invitation'
   } finally {
     isSubmitting.value = false
+  }
+}
+
+const handleAddSelfAsTeacher = async () => {
+  if (!user.value || !schoolId.value || isCurrentUserTeacher.value) return
+
+  selfAssignError.value = ''
+  isAddingSelf.value = true
+
+  try {
+    await staffService.createStaffUser({
+      first_name: user.value.first_name,
+      last_name: user.value.last_name,
+      email: user.value.email,
+      role: 'teacher',
+      school_id: schoolId.value
+    })
+
+    const rolesResponse = await userService.getUserRoles(user.value.id)
+    const currentRoles = getSchoolRoles(rolesResponse.roles?.schools || [], schoolId.value)
+    writeCurrentSchoolRoles(currentRoles)
+    window.dispatchEvent(new CustomEvent(SCHOOL_ROLES_UPDATED_EVENT, {
+      detail: {schoolId: schoolId.value, roles: currentRoles}
+    }))
+
+    await fetchTeachers()
+    setFlashMessage({
+      type: 'success',
+      message: 'Vous avez maintenant accès aux fonctionnalités professeur.'
+    })
+  } catch (err) {
+    selfAssignError.value = err.response?.data?.message || 'Erreur lors de l’ajout du rôle professeur'
+  } finally {
+    isAddingSelf.value = false
   }
 }
 
@@ -222,6 +269,25 @@ onMounted(() => {
 
     <section v-if="activeTab === 'list'">
       <div v-if="!isReadOnly" class="bg-white rounded-lg border border-gray-200 p-5 mb-5">
+        <div
+            v-if="!isLoadingTeachers && user && !isCurrentUserTeacher"
+            class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg bg-blue-50 border border-blue-200 p-3 mb-5"
+        >
+          <div>
+            <h2 class="text-sm font-semibold text-blue-900">Vous enseignez également dans cette école ?</h2>
+            <p class="text-xs text-blue-700 mt-0.5">Ajoutez le rôle professeur à votre compte sans ressaisir vos informations.</p>
+            <p v-if="selfAssignError" class="text-xs text-red-600 mt-1">{{ selfAssignError }}</p>
+          </div>
+          <button
+              type="button"
+              :disabled="isAddingSelf"
+              class="shrink-0 px-3 py-1.5 text-sm bg-default text-white rounded-md hover:opacity-90 disabled:opacity-50"
+              @click="handleAddSelfAsTeacher"
+          >
+            {{ isAddingSelf ? 'Ajout…' : 'M’ajouter comme professeur' }}
+          </button>
+        </div>
+
         <h2 class="text-base font-semibold mb-1.5">Inviter un professeur</h2>
         <p class="text-xs text-gray-600 mb-3">
           Un email d'invitation sera envoyé pour définir un mot de passe.
@@ -283,7 +349,7 @@ onMounted(() => {
                   <Edit class="size-4"/>
                 </button>
                 <button
-                    v-if="!isReadOnly"
+                    v-if="!isReadOnly && t.id !== user?.id"
                     type="button"
                     @click="openRemoveModal(t)"
                     class="text-red-500 hover:text-red-700 transition-colors"
