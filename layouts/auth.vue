@@ -14,6 +14,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from '#imports';
 import userService from '~/services/user';
 import schoolService from '~/services/school';
+import invitationsService from '~/services/invitations';
 import { useSchoolYear } from '~/composables/useSchoolYear';
 import { useAuth } from '~/composables/useAuth';
 import {
@@ -38,6 +39,46 @@ const selectedSchool = ref(null);
 const showAccountMenu = ref(false);
 const accountMenuRef = ref(null);
 const isSidebarCollapsed = ref(false);
+
+// Invitations d'écoles en attente d'acceptation explicite par l'utilisateur.
+const pendingInvitations = ref([]);
+const invitationProcessing = ref(null);
+
+const loadInvitations = async () => {
+  try {
+    pendingInvitations.value = await invitationsService.getMine() || [];
+  } catch (e) {
+    pendingInvitations.value = [];
+  }
+};
+
+const acceptInvitation = async (invitation) => {
+  if (invitationProcessing.value) return;
+  invitationProcessing.value = invitation.school_id;
+  try {
+    await invitationsService.accept(invitation.school_id);
+    pendingInvitations.value = pendingInvitations.value.filter(i => i.school_id !== invitation.school_id);
+    await loadUserSchools();
+  } catch (e) {
+    console.error('Erreur lors de l\'acceptation de l\'invitation:', e);
+  } finally {
+    invitationProcessing.value = null;
+  }
+};
+
+const declineInvitation = async (invitation) => {
+  if (invitationProcessing.value) return;
+  invitationProcessing.value = invitation.school_id;
+  try {
+    await invitationsService.decline(invitation.school_id);
+    pendingInvitations.value = pendingInvitations.value.filter(i => i.school_id !== invitation.school_id);
+    await loadUserSchools();
+  } catch (e) {
+    console.error('Erreur lors du refus de l\'invitation:', e);
+  } finally {
+    invitationProcessing.value = null;
+  }
+};
 
 const initials = computed(() => {
   if (!user.value) return 'NA';
@@ -196,6 +237,7 @@ onMounted(async () => {
       try {
         user.value = JSON.parse(userJson);
         await loadUserSchools();
+        await loadInvitations();
       } catch (e) {
         console.error('Erreur lors de la récupération des données utilisateur', e);
       }
@@ -423,6 +465,37 @@ onUnmounted(() => {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
         <span>Vous consultez l'année <strong>{{ currentYear?.label }}</strong> en lecture seule. Toute modification est désactivée.</span>
+      </div>
+
+      <div
+          v-for="invitation in pendingInvitations"
+          :key="invitation.school_id"
+          class="bg-blue-50 border-y border-blue-200 text-blue-900 text-xs px-5 py-2 flex flex-wrap items-center gap-x-3 gap-y-2"
+      >
+        <svg class="w-4 h-4 flex-shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+        </svg>
+        <span class="flex-1 min-w-0">
+          L'établissement <strong>{{ invitation.school_name }}</strong> vous invite à le rejoindre<template v-if="invitation.roles && invitation.roles.length"> en tant que <strong>{{ invitation.roles.join(' · ') }}</strong></template>.
+        </span>
+        <div class="flex items-center gap-x-2 flex-shrink-0">
+          <button
+              type="button"
+              :disabled="invitationProcessing === invitation.school_id"
+              class="px-3 py-1 rounded-md bg-primary text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
+              @click="acceptInvitation(invitation)"
+          >
+            Accepter
+          </button>
+          <button
+              type="button"
+              :disabled="invitationProcessing === invitation.school_id"
+              class="px-3 py-1 rounded-md bg-white text-blue-900 ring-1 ring-blue-200 font-semibold hover:bg-blue-100 transition-colors disabled:opacity-60"
+              @click="declineInvitation(invitation)"
+          >
+            Refuser
+          </button>
+        </div>
       </div>
 
       <div class="flex-1 overflow-auto overscroll-contain">

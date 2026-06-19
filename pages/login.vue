@@ -2,7 +2,7 @@
 import AuthGuard from '~/components/auth/AuthGuard.vue'
 import Logo from "~/components/Icons/Logo.vue"
 import InputText from "~/components/form/InputText.vue"
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { useRouter, useRoute } from '#imports'
 import authService from '~/services/auth'
@@ -35,36 +35,6 @@ const { login, error: authError, isLoading } = useAuth()
 const router = useRouter()
 const route = useRoute()
 
-// Invitation à rejoindre une école pour un utilisateur déjà existant : le lien
-// reçu par email mène ici. L'acceptation se fait au moment de la connexion.
-const invitationToken = ref(route.query.invitation_token || '')
-const invitationSchool = ref('')
-
-onMounted(async () => {
-  const email = route.query.email
-  if (email) {
-    form.value.email = String(email)
-  }
-
-  if (!invitationToken.value || !email) return
-
-  try {
-    const data = await authService.checkInvitationToken({
-      token: invitationToken.value,
-      email: String(email)
-    })
-    if (data?.mode === 'accept') {
-      invitationSchool.value = data.school_name || ''
-    } else {
-      // Token d'activation (nouveau compte) : pas une acceptation par connexion.
-      invitationToken.value = ''
-    }
-  } catch (error) {
-    // Token invalide/expiré : on retombe sur un login classique.
-    invitationToken.value = ''
-  }
-})
-
 const handleSubmit = async () => {
   formError.value = ''
   isSubmitting.value = true
@@ -80,19 +50,6 @@ const handleSubmit = async () => {
       email: form.value.email,
       password: form.value.password
     })
-
-    if (invitationToken.value) {
-      try {
-        const accepted = await authService.acceptInvitation(invitationToken.value)
-        const { setFlashMessage } = useFlashMessage()
-        setFlashMessage({
-          type: 'success',
-          message: accepted?.message || 'Invitation acceptée.'
-        })
-      } catch (error) {
-        console.error('Erreur lors de l\'acceptation de l\'invitation:', error)
-      }
-    }
 
     if (process.client) {
       localStorage.removeItem('current_school_id')
@@ -184,18 +141,6 @@ const handleSubmit = async () => {
 
           <h2 class="font-montserrat font-extrabold text-3xl text-default tracking-tight">Connexion</h2>
           <p class="text-base text-placeholder mt-2 mb-10">Accédez à l'espace de votre établissement.</p>
-
-          <div
-              v-if="invitationToken"
-              class="bg-blue-50 text-blue-800 ring-1 ring-blue-200 px-3.5 py-2.5 rounded-lg text-sm mb-6"
-          >
-            <template v-if="invitationSchool">
-              Connectez-vous pour rejoindre <strong>{{ invitationSchool }}</strong>.
-            </template>
-            <template v-else>
-              Connectez-vous pour accepter votre invitation.
-            </template>
-          </div>
 
           <form @submit.prevent="handleSubmit" class="flex flex-col gap-y-6">
             <div v-if="formError" class="bg-red-50 text-red-700 ring-1 ring-red-200 px-3.5 py-2.5 rounded-lg text-sm">
