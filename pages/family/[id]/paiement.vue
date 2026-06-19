@@ -116,7 +116,11 @@ const filteredEditBanques = computed(() => {
 })
 
 const montantTotal = computed(() => detailsPaiement.value?.montant_total || 0)
+// montant_paye = soldé (encaissé + exonéré), sert au reste à payer / à la progression.
 const montantPaye = computed(() => detailsPaiement.value?.montant_paye || 0)
+// montant_encaisse = trésorerie réellement reçue (hors exonérations).
+const montantEncaisse = computed(() => detailsPaiement.value?.montant_encaisse ?? montantPaye.value)
+const montantExonere = computed(() => detailsPaiement.value?.montant_exonere || 0)
 const resteAPayer = computed(() => detailsPaiement.value?.reste_a_payer || 0)
 
 const pourcentagePaye = computed(() => {
@@ -1022,7 +1026,8 @@ const resetNewForm = () => {
                     ></div>
                 </div>
                 <div class="flex justify-between mt-1.5 text-[11px] text-placeholder">
-                    <span>Encaissé : <span class="font-semibold text-default">{{ Math.round(montantPaye) }}€</span></span>
+                    <span>Encaissé : <span class="font-semibold text-default">{{ Math.round(montantEncaisse) }}€</span></span>
+                    <span v-if="montantExonere > 0">Exonération : <span class="font-semibold text-default">{{ Math.round(montantExonere) }}€</span></span>
                     <span>Reste à payer : <span :class="['font-semibold', resteAPayer <= 0 ? 'text-green-600' : 'text-default']">{{ Math.round(Math.max(0, resteAPayer)) }}€</span></span>
                 </div>
             </div>

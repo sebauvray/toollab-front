@@ -167,13 +167,15 @@
                   <IconCash class="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p class="text-xs font-medium text-gray-600">Montant total payé</p>
+                  <p class="text-xs font-medium text-gray-600">Montant encaissé</p>
                   <p class="text-lg font-bold text-gray-900">{{ formatCurrency(stats.payments?.total_amount || 0) }}</p>
+                  <p class="text-xs text-gray-500 mt-0.5">Exonéré : {{ formatCurrency(stats.payments?.exoneration_amount || 0) }}</p>
                 </div>
               </div>
               <div class="text-right">
-                <p class="text-base font-bold text-green-600">{{ stats.payments?.payment_rate || 0 }}%</p>
-                <p class="text-xs text-gray-600">Taux de recouvrement</p>
+                <p class="text-base font-bold text-green-600">{{ stats.payments?.collection_rate ?? 0 }}%</p>
+                <p class="text-xs text-gray-600">Taux d'encaissement</p>
+                <p class="text-xs text-gray-500 mt-1">Recouvrement : {{ stats.payments?.recovery_rate ?? stats.payments?.payment_rate ?? 0 }}%</p>
               </div>
             </div>
           </div>
