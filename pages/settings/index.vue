@@ -1,14 +1,16 @@
 <script setup>
-import {ref, onMounted, computed} from 'vue'
+import {ref, onMounted, computed, nextTick} from 'vue'
 import {useAuth} from '~/composables/useAuth'
 import PageContainer from '~/components/layout/PageContainer.vue'
 import BreadCrumb from '~/components/navigation/BreadCrumb.vue'
 import InputText from "~/components/form/InputText.vue"
 import InputSelect from "~/components/form/InputSelect.vue"
 import SaveButton from "~/components/form/SaveButton.vue"
+import CancelButton from "~/components/form/CancelButton.vue"
 import {usePageTitle} from "~/composables/usePageTitle.js"
 import UserList from "~/components/settings/UserList.vue"
 import RoleCard from "~/components/settings/RoleCard.vue"
+import ConfirmationModal from "~/components/modals/ConfirmationModal.vue"
 import { STAFF_ROLE_CARDS } from "~/utils/staffRoleCards"
 import userService from '~/services/user'
 import schoolService from '~/services/school'
@@ -78,7 +80,7 @@ const newUserForm = ref({
   first_name: '',
   last_name: '',
   email: '',
-  roles: ['registar']
+  roles: []
 })
 
 const roles = STAFF_ROLE_CARDS
@@ -134,14 +136,6 @@ const checkUserRoles = async () => {
     } else if (isAdminHere) {
       const schoolResponse = await schoolService.getSchool(currentSchoolId);
       school.value = schoolResponse;
-    }
-
-    if (availableRoles.value.length) {
-      const assignableValues = availableRoles.value.map(role => role.value)
-      newUserForm.value.roles = newUserForm.value.roles.filter(role => assignableValues.includes(role))
-      if (!newUserForm.value.roles.length) {
-        newUserForm.value.roles = [availableRoles.value[0].value]
-      }
     }
   } catch (error) {
     console.error('Erreur lors de la vérification du rôle:', error);
@@ -339,7 +333,7 @@ const handleCreateUser = async () => {
       first_name: '',
       last_name: '',
       email: '',
-      roles: availableRoles.value.length ? [availableRoles.value[0].value] : ['registar']
+      roles: []
     }
 
   } catch (error) {
@@ -348,6 +342,103 @@ const handleCreateUser = async () => {
       type: 'error',
       text: getErrorMessage(error, 'Une erreur est survenue lors de la création de l\'utilisateur')
     }
+  }
+}
+
+// ---- Gestion des rôles d'un utilisateur existant (dans le même panneau) ----
+const managingUser = ref(null)
+const managePanel = ref(null)
+const showRemoveFromSchoolModal = ref(false)
+
+const manageMode = computed(() => !!managingUser.value)
+const isManagingSelf = computed(() =>
+    manageMode.value && managingUser.value.user.id === user.value?.id)
+const panelTitle = computed(() => manageMode.value
+    ? `Gérer les rôles de ${managingUser.value.user.first_name} ${managingUser.value.user.last_name}`
+    : 'Ajouter un utilisateur')
+
+// On ne peut pas retirer ses propres rôles : les cartes correspondantes sont verrouillées.
+const isRoleLockedForManage = (roleValue) =>
+    isManagingSelf.value && (managingUser.value?.roles || []).includes(roleValue)
+
+const resetNewUserForm = () => {
+  newUserForm.value = {
+    first_name: '',
+    last_name: '',
+    email: '',
+    roles: availableRoles.value.length ? [availableRoles.value[0].value] : ['registar']
+  }
+}
+
+const handleManage = (entry) => {
+  message.value = {type: '', text: ''}
+  managingUser.value = entry
+  const assignableValues = availableRoles.value.map(role => role.value)
+  newUserForm.value = {
+    first_name: entry.user.first_name || '',
+    last_name: entry.user.last_name || '',
+    email: entry.user.email || '',
+    roles: entry.roles.filter(role => assignableValues.includes(role))
+  }
+  nextTick(() => managePanel.value?.scrollIntoView({behavior: 'smooth', block: 'start'}))
+}
+
+const cancelManage = () => {
+  managingUser.value = null
+  resetNewUserForm()
+  message.value = {type: '', text: ''}
+}
+
+const handleUpdateRoles = async () => {
+  if (!managingUser.value) return
+  try {
+    message.value = {type: '', text: ''}
+    const userId = managingUser.value.user.id
+    const assignableValues = availableRoles.value.map(role => role.value)
+    const original = managingUser.value.roles.filter(role => assignableValues.includes(role))
+    const selected = newUserForm.value.roles.filter(role => assignableValues.includes(role))
+
+    const toAdd = selected.filter(role => !original.includes(role))
+    // On ne retire jamais ses propres rôles.
+    const toRemove = isManagingSelf.value ? [] : original.filter(role => !selected.includes(role))
+
+    if (!toAdd.length && !toRemove.length) {
+      message.value = {type: 'error', text: 'Aucune modification à enregistrer'}
+      return
+    }
+
+    for (const role of toAdd) {
+      await staffService.addUserRole({user_id: userId, school_id: school.value.id, role})
+    }
+    for (const role of toRemove) {
+      await staffService.removeUserRole({user_id: userId, school_id: school.value.id, role_name: role})
+    }
+
+    setFlashMessage({type: 'success', message: 'Les rôles ont été mis à jour.'})
+    if (userListRef.value) userListRef.value.refreshUsers()
+    await checkUserRoles()
+    cancelManage()
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour des rôles:', error)
+    message.value = {type: 'error', text: getErrorMessage(error, 'Une erreur est survenue lors de la mise à jour des rôles')}
+  }
+}
+
+const handlePrimaryAction = () => manageMode.value ? handleUpdateRoles() : handleCreateUser()
+
+const removeFromSchool = async () => {
+  if (!managingUser.value) return
+  try {
+    await staffService.removeUserFromSchool({user_id: managingUser.value.user.id, school_id: school.value.id})
+    setFlashMessage({type: 'success', message: 'L\'utilisateur a été retiré de l\'établissement'})
+    if (userListRef.value) userListRef.value.refreshUsers()
+    await checkUserRoles()
+    cancelManage()
+  } catch (error) {
+    console.error('Erreur lors du retrait de l\'utilisateur:', error)
+    message.value = {type: 'error', text: getErrorMessage(error, 'Une erreur est survenue lors du retrait de l\'utilisateur')}
+  } finally {
+    showRemoveFromSchoolModal.value = false
   }
 }
 
@@ -469,29 +560,47 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div v-if="activeTab === 'users' && canManageUsers && school" class="space-y-5">
+      <div v-if="activeTab === 'users' && canManageUsers && school">
+        <div class="mb-5">
+          <h2 class="text-sm font-semibold text-default font-montserrat mb-3">Rôles disponibles dans l'établissement</h2>
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <RoleCard
+                v-for="role in availableRoles"
+                :key="`legend-${role.value}`"
+                :role="role"
+                indicator="none"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
         <div>
           <h2 class="text-sm font-semibold text-default font-montserrat mb-3">Liste des membres du personnel</h2>
           <UserList
               :school-id="school.id"
-              :assignable-roles="availableRoles.map(role => role.value)"
-              :current-user-id="user?.id"
+              :selected-user-id="managingUser?.user.id"
               ref="userListRef"
-              @update="checkUserRoles"
+              @manage="handleManage"
           />
         </div>
 
-        <div class="bg-white rounded-2xl border p-5">
-          <h2 class="text-sm font-semibold text-default font-montserrat mb-1.5">Ajouter un utilisateur</h2>
-          <p class="text-xs text-placeholder mb-5 max-w-3xl">
-            Ajoutez un membre du personnel à votre établissement.
-            Un email d'invitation sera envoyé à l'utilisateur pour définir son mot de passe.
+        <div>
+          <h2 class="text-sm font-semibold text-default font-montserrat mb-1.5">{{ panelTitle }}</h2>
+          <p class="text-xs text-placeholder mb-3 max-w-3xl">
+            <template v-if="manageMode">
+              Activez ou désactivez les rôles de cet utilisateur, puis validez.
+            </template>
+            <template v-else>
+              Ajoutez un membre du personnel à votre établissement.
+              Un email d'invitation sera envoyé à l'utilisateur pour définir son mot de passe.
+            </template>
           </p>
 
+          <div ref="managePanel" class="bg-white rounded-2xl border p-5" :class="manageMode ? 'ring-1 ring-blue-200 border-transparent' : ''">
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <InputText v-model="newUserForm.last_name" placeholder="Nom" required />
-            <InputText v-model="newUserForm.first_name" placeholder="Prénom" required />
-            <InputText v-model="newUserForm.email" placeholder="Email" type="email" required />
+            <InputText v-model="newUserForm.last_name" placeholder="Nom" :disabled="manageMode" required />
+            <InputText v-model="newUserForm.first_name" placeholder="Prénom" :disabled="manageMode" required />
+            <InputText v-model="newUserForm.email" placeholder="Email" type="email" :disabled="manageMode" required />
           </div>
 
           <div class="mt-6">
@@ -503,15 +612,41 @@ onMounted(async () => {
                   :role="role"
                   :selected="newUserForm.roles.includes(role.value)"
                   indicator="check"
+                  compact
+                  :disabled="isRoleLockedForManage(role.value)"
                   @select="toggleNewUserRole(role.value)"
               />
             </div>
           </div>
 
-          <div class="flex justify-end mt-5">
-            <SaveButton @click="handleCreateUser">Ajouter l'utilisateur</SaveButton>
+          <div class="flex items-center mt-5" :class="(manageMode && !isManagingSelf) ? 'justify-between' : 'justify-end'">
+            <button
+                v-if="manageMode && !isManagingSelf"
+                type="button"
+                @click="showRemoveFromSchoolModal = true"
+                class="px-3 py-1.5 text-xs rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+            >
+              Retirer de l'établissement
+            </button>
+            <div class="flex items-center gap-x-1.5">
+              <CancelButton v-if="manageMode" @click="cancelManage">Annuler</CancelButton>
+              <SaveButton @click="handlePrimaryAction">
+                {{ manageMode ? 'Valider' : 'Ajouter l\'utilisateur' }}
+              </SaveButton>
+            </div>
+          </div>
           </div>
         </div>
+        </div>
+
+        <ConfirmationModal
+            :is-open="showRemoveFromSchoolModal"
+            title="Retirer de l'établissement"
+            message="Retirer cet utilisateur de l'établissement ? Il perdra tous ses rôles ici, mais son compte ne sera pas supprimé."
+            confirm-button-text="Retirer"
+            @confirm="removeFromSchool"
+            @cancel="showRemoveFromSchoolModal = false"
+        />
       </div>
     </div>
   </PageContainer>

@@ -14,6 +14,10 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  disabled: {
+    type: Boolean,
+    default: false
+  },
   error: {
     type: String,
     default: ''
@@ -43,6 +47,7 @@ watch(() => modelValue.value, (newVal) => {
         @blur="isFocused = false; isFloating = !!modelValue"
         :type="type"
         :required="required"
+        :disabled="disabled"
         class="w-full px-2 py-1.5 text-sm border border-input-stroke placeholder:text-placeholder rounded-lg transition-colors duration-200 focus:ring-0 focus:outline-none focus:border-default disabled:bg-gray-100 disabled:cursor-not-allowed"
         :class="[error ? 'border-red-500' : '']"
     />
