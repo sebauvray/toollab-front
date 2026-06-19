@@ -116,11 +116,6 @@ const hasAdminAccess = computed(() => isSuperAdmin.value || hasAnyRole(currentRo
 const hasTeachingAccess = computed(() => hasAnyRole(currentRoles.value, ['teacher']));
 const hasGeneralAccess = computed(() => isSuperAdmin.value || !isTeacherOnly(currentRoles.value));
 
-const currentRole = computed(() => {
-  if (isSuperAdmin.value) return 'Super-admin';
-  return currentRoles.value.map(role => role.label).join(' · ');
-});
-
 const loadUserSchools = async () => {
   try {
     const [allSchools, rolesResponse] = await Promise.all([
@@ -303,89 +298,91 @@ onUnmounted(() => {
 
           <div
               v-if="showAccountMenu"
-              class="absolute bottom-full mb-1 bg-white border rounded-lg shadow-lg z-50 overflow-hidden"
-              :class="isSidebarCollapsed ? 'left-full ml-1.5 bottom-0 mb-0 w-64' : 'left-0 right-0'"
+              class="absolute bottom-full mb-2 w-72 max-w-[calc(100vw-1.5rem)] bg-white border border-[#E6EFF5] rounded-xl shadow-xl z-50 overflow-hidden"
+              :class="isSidebarCollapsed ? 'left-full bottom-0 mb-0 ml-2' : 'left-0'"
           >
-            <div class="flex items-center gap-x-1.5 px-2 py-2 border-b">
-              <div class="w-9 h-9 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
-                <span class="text-white text-xs font-semibold">{{ initials }}</span>
+            <!-- Profil -->
+            <div class="flex items-center gap-x-3 px-4 py-3.5 border-b border-[#E6EFF5]">
+              <div class="w-10 h-10 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
+                <span class="text-white text-sm font-semibold font-montserrat">{{ initials }}</span>
               </div>
               <div class="flex-1 min-w-0 text-left">
-                <div class="text-sm text-gray-800 truncate">{{ user.first_name }} {{ user.last_name }}</div>
-                <div class="text-xs text-gray-500 truncate">
-                  <span v-if="currentRole">{{ currentRole }}</span>
-                  <span v-if="currentRole && user.email"> · </span>
-                  <span v-if="user.email">{{ user.email }}</span>
-                </div>
+                <div class="text-sm font-semibold text-default font-montserrat truncate">{{ user.first_name }} {{ user.last_name }}</div>
+                <div v-if="user.email" class="text-xs text-placeholder truncate">{{ user.email }}</div>
               </div>
             </div>
 
-            <div v-if="schools.length > 1 || isSuperAdmin" class="max-h-64 overflow-y-auto border-b">
-              <button
-                  v-if="isSuperAdmin"
-                  @click="goToAdmin"
-                  class="w-full flex items-center gap-x-1.5 px-2 py-1.5 hover:bg-purple-50 transition-colors"
-              >
-                <div class="w-9 h-9 flex items-center justify-center rounded-full bg-purple-600 flex-shrink-0">
-                  <span class="text-white text-xs">🛡</span>
-                </div>
-                <div class="flex-1 min-w-0 text-left">
-                  <div class="text-xs font-bold text-purple-900 truncate">Administration Toollab</div>
-                  <div class="text-xs text-purple-700 truncate">Mode plateforme</div>
-                </div>
-              </button>
-              <button
-                  v-for="school in schools"
-                  :key="school.id"
-                  @click="selectSchool(school)"
-                  class="w-full flex items-center gap-x-1.5 px-2 py-1.5 hover:bg-gray-100 transition-colors"
-                  :class="{ 'bg-gray-50': selectedSchool?.id === school.id }"
-              >
-                <div v-if="school.logo" class="w-9 h-9 flex-shrink-0">
-                  <img
-                    :src="`${useRuntimeConfig().public.apiUrl}/storage/${school.logo}`"
-                    alt="Logo"
-                    class="w-full h-full object-contain rounded-full"
-                  />
-                </div>
-                <div v-else class="w-9 h-9 flex items-center justify-center rounded-full bg-primary flex-shrink-0">
-                  <span class="text-white text-xs font-semibold">{{
-                      school.name.charAt(0).toUpperCase()
-                    }}</span>
-                </div>
-                <div class="flex-1 min-w-0 text-left">
-                  <div class="text-sm text-gray-800 truncate">{{ school.name }}</div>
-                  <div class="text-xs truncate text-gray-500">
-                    {{ school.roles.length ? school.roles.map(role => role.label).join(' · ') : (isSuperAdmin ? 'Super-admin' : '—') }}
-                  </div>
-                </div>
-                <svg
-                    v-if="selectedSchool?.id === school.id"
-                    class="w-3.5 h-3.5 text-primary flex-shrink-0"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
+            <!-- Établissements -->
+            <div v-if="schools.length > 1 || isSuperAdmin" class="py-2 max-h-72 overflow-y-auto border-b border-[#E6EFF5]">
+              <p class="px-4 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-placeholder">Établissements</p>
+              <div class="px-1.5 space-y-0.5">
+                <button
+                    v-if="isSuperAdmin"
+                    @click="goToAdmin"
+                    class="w-full flex items-center gap-x-2.5 px-2.5 py-2 rounded-lg hover:bg-purple-50 transition-colors"
                 >
-                  <path fill-rule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clip-rule="evenodd" />
-                </svg>
-              </button>
+                  <div class="w-9 h-9 flex items-center justify-center rounded-lg bg-purple-600 flex-shrink-0">
+                    <span class="text-white text-sm">🛡</span>
+                  </div>
+                  <div class="flex-1 min-w-0 text-left">
+                    <div class="text-sm font-medium text-purple-900 truncate">Administration Toollab</div>
+                    <div class="text-xs text-purple-600 truncate">Mode plateforme</div>
+                  </div>
+                </button>
+                <button
+                    v-for="school in schools"
+                    :key="school.id"
+                    @click="selectSchool(school)"
+                    class="w-full flex items-center gap-x-2.5 px-2.5 py-2 rounded-lg transition-colors"
+                    :class="selectedSchool?.id === school.id ? 'bg-primary/5' : 'hover:bg-gray-blue'"
+                >
+                  <div v-if="school.logo" class="w-9 h-9 flex-shrink-0">
+                    <img
+                      :src="`${useRuntimeConfig().public.apiUrl}/storage/${school.logo}`"
+                      alt="Logo"
+                      class="w-full h-full object-contain rounded-lg"
+                    />
+                  </div>
+                  <div v-else class="w-9 h-9 flex items-center justify-center rounded-lg bg-primary flex-shrink-0">
+                    <span class="text-white text-sm font-semibold">{{
+                        school.name.charAt(0).toUpperCase()
+                      }}</span>
+                  </div>
+                  <div class="flex-1 min-w-0 text-left">
+                    <div class="text-sm font-medium text-default truncate">{{ school.name }}</div>
+                    <div class="text-xs truncate text-placeholder">
+                      {{ school.roles.length ? school.roles.map(role => role.label).join(' · ') : (isSuperAdmin ? 'Super-admin' : '—') }}
+                    </div>
+                  </div>
+                  <svg
+                      v-if="selectedSchool?.id === school.id"
+                      class="w-4 h-4 text-primary flex-shrink-0"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                  >
+                    <path fill-rule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
-            <div class="py-1">
+            <!-- Actions -->
+            <div class="p-1.5">
               <NuxtLink
                   to="/settings"
                   @click="showAccountMenu = false"
-                  class="flex items-center gap-x-1.5 px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors"
+                  class="flex items-center gap-x-2.5 px-2.5 py-2 rounded-lg text-sm text-default hover:bg-gray-blue transition-colors"
               >
-                <Setting class="size-4 text-gray-500" />
+                <Setting class="size-[18px] text-placeholder" />
                 <span>Paramètres</span>
               </NuxtLink>
               <button
                   @click="handleLogout"
-                  class="w-full flex items-center gap-x-1.5 px-2 py-1.5 text-xs text-red-600 hover:bg-gray-100 transition-colors"
+                  class="w-full flex items-center gap-x-2.5 px-2.5 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors"
               >
-                <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="size-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                 </svg>
                 <span>Déconnexion</span>
