@@ -80,6 +80,17 @@ export default {
         }
     },
 
+    async acceptInvitation(token) {
+        try {
+            const axios = useApi()
+            const response = await axios.post('/api/accept-invitation', { token })
+            return response.data
+        } catch (error) {
+            console.error('Erreur lors de l\'acceptation de l\'invitation:', error)
+            throw error
+        }
+    },
+
     async setPassword(passwordData) {
         try {
             const axios = useApi()
