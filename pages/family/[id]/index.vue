@@ -564,7 +564,8 @@ definePageMeta({
                                 ></div>
                             </div>
                             <div class="flex justify-between mt-1.5 text-[11px] text-placeholder">
-                                <span>Encaissé : <span class="font-semibold text-default">{{ Math.round(detailsPaiement.montant_paye) }}€</span></span>
+                                <span>Encaissé : <span class="font-semibold text-default">{{ Math.round(detailsPaiement.montant_encaisse ?? detailsPaiement.montant_paye) }}€</span></span>
+                                <span v-if="(detailsPaiement.montant_exonere || 0) > 0">Exonération : <span class="font-semibold text-default">{{ Math.round(detailsPaiement.montant_exonere) }}€</span></span>
                                 <span>Reste à payer : <span :class="['font-semibold', detailsPaiement.reste_a_payer <= 0 ? 'text-green-600' : 'text-default']">{{ Math.round(Math.max(0, detailsPaiement.reste_a_payer)) }}€</span></span>
                             </div>
                         </div>
