@@ -40,6 +40,12 @@ const roleDot = {
   teacher: 'bg-amber-500'
 }
 
+const isPendingInvitation = (user) => !user?.first_name || !user?.last_name
+const displayName = (user) => {
+  if (isPendingInvitation(user)) return 'Invitation en attente'
+  return `${user.first_name} ${user.last_name}`
+}
+
 const fetchUsers = async () => {
   try {
     isLoading.value = true
@@ -111,7 +117,15 @@ defineExpose({
               :class="['cursor-pointer transition-colors', selectedUserId === user.user.id ? 'bg-blue-50/60' : 'hover:bg-gray-50']"
           >
             <td class="px-4 py-2.5 font-medium text-gray-900 whitespace-nowrap">
-              {{ user.user.first_name }} {{ user.user.last_name }}
+              <div class="flex items-center gap-2">
+                <span>{{ displayName(user.user) }}</span>
+                <span
+                    v-if="isPendingInvitation(user.user)"
+                    class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium ring-1 bg-gray-50 text-gray-600 ring-gray-200"
+                >
+                  Compte non activé
+                </span>
+              </div>
             </td>
             <td class="px-4 py-2.5 text-gray-600">
               {{ user.user.email }}
