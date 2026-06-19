@@ -274,8 +274,8 @@ const handleCreateUser = async () => {
   try {
     message.value = {type: '', text: ''}
 
-    if (!newUserForm.value.first_name || !newUserForm.value.last_name || !newUserForm.value.email) {
-      message.value = {type: 'error', text: 'Tous les champs sont obligatoires'}
+    if (!newUserForm.value.email) {
+      message.value = {type: 'error', text: 'L\'email est obligatoire'}
       return
     }
 
@@ -582,14 +582,14 @@ onMounted(async () => {
             </template>
             <template v-else>
               Ajoutez un membre du personnel à votre établissement.
-              Un email d'invitation sera envoyé à l'utilisateur pour définir son mot de passe.
+              Un email d'invitation sera envoyé à l'utilisateur pour compléter son profil et définir son mot de passe.
             </template>
           </p>
 
           <div ref="managePanel" class="bg-white rounded-2xl border p-5" :class="manageMode ? 'ring-1 ring-blue-200 border-transparent' : ''">
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <InputText v-model="newUserForm.last_name" placeholder="Nom" :disabled="manageMode" required />
-            <InputText v-model="newUserForm.first_name" placeholder="Prénom" :disabled="manageMode" required />
+          <div class="grid grid-cols-1 gap-4" :class="manageMode ? 'md:grid-cols-3' : 'md:grid-cols-1'">
+            <InputText v-if="manageMode" v-model="newUserForm.last_name" placeholder="Nom" disabled required />
+            <InputText v-if="manageMode" v-model="newUserForm.first_name" placeholder="Prénom" disabled required />
             <InputText v-model="newUserForm.email" placeholder="Email" type="email" :disabled="manageMode" required />
           </div>
 

@@ -20,6 +20,8 @@ const route = useRoute()
 const router = useRouter()
 
 const form = ref({
+  first_name: '',
+  last_name: '',
   password: '',
   password_confirmation: ''
 })
@@ -31,6 +33,7 @@ const isSubmitting = ref(false)
 const message = ref({ type: '', text: '' })
 const passwordsMatch = computed(() => form.value.password === form.value.password_confirmation)
 const isTokenValid = ref(true)
+const requiresProfile = ref(false)
 
 onMounted(async () => {
   if (!token.value || !email.value) {
@@ -57,6 +60,10 @@ onMounted(async () => {
     if (!response.ok) {
       message.value = { type: 'error', text: data.message || 'Lien d\'invitation invalide ou expiré' }
       isTokenValid.value = false
+    } else {
+      requiresProfile.value = !!data.user?.requires_profile
+      form.value.first_name = data.user?.first_name || ''
+      form.value.last_name = data.user?.last_name || ''
     }
   } catch (error) {
     console.error('Erreur de vérification du token:', error)
@@ -66,6 +73,11 @@ onMounted(async () => {
 })
 
 const handleSubmit = async () => {
+  if (requiresProfile.value && (!form.value.first_name || !form.value.last_name)) {
+    message.value = { type: 'error', text: 'Veuillez renseigner votre prénom et votre nom' }
+    return
+  }
+
   if (!form.value.password || !form.value.password_confirmation) {
     message.value = { type: 'error', text: 'Veuillez remplir tous les champs' }
     return
@@ -94,6 +106,8 @@ const handleSubmit = async () => {
       body: JSON.stringify({
         token: token.value,
         email: email.value,
+        first_name: form.value.first_name,
+        last_name: form.value.last_name,
         password: form.value.password,
         password_confirmation: form.value.password_confirmation
       })
@@ -160,7 +174,7 @@ const handleSubmit = async () => {
         </div>
 
         <h2 class="font-montserrat font-extrabold text-3xl text-default tracking-tight">Activez votre compte</h2>
-        <p class="text-base text-placeholder mt-2 mb-10">Vous avez été invité sur Toollab. Choisissez un mot de passe pour accéder à votre espace.</p>
+        <p class="text-base text-placeholder mt-2 mb-10">Vous avez été invité sur Toollab. Complétez votre accès pour rejoindre votre espace.</p>
 
         <div
             v-if="message.text"
@@ -173,6 +187,19 @@ const handleSubmit = async () => {
         </div>
 
         <form v-if="isTokenValid" @submit.prevent="handleSubmit" class="flex flex-col gap-y-6">
+          <template v-if="requiresProfile">
+            <InputText
+                placeholder="Prénom"
+                v-model="form.first_name"
+                required
+            />
+            <InputText
+                placeholder="Nom"
+                v-model="form.last_name"
+                required
+            />
+          </template>
+
           <InputText
               placeholder="Mot de passe"
               type="password"
