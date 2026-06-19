@@ -292,33 +292,16 @@ const handleCreateUser = async () => {
       return
     }
 
-    // L'endpoint de création ne gère qu'un rôle : on crée avec le premier,
-    // puis on ajoute les éventuels rôles supplémentaires sur l'utilisateur créé.
-    const [firstRole, ...otherRoles] = selectedRoles
+    const [firstRole] = selectedRoles
 
     await staffService.createStaffUser({
       first_name: newUserForm.value.first_name,
       last_name: newUserForm.value.last_name,
       email: newUserForm.value.email,
       role: firstRole,
+      roles: selectedRoles,
       school_id: school.value.id
     });
-
-    if (otherRoles.length) {
-      const schoolUsers = await staffService.getSchoolUsers(school.value.id)
-      const createdEmail = newUserForm.value.email.trim().toLowerCase()
-      const createdEntry = schoolUsers.find(item => (item.user.email || '').toLowerCase() === createdEmail)
-
-      if (createdEntry) {
-        for (const role of otherRoles) {
-          await staffService.addUserRole({
-            user_id: createdEntry.user.id,
-            school_id: school.value.id,
-            role
-          })
-        }
-      }
-    }
 
     setFlashMessage({
       type: 'success',
@@ -407,11 +390,18 @@ const handleUpdateRoles = async () => {
       return
     }
 
-    for (const role of toAdd) {
-      await staffService.addUserRole({user_id: userId, school_id: school.value.id, role})
-    }
     for (const role of toRemove) {
       await staffService.removeUserRole({user_id: userId, school_id: school.value.id, role_name: role})
+    }
+    if (toAdd.length) {
+      await staffService.createStaffUser({
+        first_name: managingUser.value.user.first_name,
+        last_name: managingUser.value.user.last_name,
+        email: managingUser.value.user.email,
+        role: toAdd[0],
+        roles: toAdd,
+        school_id: school.value.id
+      })
     }
 
     setFlashMessage({type: 'success', message: 'Les rôles ont été mis à jour.'})
