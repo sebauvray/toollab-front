@@ -336,9 +336,12 @@ const showRemoveFromSchoolModal = ref(false)
 const manageMode = computed(() => !!managingUser.value)
 const isManagingSelf = computed(() =>
     manageMode.value && managingUser.value.user.id === user.value?.id)
-const panelTitle = computed(() => manageMode.value
-    ? `Gérer les rôles de ${managingUser.value.user.first_name} ${managingUser.value.user.last_name}`
-    : 'Ajouter un utilisateur')
+const panelTitle = computed(() => {
+  if (!manageMode.value) return 'Ajouter un utilisateur'
+  const u = managingUser.value.user
+  if (u.pending || !u.first_name || !u.last_name) return 'Invitation en attente'
+  return `Gérer les rôles de ${u.first_name} ${u.last_name}`
+})
 
 // On ne peut pas retirer ses propres rôles : les cartes correspondantes sont verrouillées.
 const isRoleLockedForManage = (roleValue) =>

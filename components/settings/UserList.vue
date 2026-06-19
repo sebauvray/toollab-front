@@ -40,7 +40,9 @@ const roleDot = {
   teacher: 'bg-amber-500'
 }
 
-const isPendingInvitation = (user) => !user?.first_name || !user?.last_name
+// `pending` est fourni par l'API : l'utilisateur n'a pas (encore) accepté de
+// rejoindre cette école, son nom est donc masqué côté back (confidentialité).
+const isPendingInvitation = (user) => user?.pending === true || !user?.first_name || !user?.last_name
 const displayName = (user) => {
   if (isPendingInvitation(user)) return 'Invitation en attente'
   return `${user.first_name} ${user.last_name}`
@@ -123,7 +125,7 @@ defineExpose({
                     v-if="isPendingInvitation(user.user)"
                     class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium ring-1 bg-gray-50 text-gray-600 ring-gray-200"
                 >
-                  Compte non activé
+                  En attente d'acceptation
                 </span>
               </div>
             </td>
