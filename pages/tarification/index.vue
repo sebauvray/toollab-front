@@ -595,6 +595,12 @@ onMounted(() => {
                         </div>
                     </div>
 
+                    <div class="bg-amber-50 rounded-lg border border-amber-200 px-4 py-3">
+                        <p class="text-xs text-amber-900 leading-relaxed">
+                            Les modifications de tarification s'appliquent uniquement aux prochaines inscriptions. Les familles déjà inscrites conservent le tarif enregistré au moment de leur inscription.
+                        </p>
+                    </div>
+
                     <div class="bg-white rounded-lg border border-gray-200 p-4">
                         <div class="flex justify-between items-center mb-3">
                             <h2 class="text-sm font-semibold text-gray-800">Réductions familiales</h2>
@@ -858,5 +864,6 @@ onMounted(() => {
             @confirm="deleteReductionFamiliale"
             @cancel="showDeleteConfirmation = false; deletingReductionId = null"
         />
+
     </PageContainer>
 </template>

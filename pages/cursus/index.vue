@@ -3,8 +3,10 @@ import { ref, onMounted, computed } from "vue"
 import PlusLight from "~/components/Icons/PlusLight.vue"
 import DataTable from "~/components/table/DataTable.vue"
 import AddCursusModal from "~/components/modals/AddCursusModal.vue"
+import UpdateCursusNameModal from "~/components/modals/UpdateCursusNameModal.vue"
 import PageContainer from "~/components/layout/PageContainer.vue"
 import cursusService from '~/services/cursus'
+import Edit from "~/components/Icons/Edit.vue"
 import Trash from "~/components/Icons/Trash.vue"
 import ConfirmationModal from "~/components/modals/ConfirmationModal.vue";
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
@@ -30,6 +32,8 @@ const error = ref(null)
 const cursusList = ref([])
 const showDeleteModal = ref(false)
 const cursusToDelete = ref(null)
+const showEditModal = ref(false)
+const cursusToEdit = ref(null)
 
 const pagination = ref({
   currentPage: 1,
@@ -127,6 +131,46 @@ const handleAddCursus = async (newCursus, deferred = null) => {
   }
 }
 
+const openEditModal = (cursus) => {
+  cursusToEdit.value = cursus
+  showEditModal.value = true
+}
+
+const closeEditModal = () => {
+  showEditModal.value = false
+  cursusToEdit.value = null
+}
+
+const handleUpdateCursus = async (updatedCursus, deferred = null) => {
+  try {
+    isLoading.value = true
+
+    const response = await cursusService.updateCursus(updatedCursus.id, {
+      name: updatedCursus.name
+    })
+
+    if (response.status === 'success') {
+      const { setFlashMessage } = useFlashMessage()
+      setFlashMessage({
+        type: 'success',
+        message: response.message || 'Cursus modifié avec succès'
+      })
+
+      await fetchCursus(pagination.value.currentPage)
+      deferred?.resolve()
+    } else {
+      error.value = response.message || 'Une erreur est survenue lors de la modification du cursus'
+      deferred?.reject(new Error(error.value))
+    }
+  } catch (err) {
+    console.error('Erreur lors de la modification du cursus:', err)
+    error.value = getErrorMessage(err, 'Une erreur est survenue lors de la modification du cursus')
+    deferred?.reject(err)
+  } finally {
+    isLoading.value = false
+  }
+}
+
 const openDeleteModal = (cursus) => {
   cursusToDelete.value = cursus
   showDeleteModal.value = true
@@ -177,6 +221,13 @@ onMounted(() => {
         :is-open="showAddCursusModal"
         @close="showAddCursusModal = false"
         @save="handleAddCursus"
+    />
+
+    <UpdateCursusNameModal
+        :is-open="showEditModal"
+        :cursus="cursusToEdit"
+        @close="closeEditModal"
+        @save="handleUpdateCursus"
     />
 
     <ConfirmationModal
@@ -231,7 +282,14 @@ onMounted(() => {
               {{ item.type }}
             </span>
           </div>
-          <div class="col-span-1 inline-flex items-center justify-center" v-if="!isReadOnly">
+          <div class="col-span-1 inline-flex items-center justify-center gap-x-1" v-if="!isReadOnly">
+            <button
+                @click.stop="openEditModal(item)"
+                class="text-gray-500 hover:text-blue-600 transition-colors"
+                title="Modifier ce cursus"
+            >
+              <Edit class="size-4" />
+            </button>
             <button
                 @click.stop="openDeleteModal(item)"
                 class="text-gray-500 hover:text-red-600 transition-colors"
