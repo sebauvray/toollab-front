@@ -81,8 +81,30 @@ export const isTeacherOnly = (roles) => {
 export const writeCurrentSchoolRoles = (roles, storage) => {
     const target = getStorage(storage)
     if (!target) return
-    target.setItem('current_school_roles', JSON.stringify(roleSlugs(roles)))
+    const slugs = roleSlugs(roles)
+    target.setItem('current_school_roles', JSON.stringify(slugs))
     target.removeItem('current_school_role')
+
+    // Garantit un rôle actif valide : on conserve l'actif courant s'il fait
+    // toujours partie des rôles disponibles, sinon on retombe sur le premier.
+    const currentActive = target.getItem('current_school_active_role')
+    if (!currentActive || !slugs.includes(currentActive)) {
+        if (slugs.length) {
+            target.setItem('current_school_active_role', slugs[0])
+        } else {
+            target.removeItem('current_school_active_role')
+        }
+    }
+}
+
+export const setActiveSchoolRole = (slug, storage) => {
+    const target = getStorage(storage)
+    if (!target) return
+    if (!slug) {
+        target.removeItem('current_school_active_role')
+        return
+    }
+    target.setItem('current_school_active_role', String(slug).toLowerCase())
 }
 
 export const readCurrentSchoolRoles = (storage) => {
@@ -105,9 +127,29 @@ export const readCurrentSchoolRoles = (storage) => {
     return slug ? [slug] : []
 }
 
+// Rôle actif unique, validé contre la liste des rôles disponibles.
+// Fallback sur le premier rôle disponible, '' si aucun.
+export const readActiveSchoolRole = (storage) => {
+    const available = readCurrentSchoolRoles(storage)
+    if (!available.length) return ''
+
+    const target = getStorage(storage)
+    const active = target ? target.getItem('current_school_active_role') : null
+    if (active && available.includes(active)) return active
+    return available[0]
+}
+
+// Rôle actif sous forme de tableau (0 ou 1 élément), à utiliser par les
+// contrôles de permission (hasAnyRole / isTeacherOnly).
+export const readActiveSchoolRoles = (storage) => {
+    const active = readActiveSchoolRole(storage)
+    return active ? [active] : []
+}
+
 export const clearCurrentSchoolRoles = (storage) => {
     const target = getStorage(storage)
     if (!target) return
     target.removeItem('current_school_roles')
     target.removeItem('current_school_role')
+    target.removeItem('current_school_active_role')
 }

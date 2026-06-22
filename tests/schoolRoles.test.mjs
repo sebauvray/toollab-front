@@ -5,7 +5,10 @@ import {
     getSchoolRoles,
     groupSchoolRoles,
     isTeacherOnly,
+    readActiveSchoolRole,
+    readActiveSchoolRoles,
     readCurrentSchoolRoles,
+    setActiveSchoolRole,
     writeCurrentSchoolRoles
 } from '../utils/schoolRoles.js'
 
@@ -56,4 +59,46 @@ test('reads the legacy single-role cache during transition', () => {
     storage.setItem('current_school_role', 'Professeur')
 
     assert.deepEqual(readCurrentSchoolRoles(storage), ['teacher'])
+})
+
+test('defaults the active role to the highest priority available role', () => {
+    const storage = memoryStorage()
+
+    writeCurrentSchoolRoles(['teacher', 'director'], storage)
+    assert.equal(readActiveSchoolRole(storage), 'director')
+    assert.deepEqual(readActiveSchoolRoles(storage), ['director'])
+})
+
+test('keeps a valid active role across role-list reconciliation', () => {
+    const storage = memoryStorage()
+
+    writeCurrentSchoolRoles(['teacher', 'director'], storage)
+    setActiveSchoolRole('teacher', storage)
+    assert.equal(readActiveSchoolRole(storage), 'teacher')
+
+    // Reconciliation with the same available roles must preserve the active one.
+    writeCurrentSchoolRoles(['director', 'teacher'], storage)
+    assert.equal(readActiveSchoolRole(storage), 'teacher')
+})
+
+test('resets the active role when it is no longer available', () => {
+    const storage = memoryStorage()
+
+    writeCurrentSchoolRoles(['teacher', 'director'], storage)
+    setActiveSchoolRole('teacher', storage)
+
+    // The school now only exposes the director role.
+    writeCurrentSchoolRoles(['director'], storage)
+    assert.equal(readActiveSchoolRole(storage), 'director')
+})
+
+test('clearing roles also clears the active role', () => {
+    const storage = memoryStorage()
+
+    writeCurrentSchoolRoles(['director'], storage)
+    setActiveSchoolRole('director', storage)
+    clearCurrentSchoolRoles(storage)
+
+    assert.equal(readActiveSchoolRole(storage), '')
+    assert.deepEqual(readActiveSchoolRoles(storage), [])
 })
