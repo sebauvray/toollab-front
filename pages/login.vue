@@ -8,7 +8,7 @@ import { useRouter, useRoute } from '#imports'
 import authService from '~/services/auth'
 import schoolService from '~/services/school'
 import userService from '~/services/user'
-import { clearCurrentSchoolRoles, getSchoolRoles, writeCurrentSchoolRoles } from '~/utils/schoolRoles'
+import { clearCurrentSchoolRoles, getSchoolRoles, setActiveSchoolRole, writeCurrentSchoolRoles } from '~/utils/schoolRoles'
 
 useHead({
   title: 'Connexion'
@@ -74,7 +74,10 @@ const handleSubmit = async () => {
       router.push('/admin')
     } else if (mySchools.length === 1) {
       localStorage.setItem('current_school_id', String(mySchools[0].id))
-      writeCurrentSchoolRoles(getSchoolRoles(schoolRoleEntries, mySchools[0].id))
+      const schoolRolesList = getSchoolRoles(schoolRoleEntries, mySchools[0].id)
+      writeCurrentSchoolRoles(schoolRolesList)
+      // Connexion directe (1 école) : on entre sur le premier rôle par défaut.
+      setActiveSchoolRole(schoolRolesList[0]?.slug || '')
       router.push(redirectPath || '/')
     } else if (mySchools.length > 1) {
       router.push({ path: '/select-school', query: redirectPath ? { redirect: redirectPath } : {} })

@@ -5,7 +5,7 @@ import LogoText from "~/components/Icons/LogoText.vue"
 import schoolService from '~/services/school'
 import authService from '~/services/auth'
 import userService from '~/services/user'
-import { clearCurrentSchoolRoles, groupSchoolRoles, writeCurrentSchoolRoles } from '~/utils/schoolRoles'
+import { clearCurrentSchoolRoles, groupSchoolRoles, setActiveSchoolRole, writeCurrentSchoolRoles } from '~/utils/schoolRoles'
 
 definePageMeta({
   layout: 'default',
@@ -46,7 +46,10 @@ onMounted(async () => {
 
 const selectSchool = (school) => {
   localStorage.setItem('current_school_id', String(school.id))
-  writeCurrentSchoolRoles(schoolRoles.value[school.id] || [])
+  const roles = schoolRoles.value[school.id] || []
+  writeCurrentSchoolRoles(roles)
+  // Entrée dans l'école : on active le premier rôle (par priorité) par défaut.
+  setActiveSchoolRole(roles[0]?.slug || '')
   const redirect = route.query.redirect || '/'
   router.push(redirect)
 }
