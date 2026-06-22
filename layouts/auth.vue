@@ -22,7 +22,10 @@ import {
   groupSchoolRoles,
   hasAnyRole,
   isTeacherOnly,
+  readActiveSchoolRole,
+  ROLE_LABELS,
   SCHOOL_ROLES_UPDATED_EVENT,
+  setActiveSchoolRole,
   writeCurrentSchoolRoles
 } from '~/utils/schoolRoles';
 
@@ -39,6 +42,11 @@ const selectedSchool = ref(null);
 const showAccountMenu = ref(false);
 const accountMenuRef = ref(null);
 const isSidebarCollapsed = ref(false);
+
+// Rôle actif unique (slug) qui pilote le menu et les accès.
+const activeRole = ref('');
+// École dont la liste de rôles est dépliée dans le dropdown.
+const expandedSchoolId = ref(null);
 
 // Invitations d'écoles en attente d'acceptation explicite par l'utilisateur.
 const pendingInvitations = ref([]);
@@ -111,7 +119,8 @@ const logoUrl = computed(() => {
 });
 
 const isSuperAdmin = computed(() => !!user.value?.is_super_admin);
-const currentRoles = computed(() => selectedSchool.value?.roles || []);
+// Les permissions reposent sur le rôle actif unique, pas l'union des rôles.
+const currentRoles = computed(() => (activeRole.value ? [activeRole.value] : []));
 const hasAdminAccess = computed(() => isSuperAdmin.value || hasAnyRole(currentRoles.value, ['director', 'admin']));
 const hasTeachingAccess = computed(() => hasAnyRole(currentRoles.value, ['teacher']));
 const hasGeneralAccess = computed(() => isSuperAdmin.value || !isTeacherOnly(currentRoles.value));
@@ -147,7 +156,10 @@ const loadUserSchools = async () => {
     }
 
     if (selectedSchool.value) {
+      // Conserve l'écriture de la liste complète (alimente le sélecteur) tout en
+      // maintenant un rôle actif valide ; on relit l'actif effectif.
       writeCurrentSchoolRoles(selectedSchool.value.roles);
+      activeRole.value = readActiveSchoolRole();
       try {
         await loadYears();
       } catch (e) {
@@ -159,17 +171,33 @@ const loadUserSchools = async () => {
   }
 };
 
-const selectSchool = (school) => {
+// Entre dans une école avec un rôle donné (sinon le premier par priorité).
+// Couvre à la fois le changement d'école et le changement de rôle actif.
+const enterSchool = (school, slug = null) => {
   showAccountMenu.value = false;
-  if (selectedSchool.value?.id === school.id) return;
+  const targetRole = slug || school.roles?.[0]?.slug || '';
+  const sameSchool = selectedSchool.value?.id === school.id;
+  const sameRole = activeRole.value === targetRole;
+  if (sameSchool && sameRole) return;
   selectedSchool.value = school;
   localStorage.setItem('current_school_id', String(school.id));
   writeCurrentSchoolRoles(school.roles);
+  setActiveSchoolRole(targetRole);
+  activeRole.value = targetRole;
   resetYears();
   if (process.client) {
     window.location.reload();
   }
 };
+
+const toggleExpand = (schoolId) => {
+  expandedSchoolId.value = expandedSchoolId.value === schoolId ? null : schoolId;
+};
+
+// École active : sous-liste dépliée d'office. Autre école : repliée derrière le chevron.
+const isRolesListOpen = (school) =>
+    school.roles.length > 1 &&
+    (selectedSchool.value?.id === school.id || expandedSchoolId.value === school.id);
 
 const selectYear = (yearId) => {
   showYearDropdown.value = false;
@@ -222,6 +250,8 @@ const handleSchoolRolesUpdated = (event) => {
   if (selectedSchool.value?.id === updatedSchoolId) {
     selectedSchool.value = {...selectedSchool.value, roles: updatedRoles};
     writeCurrentSchoolRoles(updatedRoles);
+    // Le rôle actif peut avoir disparu de la nouvelle liste : on le revalide.
+    activeRole.value = readActiveSchoolRole();
   }
 };
 
@@ -313,7 +343,7 @@ onUnmounted(() => {
             </div>
 
             <!-- Établissements -->
-            <div v-if="schools.length > 1 || isSuperAdmin" class="py-2 max-h-72 overflow-y-auto border-b border-[#E6EFF5]">
+            <div v-if="schools.length > 1 || isSuperAdmin || (selectedSchool && selectedSchool.roles.length > 1)" class="py-2 max-h-[60vh] overflow-y-auto border-b border-[#E6EFF5]">
               <p class="px-4 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-placeholder">Établissements</p>
               <div class="px-1.5 space-y-0.5">
                 <button
@@ -329,42 +359,92 @@ onUnmounted(() => {
                     <div class="text-xs text-purple-600 truncate">Mode plateforme</div>
                   </div>
                 </button>
-                <button
-                    v-for="school in schools"
-                    :key="school.id"
-                    @click="selectSchool(school)"
-                    class="w-full flex items-center gap-x-2.5 px-2.5 py-2 rounded-lg transition-colors"
-                    :class="selectedSchool?.id === school.id ? 'bg-primary/5' : 'hover:bg-gray-blue'"
-                >
-                  <div v-if="school.logo" class="w-9 h-9 flex-shrink-0">
-                    <img
-                      :src="`${useRuntimeConfig().public.apiUrl}/storage/${school.logo}`"
-                      alt="Logo"
-                      class="w-full h-full object-contain rounded-lg"
-                    />
-                  </div>
-                  <div v-else class="w-9 h-9 flex items-center justify-center rounded-lg bg-primary flex-shrink-0">
-                    <span class="text-white text-sm font-semibold">{{
-                        school.name.charAt(0).toUpperCase()
-                      }}</span>
-                  </div>
-                  <div class="flex-1 min-w-0 text-left">
-                    <div class="text-sm font-medium text-default truncate">{{ school.name }}</div>
-                    <div class="text-xs truncate text-placeholder">
-                      {{ school.roles.length ? school.roles.map(role => role.label).join(' · ') : (isSuperAdmin ? 'Super-admin' : '—') }}
-                    </div>
-                  </div>
-                  <svg
-                      v-if="selectedSchool?.id === school.id"
-                      class="w-4 h-4 text-primary flex-shrink-0"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
+                <div v-for="school in schools" :key="school.id">
+                  <button
+                      @click="enterSchool(school)"
+                      class="w-full flex items-center gap-x-2.5 px-2.5 py-2 rounded-lg transition-colors"
+                      :class="selectedSchool?.id === school.id ? 'bg-primary/5' : 'hover:bg-gray-blue'"
                   >
-                    <path fill-rule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clip-rule="evenodd" />
-                  </svg>
-                </button>
+                    <div v-if="school.logo" class="w-9 h-9 flex-shrink-0">
+                      <img
+                        :src="`${useRuntimeConfig().public.apiUrl}/storage/${school.logo}`"
+                        alt="Logo"
+                        class="w-full h-full object-contain rounded-lg"
+                      />
+                    </div>
+                    <div v-else class="w-9 h-9 flex items-center justify-center rounded-lg bg-primary flex-shrink-0">
+                      <span class="text-white text-sm font-semibold">{{
+                          school.name.charAt(0).toUpperCase()
+                        }}</span>
+                    </div>
+                    <div class="flex-1 min-w-0 text-left">
+                      <div class="text-sm font-medium text-default truncate">{{ school.name }}</div>
+                      <div class="text-xs truncate text-placeholder">
+                        <template v-if="selectedSchool?.id === school.id && activeRole">
+                          {{ ROLE_LABELS[activeRole] || activeRole }}
+                        </template>
+                        <template v-else>
+                          {{ school.roles.length ? school.roles.map(role => role.label).join(' · ') : (isSuperAdmin ? 'Super-admin' : '—') }}
+                        </template>
+                      </div>
+                    </div>
+                    <!-- Coche pour l'école active -->
+                    <svg
+                        v-if="selectedSchool?.id === school.id"
+                        class="w-4 h-4 text-primary flex-shrink-0"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                    >
+                      <path fill-rule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <!-- Chevron : autre école avec plusieurs rôles -->
+                    <span
+                        v-else-if="school.roles.length > 1"
+                        role="button"
+                        tabindex="0"
+                        class="p-1 -mr-1 rounded hover:bg-gray-200 text-gray-500 flex-shrink-0"
+                        :title="expandedSchoolId === school.id ? 'Masquer les rôles' : 'Choisir un rôle'"
+                        @click.stop="toggleExpand(school.id)"
+                        @keydown.enter.stop.prevent="toggleExpand(school.id)"
+                    >
+                      <svg
+                          class="w-4 h-4 transition-transform"
+                          :class="expandedSchoolId === school.id ? 'rotate-180' : ''"
+                          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                      >
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </span>
+                  </button>
+
+                  <!-- Sous-liste des rôles : dépliée d'office pour l'école active,
+                       à la demande (chevron) pour les autres. -->
+                  <div
+                      v-if="isRolesListOpen(school)"
+                      class="mt-0.5 mb-1 ml-5 pl-3 border-l border-[#E6EFF5] space-y-0.5"
+                  >
+                    <button
+                        v-for="role in school.roles"
+                        :key="role.slug"
+                        @click.stop="enterSchool(school, role.slug)"
+                        class="w-full flex items-center gap-x-2 px-2.5 py-1.5 rounded-lg transition-colors text-left"
+                        :class="selectedSchool?.id === school.id && activeRole === role.slug ? 'bg-primary/5' : 'hover:bg-gray-blue'"
+                    >
+                      <span
+                          class="w-2 h-2 rounded-full flex-shrink-0"
+                          :class="selectedSchool?.id === school.id && activeRole === role.slug ? 'bg-primary' : 'bg-gray-300'"
+                      ></span>
+                      <span
+                          class="flex-1 min-w-0 text-sm truncate"
+                          :class="selectedSchool?.id === school.id && activeRole === role.slug ? 'text-primary font-medium' : 'text-default'"
+                      >
+                        {{ role.label }}
+                      </span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
