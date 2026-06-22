@@ -1,4 +1,4 @@
-import { isTeacherOnly, readCurrentSchoolRoles } from '~/utils/schoolRoles'
+import { isTeacherOnly, readActiveSchoolRoles } from '~/utils/schoolRoles'
 
 export default defineNuxtRouteMiddleware((to) => {
     const publicPages = ['/login', '/contact', '/forgot-password', '/reset-password', '/set-password'];
@@ -42,7 +42,7 @@ export default defineNuxtRouteMiddleware((to) => {
         }
 
         const hasRoleCache = localStorage.getItem('current_school_roles') !== null;
-        const isTeacher = hasRoleCache && isTeacherOnly(readCurrentSchoolRoles());
+        const isTeacher = hasRoleCache && isTeacherOnly(readActiveSchoolRoles());
         const teacherAllowed = to.path.startsWith('/professeur')
             || to.path === '/settings'
             || noSchoolNeeded.includes(to.path);

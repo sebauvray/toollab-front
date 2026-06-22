@@ -1,5 +1,5 @@
 import userService from '~/services/user'
-import { getRoleSlug } from '~/utils/schoolRoles'
+import { getSchoolRoles, readActiveSchoolRole } from '~/utils/schoolRoles'
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
     if (process.server) return
@@ -30,12 +30,12 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         }
 
         const response = await userService.getUserRoles(user.id)
-        const userRoles = response.roles
 
-        const hasAccess = userRoles.schools?.some(schoolRole =>
-            schoolRole.context.id === parseInt(schoolId) &&
-            ['director', 'admin'].includes(getRoleSlug(schoolRole))
-        )
+        // Le rôle actif doit être director/admin ET réellement détenu côté serveur
+        // pour cette école : la séparation des rôles bloque aussi l'accès par URL.
+        const activeRole = readActiveSchoolRole()
+        const serverSlugs = getSchoolRoles(response.roles?.schools || [], parseInt(schoolId)).map(r => r.slug)
+        const hasAccess = ['director', 'admin'].includes(activeRole) && serverSlugs.includes(activeRole)
 
         if (!hasAccess) {
             return navigateTo('/')

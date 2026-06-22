@@ -19,6 +19,7 @@ import { getErrorMessage } from '~/utils/errors'
 import {
   getSchoolRoles,
   hasAnyRole,
+  readActiveSchoolRole,
   SCHOOL_ROLES_UPDATED_EVENT,
   writeCurrentSchoolRoles
 } from '~/utils/schoolRoles'
@@ -117,14 +118,17 @@ const checkUserRoles = async () => {
 
     const isSuperAdmin = !!user.value?.is_super_admin;
     const currentRoles = getSchoolRoles(userRoles.schools || [], currentSchoolId);
-    const isDirectorHere = hasAnyRole(currentRoles, ['director']);
-    const isAdminHere = hasAnyRole(currentRoles, ['admin']);
+    // On met à jour la liste disponible, puis on raisonne sur le rôle ACTIF seul.
     writeCurrentSchoolRoles(currentRoles);
     if (process.client) {
       window.dispatchEvent(new CustomEvent(SCHOOL_ROLES_UPDATED_EVENT, {
         detail: {schoolId: currentSchoolId, roles: currentRoles}
       }));
     }
+
+    const activeRoles = [readActiveSchoolRole()].filter(Boolean);
+    const isDirectorHere = hasAnyRole(activeRoles, ['director']);
+    const isAdminHere = hasAnyRole(activeRoles, ['admin']);
 
     isDirector.value = isDirectorHere || isSuperAdmin;
     isAdmin.value = !isDirector.value && isAdminHere;

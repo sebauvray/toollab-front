@@ -13,7 +13,7 @@ import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 import {usePageTitle} from "~/composables/usePageTitle.js";
 import { useSchoolYear } from "~/composables/useSchoolYear";
 import { saveExport } from "~/utils/download";
-import { hasAnyRole, readCurrentSchoolRoles } from "~/utils/schoolRoles";
+import { hasAnyRole, readActiveSchoolRoles } from "~/utils/schoolRoles";
 
 const { isReadOnly } = useSchoolYear();
 
@@ -162,7 +162,7 @@ onMounted(() => {
     if (process.client) {
         const storedUser = JSON.parse(localStorage.getItem('auth.user') || 'null');
         canExport.value = !!storedUser?.is_super_admin
-            || hasAnyRole(readCurrentSchoolRoles(), ['director', 'admin']);
+            || hasAnyRole(readActiveSchoolRoles(), ['director', 'admin']);
     }
     pagination.value.perPage = loadPerPage();
     fetchFamilies();
