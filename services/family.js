@@ -108,4 +108,18 @@ export default {
         const response = await apiClient.get('/api/families/export', { responseType: 'blob' })
         return response.data
     },
+
+    async downloadImportTemplate() {
+        const response = await apiClient.get('/api/families/import-template', { responseType: 'blob' })
+        return response.data
+    },
+
+    async importStudents(file) {
+        const formData = new FormData()
+        formData.append('file', file)
+        const response = await apiClient.post('/api/families/import', formData, {
+            headers: { 'Content-Type': undefined }
+        })
+        return response.data
+    },
 }

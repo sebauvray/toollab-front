@@ -9,6 +9,7 @@ import SaveButton from "~/components/form/SaveButton.vue"
 import CancelButton from "~/components/form/CancelButton.vue"
 import {usePageTitle} from "~/composables/usePageTitle.js"
 import UserList from "~/components/settings/UserList.vue"
+import StudentImport from "~/components/settings/StudentImport.vue"
 import RoleCard from "~/components/settings/RoleCard.vue"
 import ConfirmationModal from "~/components/modals/ConfirmationModal.vue"
 import { STAFF_ROLE_CARDS } from "~/utils/staffRoleCards"
@@ -482,6 +483,11 @@ onMounted(async () => {
             @click="activeTab = 'users'"
             :class="['px-3 py-2 text-xs font-medium -mb-px border-b-2 transition-colors whitespace-nowrap font-montserrat', activeTab === 'users' ? 'border-default text-default' : 'border-transparent text-placeholder hover:text-default']"
         >Utilisateurs</button>
+        <button
+            v-if="canManageUsers"
+            @click="activeTab = 'import'"
+            :class="['px-3 py-2 text-xs font-medium -mb-px border-b-2 transition-colors whitespace-nowrap font-montserrat', activeTab === 'import' ? 'border-default text-default' : 'border-transparent text-placeholder hover:text-default']"
+        >Import élèves</button>
       </div>
 
       <div
@@ -555,6 +561,10 @@ onMounted(async () => {
         <div class="flex justify-end mt-5">
           <SaveButton @click="handleUpdateSchool">Enregistrer</SaveButton>
         </div>
+      </div>
+
+      <div v-if="activeTab === 'import' && canManageUsers && school">
+        <StudentImport />
       </div>
 
       <div v-if="activeTab === 'users' && canManageUsers && school">
