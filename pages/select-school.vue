@@ -5,6 +5,7 @@ import LogoText from "~/components/Icons/LogoText.vue"
 import schoolService from '~/services/school'
 import authService from '~/services/auth'
 import userService from '~/services/user'
+import invitationsService from '~/services/invitations'
 import { clearCurrentSchoolRoles, groupSchoolRoles, setActiveSchoolRole, writeCurrentSchoolRoles } from '~/utils/schoolRoles'
 
 definePageMeta({
@@ -22,6 +23,9 @@ const isLoading = ref(true)
 const errorMsg = ref('')
 const user = ref(null)
 const schoolRoles = ref({})
+const pendingInvitations = ref([])
+const invitationProcessing = ref(null)
+const invitationError = ref('')
 
 const isSuperAdmin = computed(() => !!user.value?.is_super_admin)
 
@@ -29,12 +33,14 @@ onMounted(async () => {
   if (process.client) {
     try {
       user.value = JSON.parse(localStorage.getItem('auth.user') || 'null')
-      const [allSchools, rolesResponse] = await Promise.all([
+      const [allSchools, rolesResponse, invitations] = await Promise.all([
         schoolService.getSchools(),
-        userService.getUserRoles(user.value.id)
+        userService.getUserRoles(user.value.id),
+        invitationsService.getMine()
       ])
       schools.value = allSchools || []
       schoolRoles.value = groupSchoolRoles(rolesResponse?.roles?.schools || [])
+      pendingInvitations.value = invitations || []
     } catch (e) {
       console.error(e)
       errorMsg.value = 'Erreur lors du chargement des écoles.'
@@ -52,6 +58,49 @@ const selectSchool = (school) => {
   setActiveSchoolRole(roles[0]?.slug || '')
   const redirect = route.query.redirect || '/'
   router.push(redirect)
+}
+
+const refreshSchoolsAndRoles = async () => {
+  const [allSchools, rolesResponse] = await Promise.all([
+    schoolService.getSchools(),
+    userService.getUserRoles(user.value.id)
+  ])
+  schools.value = allSchools || []
+  schoolRoles.value = groupSchoolRoles(rolesResponse?.roles?.schools || [])
+}
+
+const acceptInvitation = async (invitation) => {
+  if (invitationProcessing.value) return
+  invitationError.value = ''
+  invitationProcessing.value = invitation.school_id
+
+  try {
+    await invitationsService.accept(invitation.school_id)
+    pendingInvitations.value = pendingInvitations.value.filter(item => item.school_id !== invitation.school_id)
+    await refreshSchoolsAndRoles()
+
+    const acceptedSchool = schools.value.find(school => Number(school.id) === Number(invitation.school_id))
+    if (acceptedSchool) selectSchool(acceptedSchool)
+  } catch (error) {
+    invitationError.value = error.response?.data?.message || 'Impossible d\'accepter cette invitation.'
+  } finally {
+    invitationProcessing.value = null
+  }
+}
+
+const declineInvitation = async (invitation) => {
+  if (invitationProcessing.value) return
+  invitationError.value = ''
+  invitationProcessing.value = invitation.school_id
+
+  try {
+    await invitationsService.decline(invitation.school_id)
+    pendingInvitations.value = pendingInvitations.value.filter(item => item.school_id !== invitation.school_id)
+  } catch (error) {
+    invitationError.value = error.response?.data?.message || 'Impossible de refuser cette invitation.'
+  } finally {
+    invitationProcessing.value = null
+  }
 }
 
 const goToAdmin = () => {
@@ -82,6 +131,42 @@ const handleLogout = async () => {
       </div>
 
       <div v-else class="w-full space-y-2">
+        <div v-if="invitationError" class="p-3 mb-3 text-sm text-red-700 bg-red-50 ring-1 ring-red-200 rounded-lg">
+          {{ invitationError }}
+        </div>
+
+        <div
+          v-for="invitation in pendingInvitations"
+          :key="`invitation-${invitation.school_id}`"
+          class="p-4 mb-3 border border-blue-200 bg-blue-50 rounded-lg"
+        >
+          <div class="font-semibold text-blue-950">
+            Invitation de {{ invitation.school_name }}
+          </div>
+          <div v-if="invitation.roles?.length" class="mt-1 text-xs text-blue-800">
+            Rôle{{ invitation.roles.length > 1 ? 's' : '' }} proposé{{ invitation.roles.length > 1 ? 's' : '' }} :
+            {{ invitation.roles.join(' · ') }}
+          </div>
+          <div class="flex gap-2 mt-3">
+            <button
+              type="button"
+              :disabled="invitationProcessing === invitation.school_id"
+              class="px-3 py-1.5 text-sm font-semibold text-white bg-primary rounded-md disabled:opacity-60"
+              @click="acceptInvitation(invitation)"
+            >
+              Accepter
+            </button>
+            <button
+              type="button"
+              :disabled="invitationProcessing === invitation.school_id"
+              class="px-3 py-1.5 text-sm font-semibold text-blue-900 bg-white border border-blue-200 rounded-md disabled:opacity-60"
+              @click="declineInvitation(invitation)"
+            >
+              Refuser
+            </button>
+          </div>
+        </div>
+
         <button
           v-if="isSuperAdmin"
           @click="goToAdmin"
@@ -112,7 +197,7 @@ const handleLogout = async () => {
           </div>
         </button>
 
-        <div v-if="!isSuperAdmin && schools.length === 0" class="text-center py-3 text-gray-500">
+        <div v-if="!isSuperAdmin && schools.length === 0 && pendingInvitations.length === 0" class="text-center py-3 text-gray-500">
           Vous n'avez accès à aucune école.
         </div>
 

@@ -8,6 +8,7 @@ import { useRouter, useRoute } from '#imports'
 import authService from '~/services/auth'
 import schoolService from '~/services/school'
 import userService from '~/services/user'
+import invitationsService from '~/services/invitations'
 import { clearCurrentSchoolRoles, getSchoolRoles, setActiveSchoolRole, writeCurrentSchoolRoles } from '~/utils/schoolRoles'
 
 useHead({
@@ -82,8 +83,15 @@ const handleSubmit = async () => {
     } else if (mySchools.length > 1) {
       router.push({ path: '/select-school', query: redirectPath ? { redirect: redirectPath } : {} })
     } else {
-      formError.value = 'Votre compte n\'est associé à aucune école. Contactez votre administrateur.'
-      await authService.logout()
+      // Une invitation en attente ne donne pas encore accès à l'école, mais
+      // l'utilisateur doit rester connecté pour pouvoir l'accepter.
+      const pendingInvitations = await invitationsService.getMine()
+      if (Array.isArray(pendingInvitations) && pendingInvitations.length > 0) {
+        router.push({ path: '/select-school', query: redirectPath ? { redirect: redirectPath } : {} })
+      } else {
+        formError.value = 'Votre compte n\'est associé à aucune école. Contactez votre administrateur.'
+        await authService.logout()
+      }
     }
   } catch (error) {
     console.error('Erreur de connexion:', error)
