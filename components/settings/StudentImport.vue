@@ -20,6 +20,7 @@ const fileLabel = computed(() => file.value ? file.value.name : '')
 const pickFile = () => fileInput.value?.click()
 
 const setFile = (f) => {
+  if (isImporting.value) return
   if (!f) return
   const ext = f.name.split('.').pop().toLowerCase()
   if (!ACCEPTED.includes(ext)) {
@@ -41,12 +42,13 @@ const onSelect = (e) => {
 }
 
 const clearFile = () => {
+  if (isImporting.value) return
   file.value = null
   result.value = null
 }
 
 const downloadTemplate = async () => {
-  if (isDownloading.value) return
+  if (isDownloading.value || isImporting.value) return
   isDownloading.value = true
   try {
     const blob = await familyService.downloadImportTemplate()
@@ -104,7 +106,7 @@ const submit = async () => {
       <button
           type="button"
           @click="downloadTemplate"
-          :disabled="isDownloading"
+          :disabled="isDownloading || isImporting"
           class="mt-3 inline-flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-blue-200 text-blue-700 hover:bg-blue-50 transition-colors disabled:opacity-60"
       >
         <span>{{ isDownloading ? 'Préparation…' : 'Télécharger le modèle Excel' }}</span>
@@ -117,11 +119,12 @@ const submit = async () => {
         @drop.prevent="onDrop"
         @click="pickFile"
         :class="[
-          'rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition-colors',
+          'rounded-xl border-2 border-dashed p-6 text-center transition-colors',
+          isImporting ? 'cursor-not-allowed opacity-75' : 'cursor-pointer',
           isDragging ? 'border-blue-400 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
         ]"
     >
-      <input ref="fileInput" type="file" accept=".xlsx,.csv" class="hidden" @change="onSelect" />
+      <input ref="fileInput" type="file" accept=".xlsx,.csv" class="hidden" :disabled="isImporting" @change="onSelect" />
       <template v-if="!file">
         <p class="text-sm text-default font-medium">Glissez-déposez votre fichier ici</p>
         <p class="text-xs text-placeholder mt-1">ou cliquez pour sélectionner un fichier .xlsx ou .csv</p>
@@ -129,9 +132,22 @@ const submit = async () => {
       <template v-else>
         <div class="flex items-center justify-center gap-2" @click.stop>
           <span class="text-sm text-default font-medium truncate max-w-xs">{{ fileLabel }}</span>
-          <button type="button" @click="clearFile" class="text-xs text-red-600 hover:underline">Retirer</button>
+          <button type="button" @click="clearFile" :disabled="isImporting" class="text-xs text-red-600 hover:underline disabled:text-gray-400 disabled:no-underline">Retirer</button>
         </div>
       </template>
+    </div>
+
+    <div v-if="isImporting" class="mt-4 rounded-xl border border-blue-100 bg-blue-50/70 p-3">
+      <div class="flex items-center justify-between gap-3 text-xs text-blue-800 mb-2">
+        <span class="font-medium">Import en cours</span>
+        <span>Traitement du fichier...</span>
+      </div>
+      <div class="h-2 overflow-hidden rounded-full bg-blue-100">
+        <div class="import-progress-bar h-full rounded-full bg-blue-600"></div>
+      </div>
+      <p class="mt-2 text-[11px] text-blue-700">
+        Ne fermez pas cette page. Le résultat s'affichera dès que l'import sera terminé.
+      </p>
     </div>
 
     <div class="flex justify-end mt-4">
@@ -187,3 +203,22 @@ const submit = async () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.import-progress-bar {
+  width: 42%;
+  animation: import-progress-slide 1.2s ease-in-out infinite;
+}
+
+@keyframes import-progress-slide {
+  0% {
+    transform: translateX(-110%);
+  }
+  50% {
+    transform: translateX(85%);
+  }
+  100% {
+    transform: translateX(245%);
+  }
+}
+</style>
