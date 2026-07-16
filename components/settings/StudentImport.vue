@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onBeforeUnmount } from 'vue'
 import familyService from '~/services/family'
 import { saveExport } from '~/utils/download'
 import { getErrorMessage } from '~/utils/errors'
@@ -12,10 +12,21 @@ const isImporting = ref(false)
 const isDownloading = ref(false)
 const result = ref(null)
 const fileInput = ref(null)
+const currentImport = ref(null)
+const pollTimer = ref(null)
 
 const ACCEPTED = ['xlsx', 'csv']
 
 const fileLabel = computed(() => file.value ? file.value.name : '')
+
+const displayedErrorCount = computed(() => result.value?.errors?.length || 0)
+const totalErrorCount = computed(() => result.value?.errorCount || displayedErrorCount.value)
+const hasTruncatedErrors = computed(() => Boolean(result.value?.errorsTruncated && totalErrorCount.value > displayedErrorCount.value))
+const importStatusLabel = computed(() => {
+  if (currentImport.value?.status === 'pending') return 'Import en attente'
+  if (currentImport.value?.status === 'processing') return 'Traitement du fichier'
+  return 'Import en cours'
+})
 
 const pickFile = () => fileInput.value?.click()
 
@@ -60,26 +71,81 @@ const downloadTemplate = async () => {
   }
 }
 
+const stopPolling = () => {
+  if (pollTimer.value) {
+    clearTimeout(pollTimer.value)
+    pollTimer.value = null
+  }
+}
+
+const waitForImportResult = (importId) => {
+  return new Promise((resolve, reject) => {
+    const poll = async () => {
+      try {
+        const data = await familyService.getImportStatus(importId)
+        currentImport.value = data
+
+        if (data.status === 'completed' || data.status === 'failed') {
+          stopPolling()
+          resolve(data)
+          return
+        }
+
+        pollTimer.value = setTimeout(poll, 2000)
+      } catch (e) {
+        stopPolling()
+        reject(e)
+      }
+    }
+
+    poll()
+  })
+}
+
 const submit = async () => {
   if (!file.value || isImporting.value) return
   isImporting.value = true
   result.value = null
+  currentImport.value = null
+  stopPolling()
   try {
-    const data = await familyService.importStudents(file.value)
-    result.value = { type: 'success', message: data.message, summary: data.summary }
-    file.value = null
-    emit('imported')
+    const started = await familyService.importStudents(file.value)
+    currentImport.value = started
+    const data = await waitForImportResult(started.id)
+
+    if (data.status === 'completed') {
+      result.value = { type: 'success', message: data.message, summary: data.summary }
+      file.value = null
+      emit('imported')
+      return
+    }
+
+    result.value = {
+      type: 'error',
+      message: data.message || 'Le fichier contient des erreurs. Aucun élève n\'a été importé.',
+      errors: data.errors || [],
+      errorCount: data.error_count,
+      errorsTruncated: data.errors_truncated,
+      errorsLimit: data.errors_limit
+    }
   } catch (e) {
     const errors = e?.response?.data?.errors || []
     result.value = {
       type: 'error',
       message: getErrorMessage(e, 'Le fichier contient des erreurs. Aucun élève n\'a été importé.'),
-      errors
+      errors,
+      errorCount: e?.response?.data?.error_count,
+      errorsTruncated: e?.response?.data?.errors_truncated,
+      errorsLimit: e?.response?.data?.errors_limit
     }
   } finally {
     isImporting.value = false
+    currentImport.value = null
+    stopPolling()
   }
 }
+
+onBeforeUnmount(stopPolling)
 </script>
 
 <template>
@@ -139,8 +205,8 @@ const submit = async () => {
 
     <div v-if="isImporting" class="mt-4 rounded-xl border border-blue-100 bg-blue-50/70 p-3">
       <div class="flex items-center justify-between gap-3 text-xs text-blue-800 mb-2">
-        <span class="font-medium">Import en cours</span>
-        <span>Traitement du fichier...</span>
+        <span class="font-medium">{{ importStatusLabel }}</span>
+        <span>{{ currentImport?.message || 'Le traitement continue en arrière-plan...' }}</span>
       </div>
       <div class="h-2 overflow-hidden rounded-full bg-blue-100">
         <div class="import-progress-bar h-full rounded-full bg-blue-600"></div>
@@ -174,7 +240,12 @@ const submit = async () => {
     <div v-else-if="result?.type === 'error'" class="mt-4 rounded-xl bg-red-50 border border-red-200 p-4">
       <p class="text-sm text-red-800 font-medium">{{ result.message }}</p>
       <p v-if="result.errors?.length" class="text-xs text-red-700 mt-1">
-        {{ result.errors.length }} problème(s) à corriger. Aucun élève n'a été importé — modifiez votre fichier puis réessayez.
+        <template v-if="hasTruncatedErrors">
+          {{ totalErrorCount }} problème(s) détecté(s). Seuls les {{ displayedErrorCount }} premiers sont affichés. Aucun élève n'a été importé — modifiez votre fichier puis réessayez.
+        </template>
+        <template v-else>
+          {{ displayedErrorCount }} problème(s) à corriger. Aucun élève n'a été importé — modifiez votre fichier puis réessayez.
+        </template>
       </p>
       <div v-if="result.errors?.length" class="mt-3 max-h-72 overflow-y-auto">
         <table class="w-full text-xs">

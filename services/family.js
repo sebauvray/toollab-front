@@ -122,4 +122,9 @@ export default {
         })
         return response.data
     },
+
+    async getImportStatus(importId) {
+        const response = await apiClient.get(`/api/families/imports/${importId}`)
+        return response.data
+    },
 }
