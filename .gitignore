@@ -22,3 +22,6 @@ logs
 .env
 .env.*
 !.env.example
+
+# Skills Claude : symlink vers toollab-api/.claude/skills (source versionnée là-bas)
+.claude/skills
