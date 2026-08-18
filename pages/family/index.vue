@@ -4,6 +4,8 @@ import ResponsableTLB from "~/components/Icons/Responsable-TLB.vue";
 import Search from "~/components/Icons/Search.vue";
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import AddResponsableModal from "~/components/modals/AddResponsableModal.vue";
+import ArchivedFamiliesModal from "~/components/modals/ArchivedFamiliesModal.vue";
+import Archive from "~/components/Icons/Archive.vue";
 import Tag from "~/components/Tag.vue";
 import familyService from "~/services/family.js";
 import { formatDateFr } from "~/utils/dateFormatter.js";
@@ -27,6 +29,7 @@ definePageMeta({
 usePageTitle('Famille')
 
 const showAddResponsableModal = ref(false);
+const showArchivedFamiliesModal = ref(false);
 const families = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
@@ -130,7 +133,9 @@ const handleSearch = (event) => {
     }, 300);
 };
 
-const canExport = ref(false);
+// Groupe « pilotage » : même gate que checkrole:director,admin côté API, qui
+// couvre l'export des élèves comme la consultation de l'archive.
+const canPilot = ref(false);
 const exportingStudents = ref(false);
 const exportStudents = async () => {
     if (exportingStudents.value) return;
@@ -161,7 +166,7 @@ const handleAddResponsable = async (newResponsable) => {
 onMounted(() => {
     if (process.client) {
         const storedUser = JSON.parse(localStorage.getItem('auth.user') || 'null');
-        canExport.value = !!storedUser?.is_super_admin
+        canPilot.value = !!storedUser?.is_super_admin
             || hasAnyRole(readActiveSchoolRoles(), ['director', 'admin']);
     }
     pagination.value.perPage = loadPerPage();
@@ -183,6 +188,12 @@ onUnmounted(() => {
             :is-open="showAddResponsableModal"
             @close="showAddResponsableModal = false"
             @save="handleAddResponsable"
+        />
+
+        <ArchivedFamiliesModal
+            :is-open="showArchivedFamiliesModal"
+            @close="showArchivedFamiliesModal = false"
+            @restored="fetchFamilies(pagination.currentPage)"
         />
 
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
@@ -213,7 +224,18 @@ onUnmounted(() => {
             </select>
 
             <div class="flex items-center gap-2 w-fit">
-                <ExportButton v-if="canExport" :loading="exportingStudents" @click="exportStudents" />
+                <!-- Masqué sur une année clôturée : restauration et suppression y
+                     sont refusées en 409, l'archive n'y serait qu'une liste inerte. -->
+                <button
+                    v-if="canPilot && !isReadOnly"
+                    type="button"
+                    @click="showArchivedFamiliesModal = true"
+                    title="Voir les familles archivées"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-default bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <Archive class="size-3.5" />
+                    <span>Archives</span>
+                </button>
+                <ExportButton v-if="canPilot" :loading="exportingStudents" @click="exportStudents" />
                 <button
                     @click="showAddResponsableModal = true"
                     :disabled="isReadOnly"

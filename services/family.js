@@ -127,4 +127,58 @@ export default {
         const response = await apiClient.get(`/api/families/imports/${importId}`)
         return response.data
     },
+
+    /** Chiffres affichés dans la fenêtre de confirmation, avant suppression. */
+    async getDeletionPreview(familyId) {
+        try {
+            const response = await apiClient.get(`/api/families/${familyId}/deletion-preview`)
+            return response.data
+        } catch (error) {
+            console.error(`Erreur lors de la prévisualisation de suppression ${familyId}:`, error)
+            throw error
+        }
+    },
+
+    /** Archivage : la famille part dans l'archive, d'où elle peut être restaurée. */
+    async deleteFamily(familyId) {
+        try {
+            const response = await apiClient.delete(`/api/families/${familyId}`)
+            return response.data
+        } catch (error) {
+            console.error(`Erreur lors de la suppression de la famille ${familyId}:`, error)
+            throw error
+        }
+    },
+
+    /** Les familles archivées de l'année consultée, hors suppressions définitives. */
+    async getTrashedFamilies() {
+        try {
+            const response = await apiClient.get('/api/families/trashed')
+            return response.data
+        } catch (error) {
+            console.error('Erreur lors de la récupération de la corbeille:', error)
+            throw error
+        }
+    },
+
+    /** Suppression définitive : la famille sort de l'archive et n'est plus restaurable. */
+    async purgeFamily(familyId) {
+        try {
+            const response = await apiClient.post(`/api/families/${familyId}/purge`)
+            return response.data
+        } catch (error) {
+            console.error(`Erreur lors de la suppression définitive de la famille ${familyId}:`, error)
+            throw error
+        }
+    },
+
+    async restoreFamily(familyId) {
+        try {
+            const response = await apiClient.post(`/api/families/${familyId}/restore`)
+            return response.data
+        } catch (error) {
+            console.error(`Erreur lors de la restauration de la famille ${familyId}:`, error)
+            throw error
+        }
+    },
 }

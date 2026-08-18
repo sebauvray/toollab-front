@@ -19,11 +19,14 @@ import paiementService from '~/services/paiement'
 import {formatShortDateFr} from '~/utils/dateFormatter'
 import EditIcon from "~/components/Icons/Edit.vue";
 import Trash from "~/components/Icons/Trash.vue";
+import Archive from "~/components/Icons/Archive.vue";
 import axios from "axios";
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 import ConfirmationModal from "~/components/modals/ConfirmationModal.vue";
+import ArchiveFamilyModal from "~/components/modals/ArchiveFamilyModal.vue";
 import {usePageTitle} from "~/composables/usePageTitle.js";
 import { useSchoolYear } from "~/composables/useSchoolYear";
+import { hasAnyRole, readActiveSchoolRoles } from "~/utils/schoolRoles";
 
 const { isReadOnly } = useSchoolYear();
 
@@ -64,6 +67,12 @@ const isPaiementLoading = ref(true);
 const paiementError = ref(null);
 const deletedStudent = ref(null);
 const showDeleteStudentsModal = ref(false);
+
+// Archivage de la famille : réservé aux mêmes rôles que côté API
+// (director / admin), qui refuse les autres de toute façon.
+const showArchiveFamilyModal = ref(false);
+const isArchivingFamily = ref(false);
+const canArchiveFamily = ref(false);
 
 const GENDER_COLORS = { M: '#93C5FD', F: '#FDA4AF' };
 const initials = (p) => ((p?.first_name?.[0] || '') + (p?.last_name?.[0] || '')).toUpperCase();
@@ -183,6 +192,33 @@ const handleDeleteStudent = async () => {
             type: 'error',
             message: "Erreur lors de la suppression de l'élève"
         });
+    }
+};
+
+const handleArchiveFamily = async () => {
+    isArchivingFamily.value = true;
+    const { setFlashMessage } = useFlashMessage();
+
+    try {
+        const response = await familyService.deleteFamily(route.params.id);
+
+        setFlashMessage({
+            type: 'success',
+            message: response?.message || 'Famille archivée.'
+        });
+
+        // La fiche n'a plus d'objet à afficher : on repart sur la liste.
+        await navigateTo('/family');
+    } catch (err) {
+        console.error('Erreur archivage famille :', err);
+
+        setFlashMessage({
+            type: 'error',
+            message: err.response?.data?.message || "Erreur lors de l'archivage de la famille"
+        });
+        showArchiveFamilyModal.value = false;
+    } finally {
+        isArchivingFamily.value = false;
     }
 };
 
@@ -354,6 +390,11 @@ const scrollToBottom = () => {
 };
 
 onMounted(() => {
+    if (process.client) {
+        const storedUser = JSON.parse(localStorage.getItem('auth.user') || 'null');
+        canArchiveFamily.value = !!storedUser?.is_super_admin
+            || hasAnyRole(readActiveSchoolRoles(), ['director', 'admin']);
+    }
     fetchFamilyDetails();
     fetchPaiementDetails();
 });
@@ -379,6 +420,16 @@ definePageMeta({
         <BreadCrumb :custom-items="breadcrumbItems" />
 
         <div class="flex flex-wrap justify-end gap-1.5 my-2">
+            <!-- mr-auto : action destructive isolée à gauche, loin des boutons d'ajout -->
+            <button
+                v-if="canArchiveFamily"
+                @click="showArchiveFamilyModal = true"
+                :disabled="isReadOnly"
+                :title="isReadOnly ? 'Année scolaire en lecture seule' : 'Archiver cette famille'"
+                class="mr-auto inline-flex items-center gap-x-1.5 px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                <Archive class="size-3.5" />
+                <span>Archiver la famille</span>
+            </button>
             <button
                 @click="showAddNewResponsableModal = true"
                 :disabled="isReadOnly"
@@ -692,10 +743,18 @@ definePageMeta({
 
     <ConfirmationModal
         :is-open="showDeleteStudentsModal"
-        title="Supprimer l'élève"
-        message="Cette action supprimera définitivement l'élève ainsi que toutes ses informations associées (coordonnées, rôles, etc.). Cette action est irréversible. Souhaitez-vous continuer ?"
-        confirm-button-text="Supprimer"
+        title="Retirer l'élève"
+        message="L'élève sera retiré de la famille et de ses classes de l'année en cours, ainsi que sa décision de fin d'année si elle a déjà été saisie. Les années scolaires déjà clôturées ne sont pas modifiées : il y reste inscrit, avec sa décision. Souhaitez-vous continuer ?"
+        confirm-button-text="Retirer"
         @confirm="handleDeleteStudent"
         @cancel="showDeleteStudentsModal = false"
+    />
+
+    <ArchiveFamilyModal
+        :is-open="showArchiveFamilyModal"
+        :family-id="$route.params.id"
+        :deleting="isArchivingFamily"
+        @confirm="handleArchiveFamily"
+        @cancel="showArchiveFamilyModal = false"
     />
 </template>
