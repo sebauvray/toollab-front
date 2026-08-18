@@ -2,6 +2,7 @@
 import {ref, computed, watch} from 'vue'
 import Cross from '~/components/Icons/Cross.vue'
 import Trash from '~/components/Icons/Trash.vue'
+import PlusLight from '~/components/Icons/PlusLight.vue'
 import InputText from '~/components/form/InputText.vue'
 import InputSelect from '~/components/form/InputSelect.vue'
 import InputNumber from '~/components/form/InputNumber.vue'
@@ -31,21 +32,26 @@ const error = ref('')
 const fieldErrors = ref({})
 const isSubmitting = ref(false)
 
+let scheduleUid = 0
+
+const createScheduleRow = () => ({
+  _uid: ++scheduleUid,
+  day: '',
+  start_time: '',
+  end_time: '',
+  teacher_id: null
+})
+
 const newClass = ref({
   name: '',
   gender: '',
   size: '',
   levelId: null,
   telegram_link: '',
-  schedules: []
+  schedules: [createScheduleRow()]
 })
 
-const newSchedule = ref({
-  day: '',
-  start_time: '',
-  end_time: '',
-  teacher_id: null
-})
+const scheduleErrors = ref({})
 
 const mainTeacherId = ref(null)
 
@@ -82,17 +88,12 @@ const resetForm = () => {
     size: '',
     levelId: levelOptions.value[0]?.value ?? null,
     telegram_link: '',
-    schedules: []
-  }
-  newSchedule.value = {
-    day: '',
-    start_time: '',
-    end_time: '',
-    teacher_id: null
+    schedules: [createScheduleRow()]
   }
   mainTeacherId.value = null
   error.value = ''
   fieldErrors.value = {}
+  scheduleErrors.value = {}
 }
 
 const setFieldError = (field, message) => {
@@ -149,65 +150,65 @@ watch(distinctTeacherIds, (ids) => {
   }
 })
 
-const dayOptions = [
-  {value: 'Lundi', label: 'Lundi'},
-  {value: 'Mardi', label: 'Mardi'},
-  {value: 'Mercredi', label: 'Mercredi'},
-  {value: 'Jeudi', label: 'Jeudi'},
-  {value: 'Vendredi', label: 'Vendredi'},
-  {value: 'Samedi', label: 'Samedi'},
-  {value: 'Dimanche', label: 'Dimanche'}
-]
+const isScheduleRowEmpty = (schedule) =>
+  !schedule.day && !schedule.start_time && !schedule.end_time && !schedule.teacher_id
 
-const addSchedule = () => {
-  fieldErrors.value = {}
-  if (!newSchedule.value.day || !newSchedule.value.start_time || !newSchedule.value.end_time) {
-    if (!newSchedule.value.day) setFieldError('schedule_day', 'Le jour est requis.')
-    if (!newSchedule.value.start_time) setFieldError('schedule_start_time', 'L’heure de début est requise.')
-    if (!newSchedule.value.end_time) setFieldError('schedule_end_time', 'L’heure de fin est requise.')
-    error.value = 'Veuillez corriger les champs indiqués.'
-    return
-  }
-
-  newClass.value.schedules.push({
-    day: newSchedule.value.day,
-    start_time: newSchedule.value.start_time,
-    end_time: newSchedule.value.end_time,
-    teacher_id: newSchedule.value.teacher_id
-  })
-
-  newSchedule.value = {
-    day: '',
-    start_time: '',
-    end_time: '',
-    teacher_id: null
-  }
-  error.value = ''
+const addScheduleRow = () => {
+  newClass.value.schedules.push(createScheduleRow())
 }
 
 const removeSchedule = (index) => {
-  newClass.value.schedules.splice(index, 1)
+  const [removed] = newClass.value.schedules.splice(index, 1)
+  if (removed) delete scheduleErrors.value[removed._uid]
+  if (newClass.value.schedules.length === 0) {
+    newClass.value.schedules.push(createScheduleRow())
+  }
 }
 
-const getScheduleTeacherLabel = (schedule) => {
-  if (schedule.teacher_id && teacherById.value.has(schedule.teacher_id)) {
-    const t = teacherById.value.get(schedule.teacher_id)
-    return `${t.first_name} ${t.last_name}`
-  }
-  return schedule.teacher_name || 'Aucun professeur'
+const validateSchedules = () => {
+  const errors = {}
+
+  newClass.value.schedules.forEach((schedule) => {
+    if (isScheduleRowEmpty(schedule)) return
+
+    const rowErrors = {}
+    if (!schedule.day) rowErrors.day = 'Jour requis.'
+    if (!schedule.start_time) rowErrors.start_time = 'Début requis.'
+    if (!schedule.end_time) rowErrors.end_time = 'Fin requise.'
+    if (schedule.start_time && schedule.end_time && schedule.end_time <= schedule.start_time) {
+      rowErrors.end_time = 'La fin doit être après le début.'
+    }
+
+    if (Object.keys(rowErrors).length) errors[schedule._uid] = rowErrors
+  })
+
+  scheduleErrors.value = errors
+  return Object.keys(errors).length === 0
 }
+
+const scheduleError = (schedule, index, field) =>
+  scheduleErrors.value[schedule._uid]?.[field]
+  || fieldErrors.value[`schedules.${index}.${field}`]?.[0]
+  || ''
 
 const handleSave = async () => {
   error.value = ''
   fieldErrors.value = {}
 
-  if (!newClass.value.name || !newClass.value.gender || !newClass.value.size) {
-    if (!newClass.value.name) setFieldError('name', 'Le nom de la classe est requis.')
-    if (!newClass.value.gender) setFieldError('gender', 'Le genre est requis.')
-    if (!newClass.value.size) setFieldError('size', 'L’effectif maximum est requis.')
+  if (!newClass.value.name) setFieldError('name', 'Le nom de la classe est requis.')
+  if (!newClass.value.gender) setFieldError('gender', 'Le genre est requis.')
+  if (!newClass.value.size) setFieldError('size', 'L’effectif maximum est requis.')
+
+  const schedulesAreValid = validateSchedules()
+
+  if (Object.keys(fieldErrors.value).length || !schedulesAreValid) {
     error.value = 'Veuillez corriger les champs indiqués.'
     return
   }
+
+  // Les lignes restées vides ne sont pas des créneaux : on les retire du modèle
+  // pour que les index correspondent à ceux renvoyés par l'API en cas d'erreur.
+  newClass.value.schedules = newClass.value.schedules.filter(s => !isScheduleRowEmpty(s))
 
   try {
     isSubmitting.value = true
@@ -215,7 +216,8 @@ const handleSave = async () => {
     const classData = {
       ...newClass.value,
       size: parseInt(newClass.value.size),
-      main_teacher_id: mainTeacherId.value
+      main_teacher_id: mainTeacherId.value,
+      schedules: newClass.value.schedules.map(({_uid, ...schedule}) => schedule)
     }
 
     await new Promise((resolve, reject) => {
@@ -283,60 +285,62 @@ const handleSave = async () => {
 
         <div>
           <h3 class="text-xs font-montserrat font-semibold text-gray-500 mb-2">Créneaux</h3>
-          <div class="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-2 items-center">
-            <div>
-              <SelectDay v-model="newSchedule.day" placeholder="Jour"/>
-              <p v-if="firstError('schedule_day')" class="text-xs text-red-600 mt-1">{{ firstError('schedule_day') }}</p>
-            </div>
-            <InputSelect v-model="newSchedule.teacher_id" :options="teacherOptions" placeholder="Professeur"/>
-            <div>
-              <input
-                v-model="newSchedule.start_time"
-                type="time"
-                title="Heure de début"
-                class="px-2 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default"
-              />
-              <p v-if="firstError('schedule_start_time')" class="text-xs text-red-600 mt-1">{{ firstError('schedule_start_time') }}</p>
-            </div>
-            <div>
-              <input
-                v-model="newSchedule.end_time"
-                type="time"
-                title="Heure de fin"
-                class="px-2 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default"
-              />
-              <p v-if="firstError('schedule_end_time')" class="text-xs text-red-600 mt-1">{{ firstError('schedule_end_time') }}</p>
-            </div>
-            <button
-                @click="addSchedule"
-                class="px-3 py-1.5 text-xs bg-default text-white rounded-lg hover:opacity-90"
-            >
-              Ajouter
-            </button>
-          </div>
 
-          <div v-if="newClass.schedules.length > 0" class="mt-3 border border-[#E6EFF5] rounded-lg divide-y divide-[#E6EFF5]">
+          <div class="space-y-2">
             <div
                 v-for="(schedule, index) in newClass.schedules"
-                :key="index"
-                class="flex items-center gap-x-3 px-3 py-1.5 text-xs"
+                :key="schedule._uid"
+                class="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-2 items-start"
             >
-              <span class="font-medium w-20">{{ schedule.day }}</span>
-              <span class="text-gray-600 tabular-nums">{{ schedule.start_time }}–{{ schedule.end_time }}</span>
-              <span class="text-gray-600 flex-1 min-w-0 truncate">{{ getScheduleTeacherLabel(schedule) }}</span>
-              <span
-                  v-if="schedule.teacher_id && schedule.teacher_id === mainTeacherId"
-                  class="inline-flex items-center px-1.5 py-0.5 text-[11px] rounded-full bg-amber-100 text-amber-700 ring-1 ring-amber-300 shrink-0"
-              >Principal</span>
-              <button
-                  @click="removeSchedule(index)"
-                  class="text-gray-400 hover:text-red-600 p-1 shrink-0"
-                  title="Supprimer ce créneau"
-              >
-                <Trash class="size-3.5"/>
-              </button>
+              <div>
+                <SelectDay v-model="schedule.day" placeholder="Jour"/>
+                <p v-if="scheduleError(schedule, index, 'day')" class="text-xs text-red-600 mt-1">{{ scheduleError(schedule, index, 'day') }}</p>
+              </div>
+              <InputSelect v-model="schedule.teacher_id" :options="teacherOptions" placeholder="Professeur"/>
+              <div>
+                <input
+                    v-model="schedule.start_time"
+                    type="time"
+                    title="Heure de début"
+                    class="px-2 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default"
+                />
+                <p v-if="scheduleError(schedule, index, 'start_time')" class="text-xs text-red-600 mt-1">{{ scheduleError(schedule, index, 'start_time') }}</p>
+              </div>
+              <div>
+                <input
+                    v-model="schedule.end_time"
+                    type="time"
+                    title="Heure de fin"
+                    class="px-2 py-1.5 text-sm border border-input-stroke rounded-lg focus:outline-none focus:border-default"
+                />
+                <p v-if="scheduleError(schedule, index, 'end_time')" class="text-xs text-red-600 mt-1">{{ scheduleError(schedule, index, 'end_time') }}</p>
+              </div>
+              <div class="flex items-center gap-x-1.5 h-[34px]">
+                <span
+                    v-if="schedule.teacher_id && schedule.teacher_id === mainTeacherId"
+                    class="inline-flex items-center px-1.5 py-0.5 text-[11px] rounded-full bg-amber-100 text-amber-700 ring-1 ring-amber-300 shrink-0"
+                >Principal</span>
+                <button
+                    type="button"
+                    @click="removeSchedule(index)"
+                    :disabled="newClass.schedules.length === 1 && isScheduleRowEmpty(schedule)"
+                    class="text-gray-400 hover:text-red-600 p-1 shrink-0 disabled:opacity-30 disabled:hover:text-gray-400 disabled:cursor-not-allowed"
+                    title="Supprimer ce créneau"
+                >
+                  <Trash class="size-3.5"/>
+                </button>
+              </div>
             </div>
           </div>
+
+          <button
+              type="button"
+              @click="addScheduleRow"
+              class="mt-2 w-full inline-flex items-center justify-center gap-x-1.5 px-3 py-2 text-xs font-semibold text-placeholder border border-dashed border-input-stroke rounded-lg transition-colors hover:text-default hover:border-default hover:bg-gray-light"
+          >
+            <PlusLight class="size-3.5"/>
+            <span>Ajouter un créneau</span>
+          </button>
         </div>
 
         <div v-if="mainTeacherOptions.length >= 2">
