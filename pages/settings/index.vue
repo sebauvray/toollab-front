@@ -12,10 +12,12 @@ import UserList from "~/components/settings/UserList.vue"
 import StudentImport from "~/components/settings/StudentImport.vue"
 import RoleCard from "~/components/settings/RoleCard.vue"
 import ConfirmationModal from "~/components/modals/ConfirmationModal.vue"
+import DirectorHandoverModal from "~/components/modals/DirectorHandoverModal.vue"
 import { STAFF_ROLE_CARDS } from "~/utils/staffRoleCards"
 import userService from '~/services/user'
 import schoolService from '~/services/school'
 import staffService from '~/services/staff'
+import directorHandoverService from '~/services/directorHandover'
 import { getErrorMessage } from '~/utils/errors'
 import {
   getSchoolRoles,
@@ -37,6 +39,8 @@ usePageTitle('Paramètres')
 const {setFlashMessage} = useFlashMessage()
 const isDirector = ref(false)
 const isAdmin = ref(false)
+const isDirectorRole = ref(false)
+const isTeacherHere = ref(false)
 const activeTab = ref('profile')
 const isLoading = ref(true)
 const message = ref({type: '', text: ''})
@@ -133,6 +137,12 @@ const checkUserRoles = async () => {
 
     isDirector.value = isDirectorHere || isSuperAdmin;
     isAdmin.value = !isDirector.value && isAdminHere;
+    isDirectorRole.value = isDirectorHere;
+    isTeacherHere.value = currentRoles.some(role => role.slug === 'teacher');
+
+    if (isDirectorHere) {
+      await loadHandover();
+    }
 
     if (isDirectorHere || isSuperAdmin) {
       const schoolResponse = await schoolService.getSchool(currentSchoolId);
@@ -440,6 +450,92 @@ const removeFromSchool = async () => {
   }
 }
 
+const handover = ref(null)
+const showHandoverModal = ref(false)
+const showCancelHandoverModal = ref(false)
+const isHandoverBusy = ref(false)
+
+const OUTGOING_ROLE_TEXTS = {
+  admin: 'vous deviendrez Administrateur',
+  registar: 'vous deviendrez Responsable des inscriptions',
+  none: 'vous quitterez l\'établissement'
+}
+
+const outgoingText = (handover) => {
+  if (!isTeacherHere.value) return OUTGOING_ROLE_TEXTS[handover.outgoing_role]
+  if (handover.remove_teacher_role) {
+    return handover.outgoing_role === 'none'
+        ? 'vous quitterez l\'établissement, rôle de professeur compris'
+        : `${OUTGOING_ROLE_TEXTS[handover.outgoing_role]} et perdrez votre rôle de professeur`
+  }
+  return handover.outgoing_role === 'none'
+      ? 'vous ne garderez que votre rôle de professeur'
+      : `${OUTGOING_ROLE_TEXTS[handover.outgoing_role]} et resterez professeur`
+}
+
+const formatDate = (value) => value ? new Date(value).toLocaleDateString('fr-FR') : ''
+const formatDateTime = (value) => {
+  if (!value) return ''
+  const date = new Date(value)
+  return `${date.toLocaleDateString('fr-FR')} à ${date.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}`
+}
+
+const loadHandover = async () => {
+  try {
+    const response = await directorHandoverService.getCurrent()
+    handover.value = response.data
+  } catch (error) {
+    handover.value = null
+  }
+}
+
+const handleHandoverSave = async (payload, callbacks = null) => {
+  try {
+    const response = await directorHandoverService.create(payload)
+    handover.value = response.data
+    setFlashMessage({type: 'success', message: response.message})
+    callbacks?.resolve?.()
+  } catch (error) {
+    if (error?.response?.status === 409) {
+      await loadHandover()
+    }
+    callbacks?.reject?.(error)
+  }
+}
+
+const resendHandover = async () => {
+  if (!handover.value || isHandoverBusy.value) return
+  try {
+    isHandoverBusy.value = true
+    message.value = {type: '', text: ''}
+    const response = await directorHandoverService.resend(handover.value.id)
+    handover.value = response.data
+    setFlashMessage({type: 'success', message: response.message})
+  } catch (error) {
+    message.value = {type: 'error', text: getErrorMessage(error, 'Impossible de renvoyer l\'invitation.')}
+    await loadHandover()
+  } finally {
+    isHandoverBusy.value = false
+  }
+}
+
+const cancelHandover = async () => {
+  if (!handover.value) return
+  try {
+    isHandoverBusy.value = true
+    message.value = {type: '', text: ''}
+    const response = await directorHandoverService.cancel(handover.value.id)
+    handover.value = null
+    setFlashMessage({type: 'success', message: response.message})
+  } catch (error) {
+    message.value = {type: 'error', text: getErrorMessage(error, 'Impossible d\'annuler la passation.')}
+    await loadHandover()
+  } finally {
+    isHandoverBusy.value = false
+    showCancelHandoverModal.value = false
+  }
+}
+
 const handleFileChange = (event) => {
   const file = event.target.files[0]
   if (file) {
@@ -561,6 +657,85 @@ onMounted(async () => {
         <div class="flex justify-end mt-5">
           <SaveButton @click="handleUpdateSchool">Enregistrer</SaveButton>
         </div>
+      </div>
+
+      <div v-if="activeTab === 'school' && isDirectorRole" class="bg-white rounded-2xl border p-5 mt-5">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 class="text-sm font-semibold text-default font-montserrat">Passation de direction</h2>
+            <p class="text-xs text-placeholder mt-1 max-w-2xl">
+              Transférez la direction de l'établissement à une autre personne. Elle reçoit une invitation par e-mail ;
+              la passation ne prend effet qu'à son acceptation.
+            </p>
+          </div>
+          <button
+              v-if="!handover"
+              type="button"
+              @click="showHandoverModal = true"
+              class="shrink-0 self-start px-3 py-1.5 text-xs font-medium rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Transférer la direction
+          </button>
+        </div>
+
+        <div v-if="handover" class="mt-4 pt-4 border-t border-[#E6EFF5] flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span
+                  v-if="handover.status === 'expired'"
+                  class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium ring-1 bg-red-50 text-red-700 ring-red-200"
+              >
+                <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span> Invitation expirée
+              </span>
+              <span
+                  v-else
+                  class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium ring-1 bg-amber-50 text-amber-700 ring-amber-200"
+              >
+                <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span> En attente d'acceptation
+              </span>
+              <span class="text-sm font-medium text-default truncate">{{ handover.email }}</span>
+            </div>
+            <p class="text-[11px] text-placeholder mt-1">
+              Envoyée le {{ formatDate(handover.created_at) }}
+              · {{ handover.status === 'expired' ? 'expirée le' : 'valable jusqu\'au' }} {{ formatDateTime(handover.expires_at) }}
+              · à l'acceptation, {{ outgoingText(handover) }}
+            </p>
+          </div>
+          <div class="flex items-center gap-x-1.5 shrink-0">
+            <button
+                type="button"
+                :disabled="isHandoverBusy"
+                @click="resendHandover"
+                class="px-3 py-1.5 text-xs font-medium rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              Renvoyer l'invitation
+            </button>
+            <button
+                type="button"
+                :disabled="isHandoverBusy"
+                @click="showCancelHandoverModal = true"
+                class="px-3 py-1.5 text-xs font-medium rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+            >
+              Annuler la passation
+            </button>
+          </div>
+        </div>
+
+        <DirectorHandoverModal
+            :is-open="showHandoverModal"
+            :is-teacher="isTeacherHere"
+            @close="showHandoverModal = false"
+            @save="handleHandoverSave"
+        />
+        <ConfirmationModal
+            :is-open="showCancelHandoverModal"
+            title="Annuler la passation"
+            message="Annuler la passation de direction ? Le lien envoyé ne fonctionnera plus et vous restez directeur."
+            confirm-button-text="Annuler la passation"
+            cancel-button-text="Retour"
+            @confirm="cancelHandover"
+            @cancel="showCancelHandoverModal = false"
+        />
       </div>
 
       <div v-if="activeTab === 'import' && canManageUsers && school">

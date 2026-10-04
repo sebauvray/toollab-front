@@ -1,7 +1,8 @@
+import { redirectTo } from '~/utils/navigation'
 import { isTeacherOnly, readActiveSchoolRoles } from '~/utils/schoolRoles'
 
 export default defineNuxtRouteMiddleware((to) => {
-    const publicPages = ['/login', '/contact', '/forgot-password', '/reset-password', '/set-password'];
+    const publicPages = ['/login', '/contact', '/forgot-password', '/reset-password', '/set-password', '/passation-direction'];
     const requiresAuth = !publicPages.includes(to.path);
 
     if (process.client) {
@@ -15,16 +16,16 @@ export default defineNuxtRouteMiddleware((to) => {
         }
 
         if (requiresAuth && !isAuthenticated) {
-            return navigateTo('/login');
+            return redirectTo('/login');
         }
 
         if (isAuthenticated && to.path === '/login') {
-            return navigateTo('/');
+            return redirectTo('/');
         }
 
         const noSchoolNeeded = [
             '/login', '/contact', '/forgot-password', '/reset-password',
-            '/set-password', '/select-school'
+            '/set-password', '/select-school', '/passation-direction'
         ];
         const isAdminPath = to.path.startsWith('/admin');
         if (
@@ -34,7 +35,7 @@ export default defineNuxtRouteMiddleware((to) => {
         ) {
             const schoolId = localStorage.getItem('current_school_id');
             if (!schoolId) {
-                return navigateTo({
+                return redirectTo({
                     path: '/select-school',
                     query: { redirect: to.fullPath },
                 });
@@ -47,7 +48,7 @@ export default defineNuxtRouteMiddleware((to) => {
             || to.path === '/settings'
             || noSchoolNeeded.includes(to.path);
         if (isAuthenticated && !isSuperAdmin && isTeacher && !teacherAllowed) {
-            return navigateTo('/professeur/classes');
+            return redirectTo('/professeur/classes');
         }
     }
 });
