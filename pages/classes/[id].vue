@@ -4,6 +4,7 @@ import { useRoute } from '#imports'
 import PageContainer from '~/components/layout/PageContainer.vue'
 import BreadCrumb from '~/components/navigation/BreadCrumb.vue'
 import UpdateClassModal from '~/components/modals/UpdateClassModal.vue'
+import StudentAttendancePanel from '~/components/suivi/StudentAttendancePanel.vue'
 import Edit from '~/components/Icons/Edit.vue'
 import { usePageTitle } from '~/composables/usePageTitle.js'
 import suiviService from '~/services/suivi'
@@ -64,18 +65,74 @@ const monthGroups = computed(() => {
   return groups
 })
 
-const ratesMap = computed(() => {
+const AT_RISK_RATE = 70
+
+const statsMap = computed(() => {
   const m = {}
   for (const s of students.value) {
-    let marked = 0, present = 0
-    for (const d of dates.value) {
-      const c = s.attendance[d]
-      if (c) { marked++; if (c.status === 'present') present++ }
+    const st = { present: 0, aj: 0, anj: 0, marked: 0, streak: 0, rate: null }
+    let streakOpen = true
+    for (let i = dates.value.length - 1; i >= 0; i--) {
+      const status = s.attendance[dates.value[i]]?.status
+      if (!status) continue
+      st.marked++
+      if (status === 'present') { st.present++; streakOpen = false }
+      else {
+        if (status === 'absent_justifie') st.aj++
+        else st.anj++
+        if (streakOpen) st.streak++
+      }
     }
-    m[s.student_id] = marked ? Math.round((present / marked) * 100) : null
+    st.abs = st.aj + st.anj
+    st.rate = st.marked ? Math.round((st.present / st.marked) * 100) : null
+    st.atRisk = (st.rate !== null && st.rate < AT_RISK_RATE) || st.streak >= 2
+    m[s.student_id] = st
   }
   return m
 })
+
+const classSummary = computed(() => {
+  let present = 0, marked = 0, aj = 0, anj = 0, atRisk = 0
+  for (const s of students.value) {
+    const st = statsMap.value[s.student_id]
+    present += st.present; marked += st.marked; aj += st.aj; anj += st.anj
+    if (st.atRisk) atRisk++
+  }
+  return {
+    rate: marked ? Math.round((present / marked) * 100) : null,
+    aj, anj, abs: aj + anj, atRisk,
+    lastDate: dates.value[dates.value.length - 1] || null
+  }
+})
+
+const rateTone = (r) => r === null ? 'text-gray-300' : r < AT_RISK_RATE ? 'text-red-600' : r < 90 ? 'text-amber-600' : 'text-gray-700'
+
+const query = ref('')
+const riskOnly = ref(false)
+const sortKey = ref('name')
+const normalize = (v) => (v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+
+const visibleStudents = computed(() => {
+  const q = normalize(query.value)
+  let list = students.value.filter(s => {
+    if (riskOnly.value && !statsMap.value[s.student_id].atRisk) return false
+    if (q && !normalize(`${s.last_name} ${s.first_name}`).includes(q) && !normalize(`${s.first_name} ${s.last_name}`).includes(q)) return false
+    return true
+  })
+  if (sortKey.value === 'absences') {
+    list = [...list].sort((a, b) => statsMap.value[b.student_id].abs - statsMap.value[a.student_id].abs || statsMap.value[b.student_id].anj - statsMap.value[a.student_id].anj)
+  } else if (sortKey.value === 'rate') {
+    const r = (s) => statsMap.value[s.student_id].rate ?? 101
+    list = [...list].sort((a, b) => r(a) - r(b))
+  }
+  return list
+})
+
+const formatDay = (d) => d ? `${d.slice(8, 10)}/${d.slice(5, 7)}` : '—'
+
+const selectedStudentId = ref(null)
+const selectedStudent = computed(() => students.value.find(s => s.student_id === selectedStudentId.value) || null)
+const openStudent = (s) => { hoverTip.value = null; selectedStudentId.value = s.student_id }
 
 const hoverTip = ref(null)
 const onCellEnter = (c, ev) => {
@@ -158,7 +215,6 @@ const handleUpdateClass = async (updatedClass, callbacks = null) => {
 }
 
 onMounted(() => {
-  if (route.query.tab === 'decisions') activeTab.value = 'decisions'
   fetchData()
 })
 </script>
@@ -209,62 +265,130 @@ onMounted(() => {
       </div>
 
       <div v-if="activeTab === 'attendance'">
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-3 text-xs">
-          <span class="text-placeholder">Légende :</span>
-          <span v-for="(m, k) in attMeta" :key="k" class="inline-flex items-center gap-1.5">
-            <span :class="['inline-flex items-center justify-center w-5 h-5 rounded border text-[11px] font-bold', m.cls]">{{ m.glyph }}</span>
-            {{ m.label }}
-          </span>
-          <span class="inline-flex items-center gap-1.5 text-gray-400">
-            <span class="inline-flex items-center justify-center w-5 h-5 rounded border border-gray-200 text-[11px]">–</span>
-            Non pointé
-          </span>
-          <span class="inline-flex items-center gap-1.5 text-gray-400">
-            <span class="relative inline-flex items-center justify-center w-5 h-5 rounded border border-amber-300 bg-amber-100 text-[11px] font-bold text-amber-700">J<span class="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-amber-500"></span></span>
-            Motif renseigné (survol = détail)
-          </span>
-        </div>
-
         <div v-if="students.length === 0" class="bg-white rounded-2xl border py-10 text-center text-xs text-placeholder">Aucun élève inscrit dans cette classe.</div>
         <div v-else-if="dates.length === 0" class="bg-white rounded-2xl border py-10 text-center text-xs text-placeholder">
           Aucune séance émargée pour le moment. Les colonnes apparaîtront dès que le professeur aura fait l'appel.
         </div>
-        <div v-else class="bg-white rounded-2xl border overflow-x-auto font-nunito">
-          <table class="text-xs border-collapse">
-            <thead>
-              <tr class="border-b border-[#E6EFF5]">
-                <th rowspan="2" class="sticky left-0 z-10 bg-white text-left font-semibold text-gray-700 px-3 py-2 min-w-[11rem] border-r border-[#E6EFF5] font-montserrat align-bottom">Élève</th>
-                <th v-for="g in monthGroups" :key="g.ym" :colspan="g.dates.length" class="px-2 py-1 text-center text-[10px] uppercase tracking-wide text-placeholder border-l border-[#E6EFF5]">{{ g.label }}</th>
-                <th rowspan="2" class="px-2 py-2 text-center font-semibold text-gray-700 border-l border-[#E6EFF5] align-bottom">Taux</th>
-              </tr>
-              <tr class="border-b border-[#E6EFF5]">
-                <template v-for="g in monthGroups" :key="g.ym">
-                  <th v-for="(d, i) in g.dates" :key="d" :title="d" :class="['px-2 py-1.5 text-center font-medium text-gray-500 whitespace-nowrap', i === 0 ? 'border-l border-[#E6EFF5]' : '']">{{ d.slice(8, 10) }}/{{ d.slice(5, 7) }}</th>
-                </template>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="s in students" :key="s.student_id" class="border-b border-[#E6EFF5] hover:bg-gray-50">
-                <td class="sticky left-0 z-10 bg-white px-3 py-1.5 font-medium text-gray-900 border-r border-[#E6EFF5] whitespace-nowrap font-montserrat">{{ s.last_name }} {{ s.first_name }}</td>
-                <template v-for="g in monthGroups" :key="g.ym">
-                  <td v-for="(d, i) in g.dates" :key="d" :class="['px-2 py-1.5 text-center', i === 0 ? 'border-l border-[#E6EFF5]' : '']">
-                    <span
-                        v-if="s.attendance[d]"
-                        :class="['relative inline-flex items-center justify-center w-5 h-5 rounded border text-[11px] font-bold', attMeta[s.attendance[d].status]?.cls, s.attendance[d].status === 'absent_justifie' && s.attendance[d].justification ? 'cursor-help' : 'cursor-default']"
-                        @mouseenter="onCellEnter(s.attendance[d], $event)"
-                        @mouseleave="onCellLeave"
-                    >
-                      {{ attMeta[s.attendance[d].status]?.glyph }}
-                      <span v-if="s.attendance[d].status === 'absent_justifie' && s.attendance[d].justification" class="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+
+        <template v-else>
+          <div class="bg-white rounded-2xl border mb-3 grid grid-cols-2 md:grid-cols-4 font-nunito">
+            <div class="px-4 py-3 border-b md:border-b-0 border-r border-[#E6EFF5]">
+              <div class="text-[11px] uppercase tracking-wide text-placeholder font-montserrat">Assiduité de la classe</div>
+              <div :class="['font-montserrat text-xl font-semibold tabular-nums mt-0.5', rateTone(classSummary.rate)]">{{ classSummary.rate !== null ? classSummary.rate + ' %' : '—' }}</div>
+              <div class="text-[11px] text-placeholder">présences sur les séances pointées</div>
+            </div>
+            <div class="px-4 py-3 border-b md:border-b-0 md:border-r border-[#E6EFF5]">
+              <div class="text-[11px] uppercase tracking-wide text-placeholder font-montserrat">Séances</div>
+              <div class="font-montserrat text-xl font-semibold text-default tabular-nums mt-0.5">{{ dates.length }}</div>
+              <div class="text-[11px] text-placeholder">dernière le {{ formatDay(classSummary.lastDate) }}</div>
+            </div>
+            <div class="px-4 py-3 border-r border-[#E6EFF5]">
+              <div class="text-[11px] uppercase tracking-wide text-placeholder font-montserrat">Absences</div>
+              <div class="font-montserrat text-xl font-semibold text-default tabular-nums mt-0.5">{{ classSummary.abs }}</div>
+              <div class="text-[11px] text-placeholder">
+                <span class="text-amber-700">{{ classSummary.aj }} justifiée{{ classSummary.aj > 1 ? 's' : '' }}</span> ·
+                <span class="text-red-600">{{ classSummary.anj }} non justifiée{{ classSummary.anj > 1 ? 's' : '' }}</span>
+              </div>
+            </div>
+            <button
+                type="button"
+                @click="riskOnly = !riskOnly"
+                :disabled="!classSummary.atRisk && !riskOnly"
+                :class="['px-4 py-3 text-left transition-colors rounded-br-2xl md:rounded-r-2xl md:rounded-bl-none', riskOnly ? 'bg-red-50' : classSummary.atRisk ? 'hover:bg-gray-50' : 'cursor-default']"
+            >
+              <div class="text-[11px] uppercase tracking-wide text-placeholder font-montserrat">À surveiller</div>
+              <div :class="['font-montserrat text-xl font-semibold tabular-nums mt-0.5', classSummary.atRisk ? 'text-red-600' : 'text-gray-300']">{{ classSummary.atRisk }}</div>
+              <div class="text-[11px] text-placeholder">{{ riskOnly ? 'filtre actif — cliquer pour tout afficher' : `assiduité < ${AT_RISK_RATE} % ou 2 absences d'affilée` }}</div>
+            </button>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 mb-3">
+            <div class="relative">
+              <svg class="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-placeholder pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+              </svg>
+              <input v-model="query" type="text" placeholder="Rechercher un élève…" class="pl-7 pr-2 py-1.5 text-xs border border-input-stroke rounded-lg focus:outline-none focus:border-default w-56" />
+            </div>
+            <div class="inline-flex rounded-lg border border-input-stroke divide-x divide-input-stroke overflow-hidden">
+              <button type="button" @click="riskOnly = false" :class="['px-3 py-1.5 text-xs', !riskOnly ? 'bg-default text-white' : 'bg-white text-gray-700 hover:bg-gray-50']">Tous ({{ students.length }})</button>
+              <button type="button" @click="riskOnly = true" :class="['px-3 py-1.5 text-xs', riskOnly ? 'bg-default text-white' : 'bg-white text-gray-700 hover:bg-gray-50']">À surveiller ({{ classSummary.atRisk }})</button>
+            </div>
+            <div class="relative">
+              <select v-model="sortKey" class="pl-2 pr-7 py-1.5 text-xs border border-input-stroke rounded-lg bg-white focus:outline-none focus:border-default">
+                <option value="name">Tri : nom</option>
+                <option value="absences">Tri : plus d'absences</option>
+                <option value="rate">Tri : assiduité la plus faible</option>
+              </select>
+              <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-placeholder pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+            </div>
+            <span class="ml-auto text-[11px] text-placeholder">Cliquer sur un élève pour voir sa fiche d'assiduité</span>
+          </div>
+
+          <div v-if="visibleStudents.length === 0" class="bg-white rounded-2xl border py-10 text-center text-xs text-placeholder">Aucun élève ne correspond à ces critères.</div>
+          <div v-else class="bg-white rounded-2xl border overflow-x-auto font-nunito">
+            <table class="text-xs border-collapse min-w-full">
+              <thead>
+                <tr class="border-b border-[#E6EFF5]">
+                  <th rowspan="2" class="sticky left-0 z-10 bg-white text-left font-semibold text-gray-700 px-3 py-2 min-w-[11rem] border-r border-[#E6EFF5] font-montserrat align-bottom">Élève</th>
+                  <th v-for="g in monthGroups" :key="g.ym" :colspan="g.dates.length" class="px-2 py-1 text-center text-[10px] uppercase tracking-wide text-placeholder border-l border-[#E6EFF5]">{{ g.label }}</th>
+                  <th rowspan="2" class="w-full"></th>
+                  <th colspan="3" class="sticky right-0 z-10 bg-white px-2 py-1 text-center text-[10px] uppercase tracking-wide text-placeholder border-l border-[#E6EFF5]">Bilan</th>
+                </tr>
+                <tr class="border-b border-[#E6EFF5]">
+                  <template v-for="g in monthGroups" :key="g.ym">
+                    <th v-for="(d, i) in g.dates" :key="d" :class="['px-2 py-1.5 text-center font-medium text-gray-500 whitespace-nowrap', i === 0 ? 'border-l border-[#E6EFF5]' : '']">{{ d.slice(8, 10) }}/{{ d.slice(5, 7) }}</th>
+                  </template>
+                  <th class="sticky right-[6.5rem] z-10 bg-white w-12 min-w-[3rem] px-1 py-1.5 text-center font-semibold text-amber-700 border-l border-[#E6EFF5] font-montserrat">Just.</th>
+                  <th class="sticky right-[3.5rem] z-10 bg-white w-12 min-w-[3rem] px-1 py-1.5 text-center font-semibold text-red-600 font-montserrat">Non j.</th>
+                  <th class="sticky right-0 z-10 bg-white w-14 min-w-[3.5rem] px-1 py-1.5 text-center font-semibold text-gray-700 font-montserrat">Taux</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="s in visibleStudents" :key="s.student_id" @click="openStudent(s)" class="group border-b border-[#E6EFF5] last:border-b-0 cursor-pointer">
+                  <td class="sticky left-0 z-10 bg-white group-hover:bg-gray-50 px-3 py-1.5 border-r border-[#E6EFF5] whitespace-nowrap font-montserrat">
+                    <span class="inline-flex items-center gap-1.5">
+                      <span class="font-medium text-gray-900 group-hover:underline underline-offset-2">{{ s.last_name }} {{ s.first_name }}</span>
+                      <span v-if="statsMap[s.student_id].atRisk" class="h-1.5 w-1.5 rounded-full bg-red-500" aria-label="À surveiller"></span>
                     </span>
-                    <span v-else class="text-gray-300">–</span>
                   </td>
-                </template>
-                <td class="px-2 py-1.5 text-center border-l border-[#E6EFF5] font-semibold" :class="ratesMap[s.student_id] === null ? 'text-gray-300' : ratesMap[s.student_id] < 70 ? 'text-amber-600' : 'text-gray-700'">{{ ratesMap[s.student_id] !== null ? ratesMap[s.student_id] + '%' : '—' }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                  <template v-for="g in monthGroups" :key="g.ym">
+                    <td v-for="(d, i) in g.dates" :key="d" :class="['px-2 py-1.5 text-center group-hover:bg-gray-50', i === 0 ? 'border-l border-[#E6EFF5]' : '']">
+                      <span
+                          v-if="s.attendance[d]"
+                          :class="['relative inline-flex items-center justify-center w-5 h-5 rounded border text-[11px] font-bold', attMeta[s.attendance[d].status]?.cls]"
+                          @mouseenter="onCellEnter(s.attendance[d], $event)"
+                          @mouseleave="onCellLeave"
+                      >
+                        {{ attMeta[s.attendance[d].status]?.glyph }}
+                        <span v-if="s.attendance[d].status === 'absent_justifie' && s.attendance[d].justification" class="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                      </span>
+                      <span v-else class="text-gray-300">–</span>
+                    </td>
+                  </template>
+                  <td class="group-hover:bg-gray-50"></td>
+                  <td class="sticky right-[6.5rem] z-10 bg-white group-hover:bg-gray-50 px-1 py-1.5 text-center tabular-nums border-l border-[#E6EFF5]" :class="statsMap[s.student_id].aj ? 'text-amber-700 font-semibold' : 'text-gray-300'">{{ statsMap[s.student_id].aj }}</td>
+                  <td class="sticky right-[3.5rem] z-10 bg-white group-hover:bg-gray-50 px-1 py-1.5 text-center tabular-nums" :class="statsMap[s.student_id].anj ? 'text-red-600 font-semibold' : 'text-gray-300'">{{ statsMap[s.student_id].anj }}</td>
+                  <td class="sticky right-0 z-10 bg-white group-hover:bg-gray-50 px-1 py-1.5 text-center tabular-nums font-semibold" :class="rateTone(statsMap[s.student_id].rate)">{{ statsMap[s.student_id].rate !== null ? statsMap[s.student_id].rate + '%' : '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 text-[11px] text-placeholder">
+            <span v-for="(m, k) in attMeta" :key="k" class="inline-flex items-center gap-1.5">
+              <span :class="['inline-flex items-center justify-center w-4 h-4 rounded border text-[10px] font-bold', m.cls]">{{ m.glyph }}</span>
+              {{ m.label }}
+            </span>
+            <span class="inline-flex items-center gap-1.5">
+              <span class="inline-flex items-center justify-center w-4 h-4 rounded border border-gray-200 text-[10px] text-gray-300">–</span>
+              Non pointé
+            </span>
+            <span class="inline-flex items-center gap-1.5">
+              <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+              Motif renseigné (survol pour le lire)
+            </span>
+          </div>
+        </template>
       </div>
 
       <div v-else-if="activeTab === 'decisions'">
@@ -306,6 +430,14 @@ onMounted(() => {
     >
       <span class="font-semibold">Motif :</span> {{ hoverTip.text }}
     </div>
+
+    <StudentAttendancePanel
+        v-if="selectedStudent"
+        :student="selectedStudent"
+        :dates="dates"
+        :classroom-name="classroom?.name || ''"
+        @close="selectedStudentId = null"
+    />
 
     <UpdateClassModal
         :is-open="showEditModal"
