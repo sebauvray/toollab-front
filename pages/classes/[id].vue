@@ -5,6 +5,7 @@ import PageContainer from '~/components/layout/PageContainer.vue'
 import BreadCrumb from '~/components/navigation/BreadCrumb.vue'
 import UpdateClassModal from '~/components/modals/UpdateClassModal.vue'
 import StudentAttendancePanel from '~/components/suivi/StudentAttendancePanel.vue'
+import ScheduleGrid from '~/components/schedule/ScheduleGrid.vue'
 import Edit from '~/components/Icons/Edit.vue'
 import { usePageTitle } from '~/composables/usePageTitle.js'
 import suiviService from '~/services/suivi'
@@ -50,6 +51,15 @@ const breadcrumbItems = computed(() => [
 
 const accent = computed(() => genderColors[classroom.value?.gender] || '#9CA3AF')
 const decidedCount = computed(() => students.value.filter(s => s.outcome).length)
+
+const gridSchedules = computed(() => (classroom.value?.schedules || []).map((s, i) => ({
+  id: i,
+  day: s.day,
+  start_time: s.start_time,
+  end_time: s.end_time,
+  teacher_name: s.teacher,
+  classroom: { name: classroom.value.name, gender: classroom.value.gender, cursus_name: classroom.value.cursus }
+})))
 
 const monthGroups = computed(() => {
   const groups = []
@@ -261,6 +271,7 @@ onMounted(() => {
 
       <div class="flex items-center gap-1 border-b border-[#E6EFF5] mb-4">
         <button type="button" @click="activeTab = 'attendance'" :class="['px-3 py-2 text-xs font-medium -mb-px border-b-2 transition-colors', activeTab === 'attendance' ? 'border-default text-default' : 'border-transparent text-placeholder hover:text-default']">Émargement</button>
+        <button type="button" @click="activeTab = 'planning'" :class="['px-3 py-2 text-xs font-medium -mb-px border-b-2 transition-colors', activeTab === 'planning' ? 'border-default text-default' : 'border-transparent text-placeholder hover:text-default']">Planning</button>
         <button type="button" @click="activeTab = 'decisions'" :class="['px-3 py-2 text-xs font-medium -mb-px border-b-2 transition-colors', activeTab === 'decisions' ? 'border-default text-default' : 'border-transparent text-placeholder hover:text-default']">Décisions</button>
       </div>
 
@@ -389,6 +400,11 @@ onMounted(() => {
             </span>
           </div>
         </template>
+      </div>
+
+      <div v-else-if="activeTab === 'planning'">
+        <div v-if="gridSchedules.length === 0" class="bg-white rounded-2xl border py-10 text-center text-xs text-placeholder">Aucun créneau n'est défini pour cette classe.</div>
+        <ScheduleGrid v-else :schedules="gridSchedules" />
       </div>
 
       <div v-else-if="activeTab === 'decisions'">
