@@ -156,7 +156,8 @@ import PageContainer from '~/components/layout/PageContainer.vue'
 usePageTitle('Exonérations')
 definePageMeta({
   layout: 'auth',
-  middleware: 'admin-director'
+  middleware: 'permission',
+  permission: 'statistics.view'
 })
 
 const exonerations = ref([])

@@ -13,7 +13,8 @@ const breadcrumbItems = [
 
 definePageMeta({
   layout: 'auth',
-  middleware: 'admin-director',
+  middleware: 'permission',
+  permission: 'school_years.manage',
   layoutData: { title: 'Reconduire des classes' }
 })
 

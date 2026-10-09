@@ -14,7 +14,8 @@ import cursusService from '~/services/cursus'
 
 definePageMeta({
   layout: 'auth',
-  middleware: 'admin-director',
+  middleware: 'permission',
+  permission: 'classrooms.supervise',
   layoutData: { title: 'Suivi de classe' }
 })
 

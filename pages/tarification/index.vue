@@ -21,7 +21,8 @@ definePageMeta({
     layoutData: {
         title: 'Tarification'
     },
-    middleware: 'admin-director'
+    middleware: 'permission',
+    permission: 'tarification.manage'
 })
 
 usePageTitle('Tarification')

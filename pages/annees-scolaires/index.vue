@@ -14,7 +14,8 @@ const router = useRouter()
 
 definePageMeta({
   layout: 'auth',
-  middleware: 'admin-director',
+  middleware: 'permission',
+  permission: 'school_years.manage',
   layoutData: {
     title: 'Années scolaires'
   }

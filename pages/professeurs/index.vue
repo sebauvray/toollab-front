@@ -23,7 +23,8 @@ import {
 definePageMeta({
   layout: 'auth',
   layoutData: {title: 'Professeurs'},
-  middleware: 'admin-director'
+  middleware: 'permission',
+  permission: 'staff.view'
 })
 
 usePageTitle('Professeurs')

@@ -128,7 +128,8 @@ import PageContainer from '~/components/layout/PageContainer.vue'
 usePageTitle('Recherche de chèques')
 definePageMeta({
   layout: 'auth',
-  middleware: 'admin-director'
+  middleware: 'permission',
+  permission: 'statistics.view'
 })
 
 const cheques = ref([])

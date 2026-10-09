@@ -8,7 +8,9 @@ import teacherService from '~/services/teacher'
 
 definePageMeta({
   layout: 'auth',
-  layoutData: {title: 'Détail de classe'}
+  layoutData: {title: 'Détail de classe'},
+  middleware: 'permission',
+  permission: 'teaching.access'
 })
 
 usePageTitle('Détail de classe')

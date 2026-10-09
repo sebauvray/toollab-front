@@ -20,8 +20,9 @@ import { useAuth } from '~/composables/useAuth';
 import {
   clearCurrentSchoolRoles,
   groupSchoolRoles,
-  hasAnyRole,
-  isTeacherOnly,
+  can,
+  isTeachingOnlyView,
+  readActivePermissions,
   readActiveSchoolRole,
   ROLE_LABELS,
   SCHOOL_ROLES_UPDATED_EVENT,
@@ -119,11 +120,21 @@ const logoUrl = computed(() => {
 });
 
 const isSuperAdmin = computed(() => !!user.value?.is_super_admin);
-// Les permissions reposent sur le rôle actif unique, pas l'union des rôles.
-const currentRoles = computed(() => (activeRole.value ? [activeRole.value] : []));
-const hasAdminAccess = computed(() => isSuperAdmin.value || hasAnyRole(currentRoles.value, ['director', 'admin']));
-const hasTeachingAccess = computed(() => hasAnyRole(currentRoles.value, ['teacher']));
-const hasGeneralAccess = computed(() => isSuperAdmin.value || !isTeacherOnly(currentRoles.value));
+// Les permissions sont celles du rôle actif unique (bascule vue prof / vue
+// gestion), pas l'union des rôles. activeRole en dépendance : recalcul au changement.
+const canActive = (permission) => {
+  void activeRole.value;
+  return can(permission);
+};
+// Sans le passe-droit super-admin : « Mes classes » suit le vrai rôle actif.
+const hasTeachingAccess = computed(() => {
+  void activeRole.value;
+  return readActivePermissions().includes('teaching.access');
+});
+const hasGeneralAccess = computed(() => {
+  void activeRole.value;
+  return isSuperAdmin.value || !isTeachingOnlyView();
+});
 
 const loadUserSchools = async () => {
   try {
@@ -294,12 +305,12 @@ onUnmounted(() => {
       </div>
       <nav class="inline-flex flex-col gap-y-1.5 mt-1.5 flex-1">
         <NavLink v-if="hasGeneralAccess" to="/" :icon="Home" text="Accueil" :collapsed="isSidebarCollapsed" />
-        <NavLink v-if="hasGeneralAccess" to="/family" :icon="FamilyTLB" text="Familles" :collapsed="isSidebarCollapsed" />
-        <NavLink v-if="hasAdminAccess" to="/cursus" :icon="Cursus" text="Cursus" :collapsed="isSidebarCollapsed" />
-        <NavLink v-if="hasAdminAccess" to="/classes" :icon="StudentTLB" text="Classes" :collapsed="isSidebarCollapsed" />
-        <NavLink v-if="hasAdminAccess" to="/professeurs" :icon="TeacherTLB" text="Professeurs" :collapsed="isSidebarCollapsed" />
-        <NavLink v-if="hasAdminAccess" to="/tarification" :icon="CurrencyEuro" text="Tarification" :collapsed="isSidebarCollapsed" />
-        <NavLink v-if="hasAdminAccess" to="/statistiques" :icon="ChartBar" text="Statistiques" :collapsed="isSidebarCollapsed" />
+        <NavLink v-if="canActive('families.view')" to="/family" :icon="FamilyTLB" text="Familles" :collapsed="isSidebarCollapsed" />
+        <NavLink v-if="canActive('cursus.manage')" to="/cursus" :icon="Cursus" text="Cursus" :collapsed="isSidebarCollapsed" />
+        <NavLink v-if="canActive('classrooms.supervise')" to="/classes" :icon="StudentTLB" text="Classes" :collapsed="isSidebarCollapsed" />
+        <NavLink v-if="canActive('staff.view')" to="/professeurs" :icon="TeacherTLB" text="Professeurs" :collapsed="isSidebarCollapsed" />
+        <NavLink v-if="canActive('tarification.manage')" to="/tarification" :icon="CurrencyEuro" text="Tarification" :collapsed="isSidebarCollapsed" />
+        <NavLink v-if="canActive('statistics.view')" to="/statistiques" :icon="ChartBar" text="Statistiques" :collapsed="isSidebarCollapsed" />
         <NavLink v-if="hasTeachingAccess" to="/professeur/classes" :icon="StudentTLB" text="Mes classes" :collapsed="isSidebarCollapsed" />
         <NavLink v-if="hasTeachingAccess" to="/professeur/planning" :icon="Cursus" text="Mon planning" :collapsed="isSidebarCollapsed" />
       </nav>
@@ -521,7 +532,7 @@ onUnmounted(() => {
                 </button>
               </div>
               <NuxtLink
-                  v-if="hasAdminAccess"
+                  v-if="canActive('school_years.manage')"
                   to="/annees-scolaires"
                   @click="showYearDropdown = false"
                   class="flex items-center gap-x-1.5 px-2 py-1.5 border-t bg-gray-50 hover:bg-gray-100 transition-colors text-xs text-gray-700"

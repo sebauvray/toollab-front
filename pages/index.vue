@@ -6,8 +6,7 @@ import {useAuth} from '~/composables/useAuth'
 import userService from '~/services/user'
 import {
   getSchoolRoles,
-  isTeacherOnly,
-  readActiveSchoolRoles,
+  isTeachingOnlyView,
   writeCurrentSchoolRoles
 } from '~/utils/schoolRoles'
 
@@ -31,8 +30,7 @@ const isTeacher = ref(false)
 
 if (process.client) {
   const hasRoleCache = localStorage.getItem('current_school_roles') !== null
-  const cachedRoles = readActiveSchoolRoles()
-  if (hasRoleCache && isTeacherOnly(cachedRoles)) {
+  if (hasRoleCache && isTeachingOnlyView()) {
     isTeacher.value = true
     navigateTo('/professeur/classes')
   } else if (hasRoleCache) {
@@ -48,7 +46,7 @@ onMounted(async () => {
     const response = await userService.getUserRoles(user.value.id)
     const currentRoles = getSchoolRoles(response.roles?.schools || [], schoolId)
     writeCurrentSchoolRoles(currentRoles)
-    if (isTeacherOnly(readActiveSchoolRoles())) {
+    if (isTeachingOnlyView()) {
       isTeacher.value = true
       navigateTo('/professeur/classes')
       return

@@ -12,7 +12,7 @@ import paiementService from "~/services/paiement.js";
 import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 import { useSchoolYear } from "~/composables/useSchoolYear";
 import { getCurrentSchoolId } from "~/utils/schoolContext";
-import { groupSchoolRoles, hasAnyRole } from "~/utils/schoolRoles";
+import { can, groupSchoolRoles } from "~/utils/schoolRoles";
 
 const { isReadOnly } = useSchoolYear();
 
@@ -84,8 +84,7 @@ const groupedClasses = computed(() => {
 
 const checkAdminAccess = () => {
     if (selectedSchool.value && schools.value.length > 0) {
-        const currentSchool = schools.value.find(s => s.id === selectedSchool.value.id);
-        hasAdminAccess.value = hasAnyRole(currentSchool?.roles || [], ['director', 'admin']);
+        hasAdminAccess.value = can('classrooms.manage');
     }
 };
 

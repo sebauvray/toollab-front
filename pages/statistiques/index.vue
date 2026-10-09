@@ -269,7 +269,8 @@ usePageTitle('Statistiques')
 
 definePageMeta({
   layout: 'auth',
-  middleware: 'admin-director'
+  middleware: 'permission',
+  permission: 'statistics.view'
 })
 
 const { user } = useAuth()

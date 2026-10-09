@@ -21,7 +21,7 @@ import directorHandoverService from '~/services/directorHandover'
 import { getErrorMessage } from '~/utils/errors'
 import {
   getSchoolRoles,
-  hasAnyRole,
+  can,
   readActiveSchoolRole,
   SCHOOL_ROLES_UPDATED_EVENT,
   writeCurrentSchoolRoles
@@ -131,11 +131,12 @@ const checkUserRoles = async () => {
       }));
     }
 
-    const activeRoles = [readActiveSchoolRole()].filter(Boolean);
-    const isDirectorHere = hasAnyRole(activeRoles, ['director']);
-    const isAdminHere = hasAnyRole(activeRoles, ['admin']);
+    // Rôle actif seul. roles.manage = gestion complète (directeur) ;
+    // staff.manage sans roles.manage = gestion limitée (admin).
+    const isDirectorHere = readActiveSchoolRole() === 'director';
+    const isAdminHere = can('staff.manage');
 
-    isDirector.value = isDirectorHere || isSuperAdmin;
+    isDirector.value = isSuperAdmin || can('roles.manage');
     isAdmin.value = !isDirector.value && isAdminHere;
     isDirectorRole.value = isDirectorHere;
     isTeacherHere.value = currentRoles.some(role => role.slug === 'teacher');

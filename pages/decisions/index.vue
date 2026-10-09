@@ -9,7 +9,8 @@ import schoolYearService from '~/services/schoolYear'
 
 definePageMeta({
   layout: 'auth',
-  middleware: 'admin-director',
+  middleware: 'permission',
+  permission: 'classrooms.supervise',
   layoutData: { title: 'Suivi des décisions' }
 })
 

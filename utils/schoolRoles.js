@@ -46,7 +46,8 @@ export const getSchoolRoles = (roleEntries = [], schoolId) => {
             if (!slug || rolesBySlug.has(slug)) return
             rolesBySlug.set(slug, {
                 slug,
-                label: entry.role || ROLE_LABELS[slug] || slug
+                label: entry.role || ROLE_LABELS[slug] || slug,
+                permissions: Array.isArray(entry.permissions) ? entry.permissions : []
             })
         })
 
@@ -84,6 +85,14 @@ export const writeCurrentSchoolRoles = (roles, storage) => {
     const slugs = roleSlugs(roles)
     target.setItem('current_school_roles', JSON.stringify(slugs))
     target.removeItem('current_school_role')
+
+    // Permissions par rôle, fournies par l'API (/users/{id}/roles). Un appel
+    // avec de simples slugs ne les connaît pas : on garde alors la carte en place.
+    const withPermissions = roles.filter(role => role && typeof role === 'object' && Array.isArray(role.permissions))
+    if (withPermissions.length) {
+        const permissionsByRole = Object.fromEntries(withPermissions.map(role => [role.slug, role.permissions]))
+        target.setItem('current_school_role_permissions', JSON.stringify(permissionsByRole))
+    }
 
     // Garantit un rôle actif valide : on conserve l'actif courant s'il fait
     // toujours partie des rôles disponibles, sinon on retombe sur le premier.
@@ -146,9 +155,57 @@ export const readActiveSchoolRoles = (storage) => {
     return active ? [active] : []
 }
 
+const readPermissionsByRole = (target) => {
+    try {
+        const parsed = JSON.parse(target.getItem('current_school_role_permissions') || 'null')
+        return parsed && typeof parsed === 'object' ? parsed : null
+    } catch {
+        return null
+    }
+}
+
+// Permissions du rôle actif (bascule vue prof / vue gestion), [] si inconnues.
+export const readActivePermissions = (storage) => {
+    const target = getStorage(storage)
+    if (!target) return []
+    const permissionsByRole = readPermissionsByRole(target)
+    return permissionsByRole?.[readActiveSchoolRole(target)] || []
+}
+
+const isSuperAdminUser = (target) => {
+    try {
+        return !!JSON.parse(target.getItem('auth.user') || 'null')?.is_super_admin
+    } catch {
+        return false
+    }
+}
+
+// Le rôle actif donne-t-il au moins une de ces permissions ? Le super-admin a tout.
+export const can = (permissions, storage) => {
+    const target = getStorage(storage)
+    if (!target) return false
+    if (isSuperAdminUser(target)) return true
+    const wanted = Array.isArray(permissions) ? permissions : [permissions]
+    const granted = readActivePermissions(target)
+    return wanted.some(permission => granted.includes(permission))
+}
+
+// Vue prof : le rôle actif ne donne que l'espace professeur. Sans carte de
+// permissions (session antérieure), on retombe sur le slug.
+export const isTeachingOnlyView = (storage) => {
+    const target = getStorage(storage)
+    if (!target) return false
+    const permissionsByRole = readPermissionsByRole(target)
+    const active = readActiveSchoolRole(target)
+    if (!permissionsByRole || !permissionsByRole[active]) return isTeacherOnly(readActiveSchoolRoles(target))
+    const granted = permissionsByRole[active]
+    return granted.length > 0 && granted.every(permission => permission === 'teaching.access')
+}
+
 export const clearCurrentSchoolRoles = (storage) => {
     const target = getStorage(storage)
     if (!target) return
+    target.removeItem('current_school_role_permissions')
     target.removeItem('current_school_roles')
     target.removeItem('current_school_role')
     target.removeItem('current_school_active_role')

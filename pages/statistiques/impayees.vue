@@ -110,7 +110,8 @@ import PageContainer from '~/components/layout/PageContainer.vue'
 usePageTitle('Familles impayées')
 definePageMeta({
   layout: 'auth',
-  middleware: 'admin-director'
+  middleware: 'permission',
+  permission: 'statistics.view'
 })
 
 const unpaidFamilies = ref([])

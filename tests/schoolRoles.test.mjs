@@ -1,10 +1,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
+    can,
     clearCurrentSchoolRoles,
     getSchoolRoles,
     groupSchoolRoles,
     isTeacherOnly,
+    isTeachingOnlyView,
+    readActivePermissions,
     readActiveSchoolRole,
     readActiveSchoolRoles,
     readCurrentSchoolRoles,
@@ -101,4 +104,58 @@ test('clearing roles also clears the active role', () => {
 
     assert.equal(readActiveSchoolRole(storage), '')
     assert.deepEqual(readActiveSchoolRoles(storage), [])
+})
+
+const schoolRolesWithPermissions = () => getSchoolRoles([
+    { role: 'Professeur', role_slug: 'teacher', context: { id: 1 }, permissions: ['teaching.access'] },
+    { role: 'Directeur', role_slug: 'director', context: { id: 1 }, permissions: ['cursus.manage', 'roles.manage'] }
+], 1)
+
+test('permissions follow the active role, not the union of roles', () => {
+    const storage = memoryStorage()
+    writeCurrentSchoolRoles(schoolRolesWithPermissions(), storage)
+
+    setActiveSchoolRole('director', storage)
+    assert.equal(can('cursus.manage', storage), true)
+    assert.equal(can('teaching.access', storage), false)
+    assert.equal(isTeachingOnlyView(storage), false)
+
+    setActiveSchoolRole('teacher', storage)
+    assert.deepEqual(readActivePermissions(storage), ['teaching.access'])
+    assert.equal(can('cursus.manage', storage), false)
+    assert.equal(can(['cursus.manage', 'teaching.access'], storage), true)
+    assert.equal(isTeachingOnlyView(storage), true)
+})
+
+test('writing plain slugs keeps the known permissions', () => {
+    const storage = memoryStorage()
+    writeCurrentSchoolRoles(schoolRolesWithPermissions(), storage)
+    writeCurrentSchoolRoles(['director', 'teacher'], storage)
+    setActiveSchoolRole('director', storage)
+
+    assert.equal(can('cursus.manage', storage), true)
+})
+
+test('a super-admin can everything', () => {
+    const storage = memoryStorage()
+    storage.setItem('auth.user', JSON.stringify({ is_super_admin: true }))
+
+    assert.equal(can('statistics.view', storage), true)
+})
+
+test('without a permission map, the teacher view falls back on the slug', () => {
+    const storage = memoryStorage()
+    writeCurrentSchoolRoles(['teacher'], storage)
+
+    assert.equal(isTeachingOnlyView(storage), true)
+    assert.equal(can('teaching.access', storage), false)
+})
+
+test('clearing roles also clears permissions', () => {
+    const storage = memoryStorage()
+    writeCurrentSchoolRoles(schoolRolesWithPermissions(), storage)
+    setActiveSchoolRole('director', storage)
+    clearCurrentSchoolRoles(storage)
+
+    assert.deepEqual(readActivePermissions(storage), [])
 })

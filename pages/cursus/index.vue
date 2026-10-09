@@ -21,7 +21,8 @@ definePageMeta({
   layoutData: {
     title: 'Cursus'
   },
-  middleware: 'admin-director'
+  middleware: 'permission',
+  permission: 'cursus.manage'
 })
 
 usePageTitle('Cursus')

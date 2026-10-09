@@ -384,6 +384,8 @@ definePageMeta({
   layout: 'auth',
   layoutData: {
     title: 'Cursus',
-  }
+  },
+  middleware: 'permission',
+  permission: 'cursus.manage'
 });
 </script>

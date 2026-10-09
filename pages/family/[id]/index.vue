@@ -26,7 +26,7 @@ import ConfirmationModal from "~/components/modals/ConfirmationModal.vue";
 import ArchiveFamilyModal from "~/components/modals/ArchiveFamilyModal.vue";
 import {usePageTitle} from "~/composables/usePageTitle.js";
 import { useSchoolYear } from "~/composables/useSchoolYear";
-import { hasAnyRole, readActiveSchoolRoles } from "~/utils/schoolRoles";
+import { can } from "~/utils/schoolRoles";
 
 const { isReadOnly } = useSchoolYear();
 
@@ -391,9 +391,7 @@ const scrollToBottom = () => {
 
 onMounted(() => {
     if (process.client) {
-        const storedUser = JSON.parse(localStorage.getItem('auth.user') || 'null');
-        canArchiveFamily.value = !!storedUser?.is_super_admin
-            || hasAnyRole(readActiveSchoolRoles(), ['director', 'admin']);
+        canArchiveFamily.value = can('families.delete');
     }
     fetchFamilyDetails();
     fetchPaiementDetails();

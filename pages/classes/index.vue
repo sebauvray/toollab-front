@@ -15,7 +15,8 @@ definePageMeta({
   layoutData: {
     title: 'Classes'
   },
-  middleware: 'admin-director'
+  middleware: 'permission',
+  permission: 'classrooms.supervise'
 })
 
 usePageTitle('Classes')

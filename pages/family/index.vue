@@ -15,7 +15,7 @@ import BreadCrumb from "~/components/navigation/BreadCrumb.vue";
 import {usePageTitle} from "~/composables/usePageTitle.js";
 import { useSchoolYear } from "~/composables/useSchoolYear";
 import { saveExport } from "~/utils/download";
-import { hasAnyRole, readActiveSchoolRoles } from "~/utils/schoolRoles";
+import { can } from "~/utils/schoolRoles";
 
 const { isReadOnly } = useSchoolYear();
 
@@ -135,7 +135,8 @@ const handleSearch = (event) => {
 
 // Groupe « pilotage » : même gate que checkrole:director,admin côté API, qui
 // couvre l'export des élèves comme la consultation de l'archive.
-const canPilot = ref(false);
+const canManageArchives = ref(false);
+const canExport = ref(false);
 const exportingStudents = ref(false);
 const exportStudents = async () => {
     if (exportingStudents.value) return;
@@ -165,9 +166,8 @@ const handleAddResponsable = async (newResponsable) => {
 
 onMounted(() => {
     if (process.client) {
-        const storedUser = JSON.parse(localStorage.getItem('auth.user') || 'null');
-        canPilot.value = !!storedUser?.is_super_admin
-            || hasAnyRole(readActiveSchoolRoles(), ['director', 'admin']);
+        canManageArchives.value = can('families.delete');
+        canExport.value = can('families.import_export');
     }
     pagination.value.perPage = loadPerPage();
     fetchFamilies();
@@ -227,7 +227,7 @@ onUnmounted(() => {
                 <!-- Masqué sur une année clôturée : restauration et suppression y
                      sont refusées en 409, l'archive n'y serait qu'une liste inerte. -->
                 <button
-                    v-if="canPilot && !isReadOnly"
+                    v-if="canManageArchives && !isReadOnly"
                     type="button"
                     @click="showArchivedFamiliesModal = true"
                     title="Voir les familles archivées"
@@ -235,7 +235,7 @@ onUnmounted(() => {
                     <Archive class="size-3.5" />
                     <span>Archives</span>
                 </button>
-                <ExportButton v-if="canPilot" :loading="exportingStudents" @click="exportStudents" />
+                <ExportButton v-if="canExport" :loading="exportingStudents" @click="exportStudents" />
                 <button
                     @click="showAddResponsableModal = true"
                     :disabled="isReadOnly"
