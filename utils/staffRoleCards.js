@@ -2,6 +2,7 @@ import { markRaw } from 'vue'
 import Setting from '~/components/Icons/Setting.vue'
 import NotebookTLB from '~/components/Icons/Notebook-TLB.vue'
 import TeacherTLB from '~/components/Icons/Teacher-TLB.vue'
+import User from '~/components/Icons/User.vue'
 
 // Définitions partagées des rôles attribuables au personnel.
 // Utilisées à la fois par le formulaire de création (mono-rôle, indicateur radio)
@@ -63,3 +64,36 @@ export const STAFF_ROLE_CARDS = [
 export const STAFF_ROLE_CARD_BY_VALUE = Object.fromEntries(
   STAFF_ROLE_CARDS.map(role => [role.value, role])
 )
+
+// Style des rôles créés par l'école (sans charte dédiée).
+const CUSTOM_ROLE_STYLE = {
+  icon: markRaw(User),
+  chipClass: 'bg-gray-50 text-gray-700 ring-gray-200',
+  dotClass: 'bg-gray-500',
+  ringActive: 'ring-gray-300 bg-gray-50/40',
+  iconWrap: 'bg-gray-50 text-gray-600 ring-gray-100',
+  checkClass: 'text-gray-500'
+}
+
+const MAX_LISTED_PERMISSIONS = 3
+
+// Carte affichable (RoleCard) à partir d'un rôle de l'API (/api/roles).
+// Les droits listés viennent du catalogue : ils restent exacts même si
+// l'école a modifié un rôle par défaut.
+export const toRoleCard = (role, permissionLabels = {}) => {
+  const base = STAFF_ROLE_CARD_BY_VALUE[role.slug] || CUSTOM_ROLE_STYLE
+  const labels = (role.permissions || []).map(key => permissionLabels[key] || key)
+  const listed = labels.slice(0, MAX_LISTED_PERMISSIONS)
+  if (labels.length > MAX_LISTED_PERMISSIONS) {
+    listed.push(`Et ${labels.length - MAX_LISTED_PERMISSIONS} autre(s) droit(s)`)
+  }
+
+  return {
+    ...base,
+    value: role.slug,
+    label: role.name,
+    shortLabel: role.name,
+    tagline: role.description || base.tagline || '',
+    permissions: listed.length ? listed : ['Aucun droit de gestion']
+  }
+}

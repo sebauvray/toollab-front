@@ -10,6 +10,11 @@ const props = defineProps({
   selectedUserId: {
     type: Number,
     default: null
+  },
+  // slug → nom, rôles personnalisés compris (fourni par /api/roles).
+  roleLabels: {
+    type: Object,
+    default: () => ({})
   }
 })
 
@@ -53,8 +58,10 @@ const fetchUsers = async () => {
     isLoading.value = true
     const response = await staffService.getSchoolUsers(props.schoolId)
 
+    // Tous les rôles école sont du personnel ; élève et responsable sont
+    // des rattachements famille.
     const filteredData = response.filter(item =>
-        ['director', 'admin', 'registar', 'teacher'].includes(item.role)
+        !['student', 'responsible'].includes(item.role)
     )
 
     const userMap = new Map()
@@ -140,7 +147,7 @@ defineExpose({
                     :class="['inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium ring-1', roleChip[role] || 'bg-gray-50 text-gray-600 ring-gray-200']"
                 >
                   <span class="h-1.5 w-1.5 rounded-full" :class="roleDot[role] || 'bg-gray-400'"></span>
-                  {{ roleLabels[role] }}
+                  {{ props.roleLabels[role] || roleLabels[role] || role }}
                 </span>
               </div>
             </td>

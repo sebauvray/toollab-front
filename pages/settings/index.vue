@@ -13,7 +13,9 @@ import StudentImport from "~/components/settings/StudentImport.vue"
 import RoleCard from "~/components/settings/RoleCard.vue"
 import ConfirmationModal from "~/components/modals/ConfirmationModal.vue"
 import DirectorHandoverModal from "~/components/modals/DirectorHandoverModal.vue"
-import { STAFF_ROLE_CARDS } from "~/utils/staffRoleCards"
+import { toRoleCard } from "~/utils/staffRoleCards"
+import rolesService from "~/services/roles"
+import RolesManager from "~/components/settings/RolesManager.vue"
 import userService from '~/services/user'
 import schoolService from '~/services/school'
 import staffService from '~/services/staff'
@@ -89,14 +91,25 @@ const newUserForm = ref({
   roles: []
 })
 
-const roles = STAFF_ROLE_CARDS
+// Rôles de l'école, fournis par l'API avec, pour chacun, si l'utilisateur
+// courant peut l'attribuer (règle anti-escalade appliquée côté serveur).
+const schoolRoles = ref([])
+const roleLabels = computed(() => Object.fromEntries(schoolRoles.value.map(role => [role.value, role.label])))
 
 const canManageUsers = computed(() => isDirector.value || isAdmin.value)
-const availableRoles = computed(() => {
-  if (isDirector.value) return roles
-  if (isAdmin.value) return roles.filter(role => ['registar', 'teacher'].includes(role.value))
-  return []
-})
+const canManageRoles = computed(() => isDirector.value)
+const availableRoles = computed(() => schoolRoles.value.filter(role => role.assignable))
+
+const loadSchoolRoles = async () => {
+  if (!canManageUsers.value) return
+  try {
+    const data = await rolesService.getRoles()
+    const labels = Object.fromEntries((data.permissions || []).map(p => [p.key, p.label]))
+    schoolRoles.value = (data.roles || []).map(role => ({ ...toRoleCard(role, labels), assignable: role.assignable }))
+  } catch (error) {
+    console.error('Erreur lors du chargement des rôles:', error)
+  }
+}
 
 const toggleNewUserRole = (roleValue) => {
   const selected = newUserForm.value.roles
@@ -139,6 +152,7 @@ const checkUserRoles = async () => {
     isDirector.value = isSuperAdmin || can('roles.manage');
     isAdmin.value = !isDirector.value && isAdminHere;
     isDirectorRole.value = isDirectorHere;
+    await loadSchoolRoles();
     isTeacherHere.value = currentRoles.some(role => role.slug === 'teacher');
 
     if (isDirectorHere) {
@@ -581,6 +595,11 @@ onMounted(async () => {
             :class="['px-3 py-2 text-xs font-medium -mb-px border-b-2 transition-colors whitespace-nowrap font-montserrat', activeTab === 'users' ? 'border-default text-default' : 'border-transparent text-placeholder hover:text-default']"
         >Utilisateurs</button>
         <button
+            v-if="canManageRoles"
+            @click="activeTab = 'roles'"
+            :class="['px-3 py-2 text-xs font-medium -mb-px border-b-2 transition-colors whitespace-nowrap font-montserrat', activeTab === 'roles' ? 'border-default text-default' : 'border-transparent text-placeholder hover:text-default']"
+        >Rôles</button>
+        <button
             v-if="canManageUsers"
             @click="activeTab = 'import'"
             :class="['px-3 py-2 text-xs font-medium -mb-px border-b-2 transition-colors whitespace-nowrap font-montserrat', activeTab === 'import' ? 'border-default text-default' : 'border-transparent text-placeholder hover:text-default']"
@@ -739,6 +758,10 @@ onMounted(async () => {
         />
       </div>
 
+      <div v-if="activeTab === 'roles' && canManageRoles">
+        <RolesManager @changed="loadSchoolRoles" />
+      </div>
+
       <div v-if="activeTab === 'import' && canManageUsers && school">
         <StudentImport />
       </div>
@@ -762,6 +785,7 @@ onMounted(async () => {
           <UserList
               :school-id="school.id"
               :selected-user-id="managingUser?.user.id"
+              :role-labels="roleLabels"
               ref="userListRef"
               @manage="handleManage"
           />

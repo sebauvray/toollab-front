@@ -392,7 +392,7 @@ onUnmounted(() => {
                       <div class="text-sm font-medium text-default truncate">{{ school.name }}</div>
                       <div class="text-xs truncate text-placeholder">
                         <template v-if="selectedSchool?.id === school.id && activeRole">
-                          {{ ROLE_LABELS[activeRole] || activeRole }}
+                          {{ selectedSchool.roles.find(role => role.slug === activeRole)?.label || ROLE_LABELS[activeRole] || activeRole }}
                         </template>
                         <template v-else>
                           {{ school.roles.length ? school.roles.map(role => role.label).join(' · ') : (isSuperAdmin ? 'Super-admin' : '—') }}
