@@ -117,7 +117,7 @@ onMounted(fetchSchool)
     <template v-else-if="school">
       <h1 class="text-lg font-bold mb-5">Modifier {{ school.name }}</h1>
 
-      <form class="bg-white rounded-lg border p-5 space-y-5" @submit.prevent="handleSubmit">
+      <form class="bg-white rounded-2xl border border-[#E6EFF5] p-5 space-y-5" @submit.prevent="handleSubmit">
         <div v-if="Object.keys(errors).length" class="bg-red-50 text-red-700 ring-1 ring-red-200 rounded-lg px-3 py-2 text-xs space-y-0.5">
           <p v-for="(messages, field) in errors" :key="field">{{ messages[0] }}</p>
         </div>

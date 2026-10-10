@@ -1,7 +1,15 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from '#imports'
-import schoolService from '~/services/school'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from '#imports'
+import adminDashboardService from '~/services/adminDashboard'
+import SchoolQuickActions from '~/components/admin/SchoolQuickActions.vue'
+import PageHeader from '~/components/admin/ui/PageHeader.vue'
+import SegmentedControl from '~/components/admin/ui/SegmentedControl.vue'
+import StatusBadge from '~/components/admin/ui/StatusBadge.vue'
+import AlertBanner from '~/components/admin/ui/AlertBanner.vue'
+import Skeleton from '~/components/admin/ui/Skeleton.vue'
+import { SCHOOL_ALERTS, needsAttention, relativeDay } from '~/utils/schoolAlerts'
+import { useAdminCounters } from '~/composables/useAdminCounters'
 
 definePageMeta({
   layout: 'admin',
@@ -10,93 +18,133 @@ definePageMeta({
 
 usePageTitle('Admin · Écoles')
 
+const route = useRoute()
 const router = useRouter()
+const { refreshCounters } = useAdminCounters()
+
 const schools = ref([])
 const isLoading = ref(true)
 const errorMsg = ref('')
+const q = ref('')
+const filter = ref(['alerts', 'suspended'].includes(route.query.filter) ? route.query.filter : 'all')
+watch(filter, (v) => router.replace({ query: v === 'all' ? {} : { filter: v } }))
 
-const fetchSchools = async () => {
-  isLoading.value = true
-  errorMsg.value = ''
+onMounted(async () => {
   try {
-    schools.value = await schoolService.getSchools()
+    schools.value = await adminDashboardService.getSchoolsHealth()
   } catch (e) {
     console.error(e)
     errorMsg.value = 'Erreur lors du chargement des écoles.'
   } finally {
     isLoading.value = false
   }
-}
+})
 
-onMounted(fetchSchools)
+const normalize = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+
+const filtered = computed(() => {
+  const term = normalize(q.value.trim())
+  return schools.value
+    .filter(s => filter.value === 'all' || (filter.value === 'alerts' ? needsAttention(s) : !s.access))
+    .filter(s => !term || normalize(s.name).includes(term) || normalize(s.city).includes(term) || String(s.id) === term)
+})
+
+const filterOptions = computed(() => [
+  { value: 'all', label: 'Toutes', count: schools.value.length },
+  { value: 'alerts', label: 'À surveiller', count: schools.value.filter(needsAttention).length },
+  { value: 'suspended', label: 'Suspendues', count: schools.value.filter(s => !s.access).length }
+])
+
+const onUpdated = (school, res) => {
+  school.access = res.access
+  refreshCounters()
+}
 </script>
 
 <template>
-  <div class="p-6">
-    <div class="flex justify-between items-center mb-5">
-      <div>
-        <h1 class="text-lg font-bold">Écoles</h1>
-        <p class="text-gray-600 text-xs">{{ schools.length }} école{{ schools.length > 1 ? 's' : '' }} sur la plateforme</p>
+  <div class="p-6 max-w-6xl font-montserrat">
+    <PageHeader title="Écoles" :subtitle="`${schools.length} école${schools.length > 1 ? 's' : ''} sur la plateforme`">
+      <template #actions>
+        <NuxtLink to="/admin/schools/new" class="px-3 py-1.5 text-xs font-medium bg-default text-white rounded-lg hover:opacity-90">
+          Créer une école
+        </NuxtLink>
+      </template>
+    </PageHeader>
+
+    <div class="flex flex-wrap items-center gap-2 mb-4">
+      <input
+        v-model="q"
+        type="search"
+        aria-label="Rechercher une école"
+        placeholder="Nom, ville ou ID…"
+        class="flex-1 min-w-[220px] max-w-sm px-3 py-1.5 text-sm border border-input-stroke rounded-lg bg-white"
+      />
+      <SegmentedControl v-model="filter" :options="filterOptions" label="Filtrer les écoles" />
+    </div>
+
+    <AlertBanner v-if="errorMsg" class="mb-4">{{ errorMsg }}</AlertBanner>
+
+    <div class="bg-white rounded-2xl border border-[#E6EFF5] overflow-hidden">
+      <div v-if="isLoading" class="p-5"><Skeleton :lines="6" /></div>
+      <div v-else class="overflow-x-auto">
+        <table class="w-full min-w-[760px] text-sm">
+          <thead class="border-b border-[#E6EFF5] text-left text-xs font-semibold text-gray-600">
+            <tr>
+              <th class="px-4 py-2.5">École</th>
+              <th class="px-4 py-2.5 text-right">Élèves</th>
+              <th class="px-4 py-2.5 text-right">Profs</th>
+              <th class="px-4 py-2.5 text-right">Classes</th>
+              <th class="px-4 py-2.5">Dernière activité</th>
+              <th class="px-4 py-2.5">Signaux</th>
+              <th class="px-2 py-2.5"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody class="font-nunito divide-y divide-[#E6EFF5]">
+            <tr v-if="!filtered.length">
+              <td colspan="7" class="px-4 py-8 text-center text-xs text-gray-600">
+                {{ q ? 'Aucune école ne correspond à cette recherche.' : filter === 'all' ? 'Aucune école.' : 'Rien à signaler.' }}
+              </td>
+            </tr>
+            <tr v-for="school in filtered" :key="school.id" class="hover:bg-gray-50">
+              <td class="px-4 py-2.5">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-xs shrink-0 font-montserrat" aria-hidden="true">
+                    {{ school.name?.charAt(0)?.toUpperCase() }}
+                  </div>
+                  <div class="min-w-0">
+                    <NuxtLink :to="`/admin/schools/${school.id}`" class="font-semibold text-default hover:underline">{{ school.name }}</NuxtLink>
+                    <div class="text-xs text-gray-500 flex items-center gap-1.5">
+                      {{ school.city || '—' }}
+                      <StatusBadge v-if="!school.access" status="suspended" />
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-2.5 text-right tabular-nums">{{ school.students }}</td>
+              <td class="px-4 py-2.5 text-right tabular-nums">{{ school.teachers }}</td>
+              <td class="px-4 py-2.5 text-right tabular-nums">{{ school.classrooms }}</td>
+              <td class="px-4 py-2.5 whitespace-nowrap">{{ relativeDay(school.last_activity) }}</td>
+              <td class="px-4 py-2.5">
+                <div class="flex flex-wrap gap-1">
+                  <span
+                    v-for="a in school.alerts"
+                    :key="a"
+                    class="px-1.5 py-0.5 rounded-md text-[11px] font-medium ring-1"
+                    :class="SCHOOL_ALERTS[a].cls"
+                    :title="SCHOOL_ALERTS[a].hint"
+                  >{{ SCHOOL_ALERTS[a].label }}</span>
+                </div>
+              </td>
+              <td class="px-2 py-2.5 text-right">
+                <SchoolQuickActions
+                  :school="{ ...school, has_director: !school.alerts.includes('no_director') }"
+                  @updated="res => onUpdated(school, res)"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <NuxtLink
-        to="/admin/schools/new"
-        class="px-3 py-1.5 bg-default text-white rounded-lg hover:opacity-90"
-      >
-        + Créer une école
-      </NuxtLink>
-    </div>
-
-    <div v-if="errorMsg" class="bg-red-50 border border-red-200 text-red-700 p-3 rounded mb-5">
-      {{ errorMsg }}
-    </div>
-
-    <div v-if="isLoading" class="py-6 text-center">
-      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-default mx-auto"></div>
-    </div>
-
-    <div v-else class="bg-white rounded-lg border">
-      <table class="w-full">
-        <thead class="bg-gray-50 border-b">
-          <tr>
-            <th class="text-left px-5 py-2 text-xs font-bold text-gray-600 uppercase">École</th>
-            <th class="text-left px-5 py-2 text-xs font-bold text-gray-600 uppercase">Ville</th>
-            <th class="text-left px-5 py-2 text-xs font-bold text-gray-600 uppercase">Email</th>
-            <th class="text-left px-5 py-2 text-xs font-bold text-gray-600 uppercase">Actif</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="school in schools"
-            :key="school.id"
-            tabindex="0"
-            class="border-b last:border-b-0 hover:bg-gray-50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-default"
-            @click="router.push(`/admin/schools/${school.id}`)"
-            @keydown.enter="router.push(`/admin/schools/${school.id}`)"
-          >
-            <td class="px-5 py-3">
-              <div class="flex items-center gap-2">
-                <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs">
-                  {{ school.name?.charAt(0)?.toUpperCase() }}
-                </div>
-                <div>
-                  <div class="font-semibold text-default hover:underline">{{ school.name }}</div>
-                  <div class="text-xs text-gray-500">ID #{{ school.id }}</div>
-                </div>
-              </div>
-            </td>
-            <td class="px-5 py-3">{{ school.city || '—' }}</td>
-            <td class="px-5 py-3">{{ school.email || '—' }}</td>
-            <td class="px-5 py-3">
-              <span :class="school.access ? 'text-green-600' : 'text-red-600'" class="text-xs font-bold">
-                {{ school.access ? 'Actif' : 'Désactivé' }}
-              </span>
-            </td>
-          </tr>
-          <tr v-if="schools.length === 0">
-            <td colspan="4" class="text-center py-10 text-gray-500">Aucune école.</td>
-          </tr>
-        </tbody>
-      </table>
     </div>
   </div>
 </template>

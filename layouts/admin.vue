@@ -6,6 +6,26 @@ import Setting from "~/components/Icons/Setting.vue"
 import schoolService from '~/services/school'
 import { useAuth } from '~/composables/useAuth'
 import { clearCurrentSchoolRoles } from '~/utils/schoolRoles'
+import { useAdminCounters } from '~/composables/useAdminCounters'
+
+const NAV = [
+  {
+    title: 'Plateforme',
+    items: [
+      { to: '/admin', label: 'Tableau de bord', exact: true, icon: 'M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z' },
+      { to: '/admin/schools', label: 'Écoles', counter: 'schools_to_watch', counterLabel: 'écoles à surveiller', icon: 'M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342' },
+      { to: '/admin/users', label: 'Utilisateurs', counter: 'pending_invitations', counterLabel: 'invitations en attente', icon: 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z' }
+    ]
+  },
+  {
+    title: 'Technique',
+    items: [
+      { to: '/admin/errors', label: 'Erreurs', counter: 'open_errors', counterLabel: 'erreurs ouvertes', counterTone: 'alert', icon: 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z' },
+      { to: '/admin/audit', label: 'Audit', icon: 'M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z' },
+      { to: '/admin/database', label: 'Base de données', icon: 'M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125' }
+    ]
+  }
+]
 
 const router = useRouter()
 const { logout } = useAuth()
@@ -13,6 +33,7 @@ const user = ref(null)
 const userSchools = ref([])
 const showAccountMenu = ref(false)
 const accountMenuRef = ref(null)
+const { counters, refreshCounters } = useAdminCounters()
 
 const initials = computed(() => {
   if (!user.value) return 'AD'
@@ -39,6 +60,7 @@ onMounted(async () => {
       console.error(e)
     }
     document.addEventListener('click', handleClickOutside)
+    refreshCounters()
   }
 })
 
@@ -72,59 +94,37 @@ const handleLogout = async () => {
 
 <template>
   <div class="flex bg-gray-blue h-screen antialiased overflow-hidden font-nunito">
-    <aside class="flex flex-col bg-white h-screen border-r w-64 font-medium font-montserrat">
-      <div class="w-full flex items-center justify-center h-16 border-b">
-        <LogoText class="w-36" />
+    <aside class="flex flex-col bg-white h-screen border-r border-[#E6EFF5] w-64 font-medium font-montserrat">
+      <div class="w-full flex flex-col items-center justify-center py-4 border-b border-[#E6EFF5]">
+        <LogoText class="w-32" />
+        <span class="text-[10px] font-semibold uppercase tracking-wider text-placeholder mt-1.5">Administration</span>
       </div>
 
-      <div class="px-3 py-2 bg-purple-50 border-b border-purple-200 flex items-center gap-1.5">
-        <span class="text-lg">🛡️</span>
-        <span class="text-xs font-bold text-purple-900">Administration</span>
-      </div>
-
-      <nav class="flex flex-col gap-y-1 mt-1.5 flex-1 px-1.5">
-        <NuxtLink
-          to="/admin"
-          class="px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-          exact-active-class="bg-gray-100 text-default font-bold"
-        >
-          Tableau de bord
-        </NuxtLink>
-        <NuxtLink
-          to="/admin/schools"
-          class="px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-          active-class="bg-gray-100 text-default font-bold"
-        >
-          Écoles
-        </NuxtLink>
-        <NuxtLink
-          to="/admin/users"
-          class="px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-          active-class="bg-gray-100 text-default font-bold"
-        >
-          Utilisateurs
-        </NuxtLink>
-        <NuxtLink
-          to="/admin/audit"
-          class="px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-          active-class="bg-gray-100 text-default font-bold"
-        >
-          Audit
-        </NuxtLink>
-        <NuxtLink
-          to="/admin/errors"
-          class="px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-          active-class="bg-gray-100 text-default font-bold"
-        >
-          Erreurs
-        </NuxtLink>
-        <NuxtLink
-          to="/admin/database"
-          class="px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-          active-class="bg-gray-100 text-default font-bold"
-        >
-          Base de données
-        </NuxtLink>
+      <nav class="flex flex-col flex-1 px-2 py-3 gap-y-4 overflow-y-auto" aria-label="Administration">
+        <div v-for="group in NAV" :key="group.title">
+          <p class="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-placeholder">{{ group.title }}</p>
+          <div class="flex flex-col gap-y-0.5">
+            <NuxtLink
+              v-for="item in group.items"
+              :key="item.to"
+              :to="item.to"
+              class="flex items-center gap-x-2.5 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-blue transition-colors"
+              :active-class="item.exact ? '' : 'bg-gray-100 !text-default font-semibold'"
+              :exact-active-class="item.exact ? 'bg-gray-100 !text-default font-semibold' : ''"
+            >
+              <svg class="size-[18px] shrink-0 text-placeholder" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
+              </svg>
+              <span class="flex-1">{{ item.label }}</span>
+              <span
+                v-if="item.counter && counters[item.counter]"
+                class="min-w-[20px] px-1.5 py-0.5 rounded-md text-[11px] font-semibold text-center tabular-nums"
+                :class="item.counterTone === 'alert' ? 'bg-red-50 text-red-700' : 'bg-gray-100 text-gray-700'"
+                :aria-label="`${counters[item.counter]} ${item.counterLabel}`"
+              >{{ counters[item.counter] }}</span>
+            </NuxtLink>
+          </div>
+        </div>
       </nav>
 
       <div class="mb-3 px-3">

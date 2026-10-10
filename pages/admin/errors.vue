@@ -4,6 +4,11 @@ import { useRoute, useRouter } from '#imports'
 import adminDashboardService from '~/services/adminDashboard'
 import HourlyBars from '~/components/admin/HourlyBars.vue'
 import { relativeTime, fullDate } from '~/utils/adminFormat'
+import PageHeader from '~/components/admin/ui/PageHeader.vue'
+import SegmentedControl from '~/components/admin/ui/SegmentedControl.vue'
+import AlertBanner from '~/components/admin/ui/AlertBanner.vue'
+import StatusBadge from '~/components/admin/ui/StatusBadge.vue'
+import { useAdminCounters } from '~/composables/useAdminCounters'
 
 definePageMeta({
   layout: 'admin',
@@ -26,6 +31,15 @@ const selectedId = ref(route.query.id ? Number(route.query.id) : null)
 const detail = ref(null)
 const isLoadingDetail = ref(false)
 const isSaving = ref(false)
+const summary = ref(null)
+const { refreshCounters } = useAdminCounters()
+const fetchSummary = async () => {
+  try {
+    summary.value = await adminDashboardService.getErrorsSummary()
+  } catch (e) {
+    console.error(e)
+  }
+}
 
 const STATUSES = [
   { value: 'open', label: 'Ouvertes' },
@@ -91,6 +105,8 @@ const toggleResolved = async () => {
   try {
     const res = await adminDashboardService.setErrorResolved(detail.value.id, !detail.value.resolved_at)
     detail.value.resolved_at = res.resolved_at
+    fetchSummary()
+    refreshCounters()
     await fetchErrors()
   } catch (e) {
     console.error(e)
@@ -105,6 +121,7 @@ const goToPage = (p) => { page.value = p; fetchErrors() }
 
 const onKey = (e) => { if (e.key === 'Escape') selectedId.value = null }
 onMounted(() => {
+  fetchSummary()
   fetchErrors()
   loadDetail()
   document.addEventListener('keydown', onKey)
@@ -114,37 +131,34 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
 
 <template>
   <div class="p-6 max-w-6xl font-montserrat">
-    <div class="mb-4">
-      <h1 class="text-lg font-bold">Erreurs serveur</h1>
-      <p class="text-gray-600 text-xs">Exceptions non gérées de l'API, regroupées par origine. Historique horaire conservé 7 jours.</p>
+    <PageHeader title="Erreurs serveur" subtitle="Exceptions non gérées de l'API, regroupées par origine. Historique horaire conservé 7 jours." />
+
+    <div v-if="summary" class="bg-white rounded-2xl border border-[#E6EFF5] p-5 mb-4 grid grid-cols-1 md:grid-cols-[auto,1fr] gap-x-8 gap-y-4 items-end">
+      <dl class="grid grid-cols-3 gap-x-6">
+        <div>
+          <dt class="text-xs text-gray-600">Sur 24 h</dt>
+          <dd class="text-xl font-bold tabular-nums">{{ summary.last_24h }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-gray-600">Ouvertes</dt>
+          <dd class="text-xl font-bold tabular-nums" :class="summary.open ? 'text-red-700' : ''">{{ summary.open }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-gray-600">E-mails (7 j)</dt>
+          <dd class="text-xl font-bold tabular-nums">{{ summary.mail_failures_7d }}</dd>
+        </div>
+      </dl>
+      <HourlyBars :values="summary.hourly" :height="48" />
     </div>
 
     <div class="flex flex-wrap items-center gap-3 mb-4">
-      <div class="inline-flex rounded-lg border border-input-stroke divide-x divide-input-stroke overflow-hidden" role="group" aria-label="Statut">
-        <button
-          v-for="s in STATUSES"
-          :key="s.value"
-          class="px-3 py-1.5 text-xs transition-colors"
-          :class="status === s.value ? 'bg-default text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
-          :aria-pressed="status === s.value"
-          @click="status = s.value"
-        >{{ s.label }}</button>
-      </div>
-      <div class="inline-flex flex-wrap rounded-lg border border-input-stroke divide-x divide-input-stroke overflow-hidden" role="group" aria-label="Catégorie">
-        <button
-          v-for="c in CATEGORIES"
-          :key="c.value"
-          class="px-3 py-1.5 text-xs transition-colors"
-          :class="category === c.value ? 'bg-default text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
-          :aria-pressed="category === c.value"
-          @click="category = c.value"
-        >{{ c.label }}</button>
-      </div>
+      <SegmentedControl v-model="status" :options="STATUSES" label="Statut" />
+      <SegmentedControl v-model="category" :options="CATEGORIES" label="Catégorie" />
     </div>
 
-    <div v-if="errorMsg" class="bg-red-50 text-red-700 ring-1 ring-red-200 rounded-lg px-3 py-2 text-xs mb-4">{{ errorMsg }}</div>
+    <AlertBanner v-if="errorMsg" class="mb-4">{{ errorMsg }}</AlertBanner>
 
-    <div class="bg-white rounded-2xl border overflow-hidden">
+    <div class="bg-white rounded-2xl border border-[#E6EFF5] overflow-hidden">
       <ul class="divide-y divide-[#E6EFF5] font-nunito text-sm" :class="{ 'opacity-50': isLoading }">
         <li v-if="!isLoading && !results.data.length" class="px-4 py-6 text-center text-xs text-gray-600">
           {{ status === 'open' ? 'Aucune erreur ouverte.' : 'Aucune erreur.' }}
@@ -159,7 +173,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
               <div class="flex flex-wrap items-baseline gap-x-1.5">
                 <span class="font-semibold">{{ shortClass(err.exception_class) }}</span>
                 <span class="text-xs text-gray-500">{{ CATEGORY_LABEL[err.category] }} · {{ err.context }}</span>
-                <span v-if="err.resolved_at" class="px-1.5 py-0.5 rounded-md text-[11px] font-medium ring-1 bg-green-50 text-green-700 ring-green-200">résolue</span>
+                <StatusBadge v-if="err.resolved_at" status="resolved" />
               </div>
               <div class="text-xs text-gray-700 truncate">{{ err.message || '(sans message)' }}</div>
               <div class="text-xs text-gray-500 font-mono truncate">{{ err.file }}:{{ err.line }}</div>

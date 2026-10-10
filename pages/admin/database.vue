@@ -1,7 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import adminDashboardService from '~/services/adminDashboard'
-import HourlyBars from '~/components/admin/HourlyBars.vue'
+import TrendChart from '~/components/admin/ui/TrendChart.vue'
+import PageHeader from '~/components/admin/ui/PageHeader.vue'
+import AlertBanner from '~/components/admin/ui/AlertBanner.vue'
 import { formatBytes, formatDelta } from '~/utils/adminFormat'
 
 definePageMeta({
@@ -43,15 +45,10 @@ const tables = computed(() => {
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR') : null
 const fmtNumber = (n) => n.toLocaleString('fr-FR')
 
-const history = computed(() => {
-  const daily = data.value?.daily ?? []
-  return {
-    values: daily.map(d => d.size_bytes),
-    tooltips: daily.map(d => `${fmtDate(d.date)} · ${formatBytes(d.size_bytes)} · ${fmtNumber(d.rows)} lignes`),
-    start: daily.length ? fmtDate(daily[0].date) : '',
-    end: daily.length ? fmtDate(daily.at(-1).date) : ''
-  }
-})
+const history = computed(() => (data.value?.daily ?? []).map(d => ({
+  label: new Date(d.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
+  value: d.size_bytes
+})))
 </script>
 
 <template>
@@ -63,7 +60,7 @@ const history = computed(() => {
       </p>
     </div>
 
-    <div v-if="errorMsg" class="bg-red-50 text-red-700 ring-1 ring-red-200 rounded-lg px-3 py-2 text-xs mb-4">{{ errorMsg }}</div>
+    <AlertBanner v-if="errorMsg" class="mb-4">{{ errorMsg }}</AlertBanner>
 
     <div v-if="isLoading" class="py-6 text-center">
       <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-default mx-auto"></div>
@@ -71,17 +68,17 @@ const history = computed(() => {
 
     <template v-else-if="data">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-        <div class="bg-white p-5 rounded-2xl border">
+        <div class="bg-white p-5 rounded-2xl border border-[#E6EFF5]">
           <div class="text-xl font-bold text-default tabular-nums">{{ formatBytes(data.total_bytes) }}</div>
           <div class="text-sm font-medium mt-1">Taille totale</div>
           <div class="text-xs text-gray-500 mt-0.5">données + index, {{ data.tables.length }} tables</div>
         </div>
-        <div class="bg-white p-5 rounded-2xl border">
+        <div class="bg-white p-5 rounded-2xl border border-[#E6EFF5]">
           <div class="text-xl font-bold text-default tabular-nums">{{ fmtNumber(data.total_rows) }}</div>
           <div class="text-sm font-medium mt-1">Lignes</div>
           <div class="text-xs text-gray-500 mt-0.5">toutes tables confondues</div>
         </div>
-        <div class="bg-white p-5 rounded-2xl border">
+        <div class="bg-white p-5 rounded-2xl border border-[#E6EFF5]">
           <div class="text-xl font-bold text-default tabular-nums">{{ formatDelta(data.size_30d, formatBytes) }}</div>
           <div class="text-sm font-medium mt-1">Croissance</div>
           <div class="text-xs text-gray-500 mt-0.5">
@@ -91,15 +88,14 @@ const history = computed(() => {
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl border p-5 mb-4">
+      <div class="bg-white rounded-2xl border border-[#E6EFF5] p-5 mb-4">
         <h2 class="text-sm font-semibold mb-3">Taille totale sur 30 jours</h2>
-        <HourlyBars
-          v-if="history.values.length >= 2"
-          :values="history.values"
-          :tooltips="history.tooltips"
-          :start-label="history.start"
-          :end-label="history.end"
-          :height="56"
+        <TrendChart
+          v-if="history.length >= 2"
+          :points="history"
+          :format="formatBytes"
+          :zero-based="false"
+          :height="120"
           label="Taille totale de la base par jour sur 30 jours"
         />
         <p v-else class="text-xs text-gray-600">
@@ -107,7 +103,7 @@ const history = computed(() => {
         </p>
       </div>
 
-      <div class="bg-white rounded-2xl border overflow-hidden">
+      <div class="bg-white rounded-2xl border border-[#E6EFF5] overflow-hidden">
         <div class="px-4 py-3 border-b border-[#E6EFF5] flex flex-wrap justify-between items-center gap-2">
           <h2 class="text-sm font-semibold">Tables</h2>
           <div class="inline-flex rounded-lg border border-input-stroke divide-x divide-input-stroke overflow-hidden" role="group" aria-label="Tri">

@@ -3,6 +3,9 @@ import { ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from '#imports'
 import adminDashboardService from '~/services/adminDashboard'
 import { relativeTime } from '~/utils/adminFormat'
+import PageHeader from '~/components/admin/ui/PageHeader.vue'
+import Tabs from '~/components/admin/ui/Tabs.vue'
+import AlertBanner from '~/components/admin/ui/AlertBanner.vue'
 import { AUDIT_CATEGORIES, auditDetail, auditDotClass, shortLabel } from '~/utils/auditFormat'
 
 definePageMeta({
@@ -21,6 +24,7 @@ const tab = ref(route.query.tab === 'impersonations' ? 'impersonations' : 'actio
 const category = ref(route.query.action || '')
 const q = ref(route.query.q || '')
 const userId = ref(route.query.user_id || '')
+const schoolId = ref(route.query.school_id || '')
 const page = ref(1)
 const logs = ref({ data: [], total: 0, last_page: 1, from: 0, to: 0 })
 
@@ -33,12 +37,13 @@ const errorMsg = ref('')
 const fetchLogs = async () => {
   isLoading.value = true
   errorMsg.value = ''
-  router.replace({ query: { tab: undefined, action: category.value || undefined, q: q.value || undefined, user_id: userId.value || undefined } })
+  router.replace({ query: { tab: undefined, action: category.value || undefined, q: q.value || undefined, user_id: userId.value || undefined, school_id: schoolId.value || undefined } })
   try {
     logs.value = await adminDashboardService.getAuditLogs({
       action: category.value || undefined,
       q: q.value || undefined,
       user_id: userId.value || undefined,
+      school_id: schoolId.value || undefined,
       page: page.value
     })
   } catch (e) {
@@ -76,6 +81,7 @@ onMounted(load)
 
 const goToPage = (p) => { page.value = p; fetchLogs() }
 const clearUser = () => { userId.value = ''; page.value = 1; fetchLogs() }
+const clearSchool = () => { schoolId.value = ''; page.value = 1; fetchLogs() }
 
 const STATUS = {
   active: { label: 'En cours', cls: 'bg-amber-50 text-amber-700 ring-amber-200' },
@@ -96,24 +102,16 @@ const name = (u) => u ? `${u.first_name} ${u.last_name}` : 'Utilisateur supprim�
 
 <template>
   <div class="p-6 max-w-6xl font-montserrat">
-    <div class="mb-4">
-      <h1 class="text-lg font-bold">Journal d'audit</h1>
-      <p class="text-gray-600 text-xs">Actions sensibles sur la plateforme et sessions du support.</p>
-    </div>
+    <PageHeader title="Journal d'audit" subtitle="Actions sensibles sur la plateforme et sessions du support." />
 
-    <div class="flex gap-5 border-b border-[#E6EFF5] mb-4 text-sm" role="tablist">
-      <button
-        v-for="t in [{ v: 'actions', l: 'Actions sensibles' }, { v: 'impersonations', l: 'Sessions « en tant que »' }]"
-        :key="t.v"
-        role="tab"
-        :aria-selected="tab === t.v"
-        class="pb-2 -mb-px border-b-2 transition-colors"
-        :class="tab === t.v ? 'border-default text-default font-semibold' : 'border-transparent text-gray-600 hover:text-default'"
-        @click="tab = t.v"
-      >{{ t.l }}</button>
-    </div>
+    <Tabs
+      v-model="tab"
+      :tabs="[{ value: 'actions', label: 'Actions sensibles' }, { value: 'impersonations', label: 'Sessions « en tant que »' }]"
+      label="Sections du journal"
+      class="mb-4"
+    />
 
-    <div v-if="errorMsg" class="bg-red-50 text-red-700 ring-1 ring-red-200 rounded-lg px-3 py-2 text-xs mb-4">{{ errorMsg }}</div>
+    <AlertBanner v-if="errorMsg" class="mb-4">{{ errorMsg }}</AlertBanner>
 
     <!-- Actions sensibles -->
     <template v-if="tab === 'actions'">
@@ -141,8 +139,12 @@ const name = (u) => u ? `${u.first_name} ${u.last_name}` : 'Utilisateur supprim�
         Filtré sur l'utilisateur #{{ userId }}
         <button class="text-blue-link hover:underline" @click="clearUser">Retirer le filtre</button>
       </div>
+      <div v-if="schoolId" class="mb-3 text-xs text-gray-700 flex items-center gap-2">
+        Filtré sur l'école #{{ schoolId }}
+        <button class="text-blue-link hover:underline" @click="clearSchool">Retirer le filtre</button>
+      </div>
 
-      <div class="bg-white rounded-2xl border overflow-hidden">
+      <div class="bg-white rounded-2xl border border-[#E6EFF5] overflow-hidden">
         <ul class="divide-y divide-[#E6EFF5] font-nunito text-sm" :class="{ 'opacity-50': isLoading }">
           <li v-if="!isLoading && !logs.data.length" class="px-4 py-6 text-center text-xs text-gray-600">Aucune action enregistrée.</li>
           <li v-for="log in logs.data" :key="log.id" class="px-4 py-2.5 flex gap-3">
@@ -186,7 +188,7 @@ const name = (u) => u ? `${u.first_name} ${u.last_name}` : 'Utilisateur supprim�
     </template>
 
     <!-- Sessions « en tant que » -->
-    <div v-else class="bg-white rounded-2xl border overflow-x-auto">
+    <div v-else class="bg-white rounded-2xl border border-[#E6EFF5] overflow-x-auto">
       <table class="w-full">
         <thead class="border-b border-[#E6EFF5] text-left text-xs font-semibold text-gray-600">
           <tr>

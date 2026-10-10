@@ -67,7 +67,7 @@ const handleSubmit = async () => {
     </NuxtLink>
     <h1 class="text-lg font-bold mb-5">Créer une école</h1>
 
-    <form @submit.prevent="handleSubmit" class="bg-white rounded-lg border p-5 space-y-5">
+    <form @submit.prevent="handleSubmit" class="bg-white rounded-2xl border border-[#E6EFF5] p-5 space-y-5">
       <div v-if="Object.keys(errors).length" class="bg-red-50 text-red-700 ring-1 ring-red-200 rounded-lg px-3 py-2 text-xs space-y-0.5">
         <p v-for="(msgs, field) in errors" :key="field">{{ msgs[0] }}</p>
       </div>

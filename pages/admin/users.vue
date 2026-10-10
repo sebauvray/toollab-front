@@ -233,7 +233,7 @@ const openSchool = (id) => {
       {{ errorMsg }}
     </div>
 
-    <div class="bg-white rounded-2xl border overflow-hidden">
+    <div class="bg-white rounded-2xl border border-[#E6EFF5] overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full table-fixed min-w-[720px]" :class="{ 'opacity-50': isLoading }">
           <colgroup>

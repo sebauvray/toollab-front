@@ -6,6 +6,26 @@ export default {
         return response.data
     },
 
+    async getSchoolsHealth() {
+        const response = await apiClient.get('/api/admin/schools-health')
+        return response.data
+    },
+
+    async getSchoolOverview(id) {
+        const response = await apiClient.get(`/api/admin/schools/${id}/overview`)
+        return response.data
+    },
+
+    async getErrorsSummary() {
+        const response = await apiClient.get('/api/admin/errors/summary')
+        return response.data
+    },
+
+    async getCounters() {
+        const response = await apiClient.get('/api/admin/counters')
+        return response.data
+    },
+
     async searchUsers(params = {}) {
         const response = await apiClient.get('/api/admin/users', { params })
         return response.data
