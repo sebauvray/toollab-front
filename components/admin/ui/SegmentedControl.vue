@@ -19,7 +19,7 @@ defineEmits(['update:modelValue'])
       :aria-pressed="modelValue === o.value"
       @click="$emit('update:modelValue', o.value)"
     >
-      {{ o.label }}<span v-if="o.count !== undefined && o.count !== null" class="tabular-nums" :class="modelValue === o.value ? 'text-white/70' : 'text-gray-500'"> {{ o.count }}</span>
+      {{ o.label }}<span v-if="o.count !== undefined && o.count !== null" class="ml-1 tabular-nums" :class="modelValue === o.value ? 'text-white/70' : 'text-gray-500'">{{ o.count }}</span>
     </button>
   </div>
 </template>
