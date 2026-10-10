@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import adminDashboardService from '~/services/adminDashboard'
 import SchoolQuickActions from '~/components/admin/SchoolQuickActions.vue'
 import HourlyBars from '~/components/admin/HourlyBars.vue'
+import { formatBytes, formatDelta } from '~/utils/adminFormat'
 import { auditDetail, auditDotClass, shortLabel } from '~/utils/auditFormat'
 
 definePageMeta({
@@ -227,6 +228,16 @@ const onSchoolUpdated = (school, res) => {
             <dd>
               <span :class="data.system.database.ok ? 'text-green-600' : 'text-red-600'">●</span>
               {{ data.system.database.ok ? `OK · ${data.system.database.latency_ms} ms` : 'Erreur' }}
+            </dd>
+            <dt class="text-gray-500">Taille de la base</dt>
+            <dd>
+              <NuxtLink v-if="data.system.database_size" to="/admin/database" class="hover:underline tabular-nums">
+                {{ formatBytes(data.system.database_size.total_bytes) }}
+                <span v-if="data.system.database_size.size_30d !== null" class="text-xs text-gray-500">
+                  ({{ formatDelta(data.system.database_size.size_30d, formatBytes) }} depuis le {{ new Date(data.system.database_size.compared_to).toLocaleDateString('fr-FR') }})
+                </span>
+              </NuxtLink>
+              <template v-else>—</template>
             </dd>
             <dt class="text-gray-500">Migrations en attente</dt>
             <dd :class="data.system.migrations_pending.length ? 'text-red-600 font-medium' : ''">

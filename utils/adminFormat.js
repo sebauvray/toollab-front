@@ -38,3 +38,24 @@ export function groupMemberships(memberships) {
     }
     return [...groups.values()]
 }
+
+/** 1 234 567 o → « 1,2 Mo ». */
+export function formatBytes(bytes) {
+    if (bytes == null) return '—'
+    const units = ['o', 'Ko', 'Mo', 'Go', 'To']
+    let value = Math.abs(bytes)
+    let i = 0
+    while (value >= 1024 && i < units.length - 1) {
+        value /= 1024
+        i++
+    }
+    const n = value.toLocaleString('fr-FR', { maximumFractionDigits: value < 10 && i > 0 ? 1 : 0 })
+    return `${bytes < 0 ? '−' : ''}${n} ${units[i]}`
+}
+
+/** Variation signée : « +12 », « −3 », « 0 », ou « — » si inconnue. */
+export function formatDelta(value, formatter = (v) => v.toLocaleString('fr-FR')) {
+    if (value == null) return '—'
+    if (value === 0) return '0'
+    return `${value > 0 ? '+' : '−'}${formatter(Math.abs(value))}`
+}

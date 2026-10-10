@@ -81,6 +81,11 @@ export default {
         return response.data
     },
 
+    async getDatabase() {
+        const response = await apiClient.get('/api/admin/database')
+        return response.data
+    },
+
     async getImpersonations() {
         const response = await apiClient.get('/api/admin/impersonations')
         return response.data

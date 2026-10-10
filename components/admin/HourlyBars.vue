@@ -6,7 +6,11 @@ import { computed, ref } from 'vue'
 const props = defineProps({
   values: { type: Array, required: true }, // 24 compteurs, du plus ancien au plus récent
   label: { type: String, default: 'Erreurs par heure sur 24 h' },
-  height: { type: Number, default: 40 }
+  height: { type: Number, default: 40 },
+  // Variante générique : une infobulle par barre et les bornes de l'axe
+  tooltips: { type: Array, default: null },
+  startLabel: { type: String, default: '-24 h' },
+  endLabel: { type: String, default: 'maintenant' }
 })
 
 const hovered = ref(null)
@@ -23,6 +27,7 @@ const hourLabel = (index) => {
 }
 
 const peak = computed(() => {
+  if (props.tooltips) return `${props.values.length} valeurs, de ${props.tooltips[0]} à ${props.tooltips.at(-1)}`
   const i = props.values.indexOf(Math.max(...props.values))
   return total.value ? `pic de ${props.values[i]} entre ${hourLabel(i)}` : 'aucune'
 })
@@ -46,14 +51,15 @@ const peak = computed(() => {
       </div>
     </div>
     <div class="flex justify-between text-[10px] text-gray-500 mt-0.5" aria-hidden="true">
-      <span>-24 h</span><span>maintenant</span>
+      <span>{{ startLabel }}</span><span>{{ endLabel }}</span>
     </div>
     <div
       v-if="hovered !== null"
       class="absolute -top-7 z-10 px-2 py-0.5 rounded-md bg-white border shadow-md text-[11px] whitespace-nowrap pointer-events-none"
-      :style="{ left: `${Math.min(Math.max((hovered / 23) * 100, 10), 80)}%`, transform: 'translateX(-50%)' }"
+      :style="{ left: `${Math.min(Math.max((hovered / Math.max(1, values.length - 1)) * 100, 10), 80)}%`, transform: 'translateX(-50%)' }"
     >
-      <strong>{{ values[hovered] }}</strong> erreur{{ values[hovered] > 1 ? 's' : '' }} · {{ hourLabel(hovered) }}
+      <template v-if="tooltips">{{ tooltips[hovered] }}</template>
+      <template v-else><strong>{{ values[hovered] }}</strong> erreur{{ values[hovered] > 1 ? 's' : '' }} · {{ hourLabel(hovered) }}</template>
     </div>
   </div>
 </template>
