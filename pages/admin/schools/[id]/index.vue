@@ -147,7 +147,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="p-6 max-w-6xl font-montserrat">
+  <div class="p-4 sm:p-6 max-w-6xl font-montserrat">
     <div v-if="isLoading" class="space-y-4">
       <Skeleton :lines="2" height="h-6" />
       <div class="bg-white rounded-2xl border border-[#E6EFF5] p-5"><Skeleton :lines="5" /></div>

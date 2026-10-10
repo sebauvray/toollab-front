@@ -130,7 +130,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
 </script>
 
 <template>
-  <div class="p-6 max-w-6xl font-montserrat">
+  <div class="p-4 sm:p-6 max-w-6xl font-montserrat">
     <PageHeader title="Erreurs serveur" subtitle="Exceptions non gérées de l'API, regroupées par origine. Historique horaire conservé 7 jours." />
 
     <div v-if="summary" class="bg-white rounded-2xl border border-[#E6EFF5] p-5 mb-4 grid grid-cols-1 md:grid-cols-[auto,1fr] gap-x-8 gap-y-4 items-end">

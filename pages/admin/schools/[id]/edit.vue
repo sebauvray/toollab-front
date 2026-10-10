@@ -101,7 +101,7 @@ onMounted(fetchSchool)
 </script>
 
 <template>
-  <div class="p-6 max-w-3xl">
+  <div class="p-4 sm:p-6 max-w-3xl">
     <NuxtLink :to="`/admin/schools/${schoolId}`" class="text-xs text-gray-500 hover:text-default mb-3 inline-block">
       ← Retour à la fiche école
     </NuxtLink>

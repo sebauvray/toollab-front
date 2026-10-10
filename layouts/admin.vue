@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { useRouter } from '#imports'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter, useRoute } from '#imports'
 import LogoText from "~/components/Icons/LogoText.vue"
 import Setting from "~/components/Icons/Setting.vue"
 import schoolService from '~/services/school'
@@ -34,6 +34,11 @@ const userSchools = ref([])
 const showAccountMenu = ref(false)
 const accountMenuRef = ref(null)
 const { counters, refreshCounters } = useAdminCounters()
+const sidebarOpen = ref(false)
+const route = useRoute()
+// Le tiroir se referme à chaque navigation
+watch(() => route.fullPath, () => { sidebarOpen.value = false })
+const totalAlerts = computed(() => (counters.value.open_errors || 0) + (counters.value.schools_to_watch || 0))
 
 const initials = computed(() => {
   if (!user.value) return 'AD'
@@ -94,7 +99,13 @@ const handleLogout = async () => {
 
 <template>
   <div class="flex bg-gray-blue h-screen antialiased overflow-hidden font-nunito">
-    <aside class="flex flex-col bg-white h-screen border-r border-[#E6EFF5] w-64 font-medium font-montserrat">
+    <!-- Mobile : la barre latérale devient un tiroir -->
+    <div v-if="sidebarOpen" class="fixed inset-0 z-40 bg-black/30 lg:hidden" aria-hidden="true" @click="sidebarOpen = false"></div>
+    <aside
+      id="admin-sidebar"
+      class="fixed inset-y-0 left-0 z-50 flex flex-col bg-white h-screen border-r border-[#E6EFF5] w-64 font-medium font-montserrat transition-transform lg:static lg:translate-x-0"
+      :class="sidebarOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full'"
+    >
       <div class="w-full flex flex-col items-center justify-center py-4 border-b border-[#E6EFF5]">
         <LogoText class="w-32" />
         <span class="text-[10px] font-semibold uppercase tracking-wider text-placeholder mt-1.5">Administration</span>
@@ -217,7 +228,22 @@ const handleLogout = async () => {
       </div>
     </aside>
 
-    <div class="flex flex-col flex-1 overflow-hidden">
+    <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
+      <header class="lg:hidden flex items-center gap-3 h-14 px-4 bg-white border-b border-[#E6EFF5] font-montserrat shrink-0">
+        <button
+          type="button"
+          class="inline-flex items-center justify-center w-9 h-9 -ml-2 rounded-lg text-default hover:bg-gray-100"
+          aria-controls="admin-sidebar"
+          :aria-expanded="sidebarOpen"
+          aria-label="Ouvrir le menu"
+          @click="sidebarOpen = true"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+        </button>
+        <LogoText class="w-24" />
+        <span class="text-[10px] font-semibold uppercase tracking-wider text-placeholder">Admin</span>
+        <span v-if="totalAlerts" class="ml-auto min-w-[20px] px-1.5 py-0.5 rounded-md text-[11px] font-semibold text-center bg-red-50 text-red-700 tabular-nums" :aria-label="`${totalAlerts} point(s) à traiter`">{{ totalAlerts }}</span>
+      </header>
       <div class="flex-1 overflow-auto">
         <slot />
       </div>

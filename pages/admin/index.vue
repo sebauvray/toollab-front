@@ -97,7 +97,7 @@ const onSchoolUpdated = (school, res) => {
 </script>
 
 <template>
-  <div class="p-6 max-w-6xl font-montserrat">
+  <div class="p-4 sm:p-6 max-w-6xl font-montserrat">
     <PageHeader title="Tableau de bord" subtitle="Vue d'ensemble de la plateforme Toollab.">
       <template #actions>
         <NuxtLink to="/admin/schools/new" class="px-3 py-1.5 text-xs font-medium bg-default text-white rounded-lg hover:opacity-90">

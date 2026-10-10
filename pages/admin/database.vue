@@ -52,7 +52,7 @@ const history = computed(() => (data.value?.daily ?? []).map(d => ({
 </script>
 
 <template>
-  <div class="p-6 max-w-6xl font-montserrat">
+  <div class="p-4 sm:p-6 max-w-6xl font-montserrat">
     <div class="mb-4">
       <h1 class="text-lg font-bold">Base de données</h1>
       <p class="text-gray-600 text-xs">

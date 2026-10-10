@@ -61,7 +61,7 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="p-6 max-w-3xl">
+  <div class="p-4 sm:p-6 max-w-3xl">
     <NuxtLink to="/admin/schools" class="text-xs text-gray-500 hover:text-default mb-3 inline-block">
       ← Retour aux écoles
     </NuxtLink>

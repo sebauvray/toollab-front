@@ -101,7 +101,7 @@ const name = (u) => u ? `${u.first_name} ${u.last_name}` : 'Utilisateur supprimÃ
 </script>
 
 <template>
-  <div class="p-6 max-w-6xl font-montserrat">
+  <div class="p-4 sm:p-6 max-w-6xl font-montserrat">
     <PageHeader title="Journal d'audit" subtitle="Actions sensibles sur la plateforme et sessions du support." />
 
     <Tabs
