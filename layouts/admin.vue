@@ -111,6 +111,13 @@ const handleLogout = async () => {
         >
           Audit
         </NuxtLink>
+        <NuxtLink
+          to="/admin/errors"
+          class="px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+          active-class="bg-gray-100 text-default font-bold"
+        >
+          Erreurs
+        </NuxtLink>
       </nav>
 
       <div class="mb-3 px-3">

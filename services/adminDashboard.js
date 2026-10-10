@@ -66,6 +66,21 @@ export default {
         return response.data
     },
 
+    async getErrors(params = {}) {
+        const response = await apiClient.get('/api/admin/errors', { params })
+        return response.data
+    },
+
+    async getError(id) {
+        const response = await apiClient.get(`/api/admin/errors/${id}`)
+        return response.data
+    },
+
+    async setErrorResolved(id, resolved) {
+        const response = await apiClient.post(`/api/admin/errors/${id}/${resolved ? 'resolve' : 'reopen'}`)
+        return response.data
+    },
+
     async getImpersonations() {
         const response = await apiClient.get('/api/admin/impersonations')
         return response.data

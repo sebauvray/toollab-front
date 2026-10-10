@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import adminDashboardService from '~/services/adminDashboard'
 import SchoolQuickActions from '~/components/admin/SchoolQuickActions.vue'
+import HourlyBars from '~/components/admin/HourlyBars.vue'
 import { auditDetail, auditDotClass, shortLabel } from '~/utils/auditFormat'
 
 definePageMeta({
@@ -246,6 +247,40 @@ const onSchoolUpdated = (school, res) => {
               {{ data.system.debug ? 'activé' : 'désactivé' }}
             </dd>
           </dl>
+          <div class="px-4 pb-4">
+            <div class="flex justify-between items-baseline mb-3">
+              <h3 class="text-xs font-semibold uppercase text-gray-500">Erreurs serveur</h3>
+              <NuxtLink to="/admin/errors" class="text-xs text-blue-link hover:underline">Tout voir</NuxtLink>
+            </div>
+            <dl class="grid grid-cols-3 gap-2 mb-3 text-sm">
+              <div>
+                <dt class="text-xs text-gray-500">Sur 24 h</dt>
+                <dd class="text-lg font-bold tabular-nums">{{ data.system.errors.last_24h }}</dd>
+              </div>
+              <div>
+                <dt class="text-xs text-gray-500">Ouvertes</dt>
+                <dd class="text-lg font-bold tabular-nums">{{ data.system.errors.open }}</dd>
+              </div>
+              <div>
+                <dt class="text-xs text-gray-500">E-mails en échec (7 j)</dt>
+                <dd class="text-lg font-bold tabular-nums">
+                  <NuxtLink v-if="data.system.errors.mail_failures_7d" to="/admin/errors?category=mail" class="hover:underline">{{ data.system.errors.mail_failures_7d }}</NuxtLink>
+                  <template v-else>0</template>
+                </dd>
+              </div>
+            </dl>
+            <HourlyBars :values="data.system.errors.hourly" />
+            <ul v-if="data.system.errors.top.length" class="mt-3 space-y-1.5 font-nunito">
+              <li v-for="err in data.system.errors.top" :key="err.id" class="text-xs">
+                <NuxtLink :to="`/admin/errors?status=all&id=${err.id}`" class="hover:underline">
+                  <span class="font-semibold">{{ err.exception_class.split('\\').pop() }}</span>
+                  <span class="text-gray-500"> · {{ err.context }}</span>
+                </NuxtLink>
+                <div class="text-gray-600 truncate">{{ err.message }} · {{ err.occurrences }}× · {{ relative(err.last_seen_at) }}</div>
+              </li>
+            </ul>
+            <p v-else class="mt-3 text-xs text-gray-600">Aucune erreur ouverte sur 7 jours.</p>
+          </div>
           <div v-if="data.system.migrations_pending.length" class="px-4 pb-4">
             <h3 class="text-xs font-semibold uppercase text-gray-500 mb-1">Migrations non jouées</h3>
             <ul class="font-mono text-xs text-red-700 space-y-0.5">
