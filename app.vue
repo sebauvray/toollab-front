@@ -18,6 +18,7 @@ onMounted(() => {
     </div>
   </div>
 
+  <ImpersonationBanner />
   <FlashMessage />
 
   <NuxtLayout>

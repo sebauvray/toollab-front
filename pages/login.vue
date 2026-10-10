@@ -97,6 +97,8 @@ const handleSubmit = async () => {
     console.error('Erreur de connexion:', error)
     if (error.response?.status === 500) {
       formError.value = 'Une erreur est survenue. Veuillez réessayer plus tard.'
+    } else if (error.response?.status === 403) {
+      formError.value = error.response?.data?.message || "L'accès à Toollab est réservé aux équipes des écoles."
     } else if (error.response?.status === 401 || error.response?.status === 422) {
       formError.value = error.response?.data?.message || 'Identifiants incorrects'
     } else if (error.response?.status === 429) {

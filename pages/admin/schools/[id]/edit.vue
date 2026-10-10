@@ -31,7 +31,6 @@ const form = ref({
   zipcode: '',
   city: '',
   country: '',
-  access: true,
   siret: '',
   vat_mode: '',
   vat_number: ''
@@ -62,7 +61,6 @@ const fetchSchool = async () => {
       zipcode: school.value.zipcode || '',
       city: school.value.city || '',
       country: school.value.country || '',
-      access: Boolean(school.value.access),
       siret: school.value.siret || '',
       vat_mode: school.value.vat_mode || '',
       vat_number: school.value.vat_number || ''
@@ -136,10 +134,6 @@ onMounted(fetchSchool)
             <InputText v-model="form.zipcode" placeholder="Code postal" :error="errors.zipcode?.[0]" />
             <InputText v-model="form.city" placeholder="Ville" :error="errors.city?.[0]" />
             <InputText v-model="form.country" placeholder="Pays" :error="errors.country?.[0]" />
-            <label class="flex items-center gap-2 px-3 py-2 border rounded-lg text-sm cursor-pointer">
-              <input v-model="form.access" type="checkbox" class="rounded border-gray-300 text-default focus:ring-default" />
-              École active
-            </label>
           </div>
         </section>
 

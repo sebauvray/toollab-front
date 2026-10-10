@@ -5,8 +5,13 @@ import RoleFormModal from '~/components/modals/RoleFormModal.vue'
 import ConfirmationModal from '~/components/modals/ConfirmationModal.vue'
 import SaveButton from '~/components/form/SaveButton.vue'
 import { getErrorMessage } from '~/utils/errors'
+import { useSchoolFeatures } from '~/composables/useSchoolFeatures'
 
 const emit = defineEmits(['changed'])
+
+// Flag « custom_roles » : désactivé, la matrice reste visible en lecture seule
+const { load: loadFeatures, isEnabled } = useSchoolFeatures()
+const canEditRoles = computed(() => isEnabled('custom_roles'))
 
 const roles = ref([])
 const catalog = ref([])
@@ -78,7 +83,10 @@ const deleteBlockedReason = (role) => {
   return ''
 }
 
-onMounted(fetchRoles)
+onMounted(() => {
+  loadFeatures()
+  fetchRoles()
+})
 </script>
 
 <template>
@@ -91,8 +99,12 @@ onMounted(fetchRoles)
           Le rôle Directeur est verrouillé ; les rôles par défaut peuvent être ajustés mais pas supprimés.
         </p>
       </div>
-      <SaveButton @click="openCreate">Nouveau rôle</SaveButton>
+      <SaveButton v-if="canEditRoles" @click="openCreate">Nouveau rôle</SaveButton>
     </div>
+
+    <p v-if="!canEditRoles" class="text-xs rounded-lg px-3 py-2 mb-3 ring-1 bg-gray-50 text-gray-700 ring-gray-200">
+      La personnalisation des rôles n'est pas activée pour votre établissement : les rôles sont affichés en lecture seule.
+    </p>
 
     <div
         v-if="message.text"
@@ -120,7 +132,7 @@ onMounted(fetchRoles)
                 <span>{{ role.users_count }} pers.</span>
               </div>
               <p v-if="role.description" class="mt-1 text-[11px] text-placeholder leading-snug">{{ role.description }}</p>
-              <div v-if="!role.is_locked" class="mt-2 flex gap-1">
+              <div v-if="!role.is_locked && canEditRoles" class="mt-2 flex gap-1">
                 <button
                     type="button"
                     class="px-2 py-1 text-[11px] rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-50"

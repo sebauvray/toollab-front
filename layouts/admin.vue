@@ -86,7 +86,7 @@ const handleLogout = async () => {
         <NuxtLink
           to="/admin"
           class="px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-          active-class="bg-gray-100 text-default font-bold"
+          exact-active-class="bg-gray-100 text-default font-bold"
         >
           Tableau de bord
         </NuxtLink>
@@ -96,6 +96,20 @@ const handleLogout = async () => {
           active-class="bg-gray-100 text-default font-bold"
         >
           Écoles
+        </NuxtLink>
+        <NuxtLink
+          to="/admin/users"
+          class="px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+          active-class="bg-gray-100 text-default font-bold"
+        >
+          Utilisateurs
+        </NuxtLink>
+        <NuxtLink
+          to="/admin/audit"
+          class="px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+          active-class="bg-gray-100 text-default font-bold"
+        >
+          Audit
         </NuxtLink>
       </nav>
 

@@ -109,6 +109,11 @@ const goToAdmin = () => {
   router.push('/admin')
 }
 
+const hasNoAssignment = computed(() =>
+  !isLoading.value && !errorMsg.value && !isSuperAdmin.value
+  && schools.value.length === 0 && pendingInvitations.value.length === 0
+)
+
 const handleLogout = async () => {
   await authService.logout()
   router.push('/login')
@@ -120,7 +125,7 @@ const handleLogout = async () => {
     <LogoText class="my-[5vh]" />
     <div class="flex flex-col items-center bg-white rounded-3xl border w-[85%] sm:w-[70%] lg:w-[50%] 2xl:w-[35%] shadow-xl p-6">
       <h2 class="text-default text-xl font-bold mb-1.5">Bienvenue {{ user?.first_name }}</h2>
-      <p class="text-default/60 text-center mb-5">Sélectionnez l'école sur laquelle vous voulez travailler.</p>
+      <p v-if="!hasNoAssignment" class="text-default/60 text-center mb-5">Sélectionnez l'école sur laquelle vous voulez travailler.</p>
 
       <div v-if="isLoading" class="py-6">
         <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-default"></div>
@@ -183,13 +188,18 @@ const handleLogout = async () => {
           v-for="school in schools"
           :key="school.id"
           @click="selectSchool(school)"
-          class="w-full p-3 border border-gray-300 hover:border-default hover:bg-gray-50 rounded-lg transition-colors text-left flex items-center gap-2"
+          :disabled="!school.access && !isSuperAdmin"
+          class="w-full p-3 border border-gray-300 hover:border-default hover:bg-gray-50 rounded-lg transition-colors text-left flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:border-gray-300 disabled:hover:bg-white"
         >
           <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold">
             {{ school.name?.charAt(0)?.toUpperCase() }}
           </div>
           <div>
-            <div class="font-semibold">{{ school.name }}</div>
+            <div class="font-semibold">
+              {{ school.name }}
+              <span v-if="!school.access" class="ml-1 align-middle px-1.5 py-0.5 rounded-md text-[11px] font-medium ring-1 bg-red-50 text-red-700 ring-red-200">suspendue</span>
+            </div>
+            <div v-if="!school.access && !isSuperAdmin" class="text-xs text-red-700">Accès suspendu par Toollab. Contactez votre direction ou le support.</div>
             <div class="text-xs text-gray-500">{{ school.city || school.country || '' }}</div>
             <div v-if="schoolRoles[school.id]?.length" class="text-xs text-gray-500">
               {{ schoolRoles[school.id].map(role => role.label).join(' · ') }}
@@ -197,8 +207,17 @@ const handleLogout = async () => {
           </div>
         </button>
 
-        <div v-if="!isSuperAdmin && schools.length === 0 && pendingInvitations.length === 0" class="text-center py-3 text-gray-500">
-          Vous n'avez accès à aucune école.
+        <div v-if="hasNoAssignment" class="flex flex-col items-center text-center py-4">
+          <div class="w-10 h-10 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center mb-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+          <p class="font-montserrat font-semibold text-sm text-default">Aucune affectation d'école</p>
+          <p class="text-xs text-gray-600 mt-1 max-w-sm">
+            Votre compte n'est plus rattaché à aucune école. Si vous pensez qu'il s'agit d'une erreur,
+            contactez la direction de votre école pour qu'elle vous invite à nouveau.
+          </p>
         </div>
 
         <button

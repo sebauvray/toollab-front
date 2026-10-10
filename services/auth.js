@@ -1,5 +1,6 @@
 import { useApi } from './api'
 import { clearCurrentSchoolRoles } from '~/utils/schoolRoles'
+import { isImpersonating, restoreAdminSession } from '~/utils/impersonation'
 
 export default {
     async login(credentials) {
@@ -22,6 +23,14 @@ export default {
 
     async logout() {
         const axios = useApi()
+        if (isImpersonating()) {
+            try {
+                await axios.post('/api/impersonate/stop')
+            } finally {
+                restoreAdminSession()
+            }
+            return
+        }
         try {
             await axios.post('/api/logout')
         } catch (error) {

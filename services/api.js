@@ -1,5 +1,7 @@
 import * as axiosModule from 'axios'
 import { clearCurrentSchoolRoles } from '~/utils/schoolRoles'
+import { isImpersonating, restoreAdminSession } from '~/utils/impersonation'
+import { useFlashMessage } from '~/composables/useFlashMessage'
 const axios = axiosModule.default || axiosModule
 
 const apiClient = axios.create({
@@ -42,6 +44,28 @@ export function setupInterceptors() {
             return response
         },
         async (error) => {
+            // École suspendue pendant la session : retour au choix d'école, qui affiche la suspension
+            if (error.response?.status === 403 && error.response.data?.school_suspended) {
+                localStorage.removeItem('current_school_id')
+                localStorage.removeItem('current_school_year_id')
+                clearCurrentSchoolRoles()
+                if (process.client && window.location.pathname !== '/select-school') {
+                    window.location.href = '/select-school'
+                }
+                return Promise.reject(error)
+            }
+
+            if (error.response?.status === 403 && error.response.data?.impersonation_read_only) {
+                useFlashMessage().setFlashMessage({ type: 'error', message: error.response.data.message })
+                return Promise.reject(error)
+            }
+
+            // Token « en tant que » expiré : on revient à la session admin, pas au login
+            if (error.response && error.response.status === 401 && isImpersonating()) {
+                restoreAdminSession()
+                return Promise.reject(error)
+            }
+
             if (error.response && error.response.status === 401 && localStorage.getItem('auth.token')) {
                 localStorage.removeItem('auth.token')
                 localStorage.removeItem('auth.user')
